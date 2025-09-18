@@ -1,0 +1,14 @@
+{
+  "name": "portfolioly",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "template"
+  ],
+  "packageManager": "yarn@4.9.4",
+  "scripts": {
+    "build": "yarn workspaces foreach -At run build",
+    "watch": "yarn workspaces foreach -At run watch",
+    "dev:template": "yarn workspace template dev"
+  }
+}

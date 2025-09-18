@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "template",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@portfolioly/template-components": "workspace:*",
     "@tailwindcss/typography": "^0.5.16",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.12",

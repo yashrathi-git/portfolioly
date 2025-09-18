@@ -1,0 +1,33 @@
+{
+  "name": "@portfolioly/template-components",
+  "private": true,
+  "version": "0.0.0",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "framer-motion": "^12.23.12",
+    "lucide-react": "^0.544.0",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react-swc": "^3",
+    "typescript": "^5",
+    "vite": "^5",
+    "vite-plugin-dts": "^4"
+  },
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch"
+  }
+}

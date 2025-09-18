@@ -6,8 +6,12 @@ import ChatHeader from "./chat/Header";
 import { EmptyState } from "./chat/EmptyState";
 import { Thread } from "./chat/Thread";
 import { Composer } from "./chat/Composer";
-import { Suggestions } from "./chat/Suggestions";
-import type { Message, Profile, Suggestion } from "./chat/types";
+import { Suggestions } from "@portfolioly/template-components";
+import type {
+  Message,
+  Profile,
+  Suggestion,
+} from "@portfolioly/template-components";
 
 export type ChatPortfolioProps = {
   profile: Profile;
@@ -15,7 +19,11 @@ export type ChatPortfolioProps = {
   presets: Record<string, string>; // label -> assistant reply
 };
 
-export const ChatPortfolio = ({ profile, suggestions, presets }: ChatPortfolioProps) => {
+export const ChatPortfolio = ({
+  profile,
+  suggestions,
+  presets,
+}: ChatPortfolioProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
@@ -26,23 +34,35 @@ export const ChatPortfolio = ({ profile, suggestions, presets }: ChatPortfolioPr
 
   // Auto-scroll on new messages
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+    listRef.current?.scrollTo({
+      top: listRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages, isThinking]);
 
   const sendUserMessage = (text: string) => {
     const value = text.trim();
     if (!value) return;
 
-    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: value };
+    const userMsg: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: value,
+    };
     setMessages((m) => [...m, userMsg]);
 
     // Simulate assistant thinking then reply with placeholder
     setIsThinking(true);
-    const assistantContent = presets[value] ||
+    const assistantContent =
+      presets[value] ||
       "Thanks for your message! This portfolio uses placeholder responses. Try the suggestions or ask about projects, skills, or contact.";
 
     setTimeout(() => {
-      const reply: Message = { id: crypto.randomUUID(), role: "assistant", content: assistantContent };
+      const reply: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: assistantContent,
+      };
       setMessages((m) => [...m, reply]);
       setIsThinking(false);
     }, 600);
@@ -83,7 +103,10 @@ export const ChatPortfolio = ({ profile, suggestions, presets }: ChatPortfolioPr
               onPick={onPickSuggestion}
             />
           ) : (
-            <div ref={listRef} className="absolute inset-0 overflow-y-auto pb-40">
+            <div
+              ref={listRef}
+              className="absolute inset-0 overflow-y-auto pb-40"
+            >
               <div className="mx-auto w-full max-w-3xl">
                 <Thread messages={messages} isThinking={isThinking} />
               </div>
@@ -130,7 +153,11 @@ export const ChatPortfolio = ({ profile, suggestions, presets }: ChatPortfolioPr
                       <motion.div
                         initial={{ x: "-100%" }}
                         animate={{ x: "100%" }}
-                        transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 1.2,
+                          ease: "linear",
+                        }}
                         className="h-full w-1/3 bg-[oklch(0.74_0.15_310)]/70"
                       />
                     </motion.div>
@@ -145,8 +172,12 @@ export const ChatPortfolio = ({ profile, suggestions, presets }: ChatPortfolioPr
                 />
                 {/* Tech tags (subtle) */}
                 <div className="mt-3 flex items-center gap-3 text-xs sm:text-[13px] text-[color:var(--muted-foreground)]">
-                  <span className="inline-flex items-center gap-1">React • Next.js • TypeScript</span>
-                  <span className="inline-flex items-center gap-1">Tailwind v4 • Shadcn/UI</span>
+                  <span className="inline-flex items-center gap-1">
+                    React • Next.js • TypeScript
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    Tailwind v4 • Shadcn/UI
+                  </span>
                 </div>
               </div>
             </motion.div>

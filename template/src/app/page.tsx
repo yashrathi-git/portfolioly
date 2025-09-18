@@ -1,5 +1,5 @@
 import ChatPortfolio from "@/components/ChatPortfolio";
-import type { Profile } from "@/components/chat/types";
+import type { Profile } from "@portfolioly/template-components";
 
 export default function Home() {
   const profile: Profile = {
