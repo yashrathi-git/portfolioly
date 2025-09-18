@@ -5,13 +5,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import ChatHeader from "./chat/Header";
 import { EmptyState } from "./chat/EmptyState";
 import { Thread } from "./chat/Thread";
-import { Composer } from "@portfolioly/template-components/src/client";
-import { Suggestions } from "@portfolioly/template-components";
-import type {
-  Message,
-  Profile,
-  Suggestion,
-} from "@portfolioly/template-components";
+import { Composer } from "./chat/Composer";
+import { Suggestions } from "./Suggestions";
+import type { Message, Profile, Suggestion } from "./types";
 
 export type ChatPortfolioProps = {
   profile: Profile;

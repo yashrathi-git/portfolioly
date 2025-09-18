@@ -1,4 +1,4 @@
-import ChatPortfolio from "@/components/ChatPortfolio";
+import { ChatPortfolio } from "@portfolioly/template-components/src/client";
 import type { Profile } from "@portfolioly/template-components";
 
 export default function Home() {
