@@ -5831,9 +5831,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"template@workspace:template":
+"template@workspace:apps/template":
   version: 0.0.0-use.local
-  resolution: "template@workspace:template"
+  resolution: "template@workspace:apps/template"
   dependencies:
     "@eslint/eslintrc": "npm:^3.3.1"
     "@portfolioly/template-components": "workspace:*"

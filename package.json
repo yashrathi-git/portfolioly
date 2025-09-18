@@ -2,8 +2,8 @@
   "name": "portfolioly",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "template"
+    "apps/*",
+    "packages/*"
   ],
   "packageManager": "yarn@4.9.4",
   "scripts": {
