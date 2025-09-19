@@ -9,6 +9,9 @@
   "scripts": {
     "build": "yarn workspaces foreach -At run build",
     "watch": "yarn workspaces foreach -At run watch",
-    "dev:template": "yarn workspace template dev"
+    "dev:template": "yarn workspace template dev",
+    "dev:main": "yarn workspace main dev",
+    "build:main": "yarn workspace main build",
+    "start:main": "yarn workspace main start"
   }
 }
