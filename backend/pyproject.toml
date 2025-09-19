@@ -1,0 +1,14 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.116.2",
+    "firebase-admin>=7.1.0",
+    "pydantic-settings>=2.10.1",
+    "pydantic[email]>=2.11.9",
+    "python-dotenv>=1.1.1",
+    "python-multipart>=0.0.20",
+]
