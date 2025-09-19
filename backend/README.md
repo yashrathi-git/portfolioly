@@ -104,22 +104,52 @@ async def custom_route(user: UserToken = Depends(require_authenticated_user)):
 
 ## Development
 
+### Prerequisites
+
+This project uses `uv` as the Python package manager for faster dependency management and virtual environment handling.
+
+Install `uv`:
+
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Or with pip
+pip install uv
+```
+
 ### Setup
 
 ```bash
 cd backend
-pip install -r requirements.txt
+
+# Create virtual environment and install dependencies with uv
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -r requirements.txt
+
+# Alternative: Install dependencies directly with uv (recommended)
+uv pip sync requirements.txt
 ```
 
 ### Run Development Server
 
 ```bash
+# With uv (recommended)
+uv run python run.py
+
+# Or activate venv first
+source .venv/bin/activate
 python run.py
 ```
 
 ### Run with uvicorn directly
 
 ```bash
+# With uv
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Or with activated venv
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
