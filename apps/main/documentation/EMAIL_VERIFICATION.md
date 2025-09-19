@@ -149,3 +149,136 @@ export default function MarketingPage() {
 
 - `apps/main/src/lib/auth/PROTECTION_GUIDE.md` — quick start and examples
 - `apps/main/src/hooks/useVerificationPolling.ts` — polling strategy and backoff
+
+\*\*\*\*## Sign-up flow (Firebase APIs)
+
+This section shows the exact sequence and APIs used when a user signs up, how we send the verification email, and how the app routes users until verification completes.
+
+### 1) Creating the account and sending the verification email
+
+File: `apps/main/src/lib/auth/AuthContext.tsx`
+
+The `signUp` method creates the account, sets the display name, sends the verification email, and records resend timing and status.
+
+```ts
+const signUp = useCallback(
+  async (email: string, password: string, displayName: string) => {
+    const auth = getFirebaseAuth();
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+    // Attach a human-friendly display name
+    await updateProfile(cred.user, { displayName });
+
+    // Send verification email immediately
+    await sendEmailVerification(cred.user);
+    setLastVerificationSent(new Date());
+    setVerificationStatus("pending");
+  },
+  []
+);
+```
+
+Resend is rate-limited to avoid abuse and accidental spamming:
+
+```ts
+const resendVerification = useCallback(async () => {
+  const auth = getFirebaseAuth();
+  const currentUser = auth.currentUser;
+  if (!currentUser)
+    throw new Error("Please sign in to resend verification email");
+
+  if (lastVerificationSent) {
+    const timeSince = Date.now() - lastVerificationSent.getTime();
+    const minWaitTime = 60_000; // 60 seconds
+    if (timeSince < minWaitTime) {
+      const remaining = Math.ceil((minWaitTime - timeSince) / 1000);
+      throw new Error(
+        `Please wait ${remaining} seconds before requesting another verification email`
+      );
+    }
+  }
+
+  await sendEmailVerification(currentUser);
+  setLastVerificationSent(new Date());
+  setVerificationStatus("pending");
+}, [lastVerificationSent]);
+```
+
+Notes:
+
+- The user remains signed in but unverified; the app will route them to the verification screen.
+- `verificationStatus` is simplified to: `idle | pending | verified | failed`.
+
+### 2) The sign-up form submission
+
+File: `apps/main/src/components/auth/SignUpForm.tsx`
+
+The form validates input, calls `signUp(...)`, and lets the page handle routing.
+
+```tsx
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!name.trim()) {
+    setError("Please enter your name");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    await signUp(email, password, name.trim());
+    setJustRegistered(true); // parent page will redirect appropriately
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Failed to sign up");
+    setLoading(false);
+  }
+};
+```
+
+### 3) Post sign-up routing (verified vs unverified)
+
+File: `apps/main/src/app/auth/sign-up/page.tsx`
+
+After sign-up, the page listens to `user` and uses the centralized guard to decide where to send them.
+
+```tsx
+useEffect(() => {
+  if (user && !loading) {
+    router.push(getPostAuthRedirectPath(user));
+  }
+}, [user, loading, router]);
+```
+
+Helper used:
+
+```ts
+// apps/main/src/lib/auth/routeGuards.ts
+export function getPostAuthRedirectPath(user: User) {
+  return user.emailVerified ? "/dashboard" : "/auth/verify-email";
+}
+```
+
+### 4) Verification screen and automatic completion detection
+
+Files:
+
+- `apps/main/src/app/auth/verify-email/page.tsx`
+- `apps/main/src/components/auth/VerificationRequiredScreen.tsx`
+- `apps/main/src/hooks/useVerificationPolling.ts`
+
+On the verify page we:
+
+- Render a centered card with the target email and clear calls-to-action
+- Start polling `user.reload()` to detect when `emailVerified` becomes true
+- Redirect to `/dashboard` automatically once verified
+
+```tsx
+const { isPolling, startPolling } = useVerificationPolling(user, () => {
+  router.push("/dashboard");
+});
+
+useEffect(() => {
+  if (user && !user.emailVerified) startPolling();
+}, [user, startPolling]);
+```
+
+This keeps verification detection scoped to the verification screen, avoiding duplicated polling elsewhere.
