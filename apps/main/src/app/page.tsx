@@ -1,105 +1,19 @@
 "use client";
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import AuthShell from "@/components/auth/AuthShell";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { getIdToken } from "@/lib/firebase";
-import { Sun, Moon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
-export default function Home() {
-  const { user, loading, signOut } = useAuth();
+export default function HomePage() {
+  const { user, loading } = useAuth();
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Portfolioly";
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-
-  const [data, setData] = useState<null | { message: string; uid?: string | null; email?: string | null; claims?: Record<string, unknown> }>(null);
-  const [fetching, setFetching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshIndex, setRefreshIndex] = useState(0);
-  const [isDark, setIsDark] = useState(() => (typeof document !== "undefined" ? document.documentElement.classList.contains("dark") : false));
-
-  // Ensure toggle state matches the pre-painted theme on first mount
-  useEffect(() => {
-    const current = document.documentElement.classList.contains("dark");
-    setIsDark(current);
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    const next = !isDark;
-    setIsDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    try {
-      localStorage.setItem("theme", next ? "dark" : "light");
-    } catch {}
-  }, [isDark]);
-
-  useEffect(() => {
-    let active = true;
-    const controller = new AbortController();
-
-    const run = async () => {
-      if (!user) return;
-      setFetching(true);
-      setError(null);
-      setData(null);
-      try {
-        const token = await getIdToken();
-        if (!token) throw new Error("No ID token available");
-        const res = await fetch(`${API_BASE}/protected`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          signal: controller.signal,
-        });
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(`Backend error (${res.status}): ${t}`);
-        }
-        const json = await res.json();
-        if (active) setData(json);
-      } catch (e: any) {
-        if (active && e.name !== "AbortError") setError(e?.message || "Failed to fetch protected data");
-      } finally {
-        if (active) setFetching(false);
-      }
-    };
-
-    run();
-    return () => {
-      active = false;
-      controller.abort();
-    };
-  }, [user, API_BASE, refreshIndex]);
-
-  const HeaderBar = useMemo(
-    () => (
-      <div className="w-full border-b sticky top-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
-        <div className="mx-auto max-w-4xl px-4 h-14 flex items-center justify-between">
-          <span className="font-semibold tracking-tight">{appName}</span>
-          <div className="flex items-center gap-2 text-sm">
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Toggle theme"
-              onClick={toggleTheme}
-            >
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-muted-foreground hidden sm:inline">
-                  {user.displayName || user.email}
-                </span>
-                <Button size="sm" variant="outline" onClick={() => signOut()}>Sign out</Button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    ),
-    [appName, user, signOut, isDark, toggleTheme]
-  );
 
   if (loading) {
     return (
@@ -117,52 +31,85 @@ export default function Home() {
     );
   }
 
-  if (!user) {
-    return (
-      <>
-        {HeaderBar}
-        <main className="mx-auto max-w-4xl px-4 py-10">
-          <AuthShell />
-        </main>
-      </>
-    );
-  }
-
   return (
-    <>
-      {HeaderBar}
-      <main className="mx-auto max-w-4xl px-4 py-8 grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome</CardTitle>
-            <CardDescription>Signed in as {user.email}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">This page demonstrates verifying your Firebase ID token with a FastAPI backend and returning protected data.</p>
-          </CardContent>
-        </Card>
+    <main className="mx-auto max-w-4xl px-4 py-16">
+      <div className="text-center space-y-8">
+        <div className="space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+            Welcome to {appName}
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Your portfolio management platform. Create, manage, and showcase
+            your work with ease.
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Protected API Data</CardTitle>
-            <CardDescription>Fetched from {API_BASE}/protected</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {fetching && <div className="h-16 animate-pulse rounded-md bg-muted" />}
-            {error && (
-              <div className="text-sm text-destructive" role="alert">{error}</div>
-            )}
-            {data && (
-              <pre className="text-xs p-4 rounded-md bg-muted overflow-auto">
-{JSON.stringify(data, null, 2)}
-              </pre>
-            )}
-            <div className="flex gap-2">
-              <Button onClick={() => setRefreshIndex((i) => i + 1)} disabled={fetching}>Refresh</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-    </>
+        {user ? (
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle>Welcome back!</CardTitle>
+              <CardDescription>
+                Signed in as {user.displayName || user.email}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" asChild>
+                <Link href="/dashboard">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" asChild>
+              <Link href="/auth/sign-up">
+                Get Started
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/auth/sign-in">Sign in</Link>
+            </Button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Create</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Build beautiful portfolios with our intuitive tools and
+                templates.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Manage</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Organize your projects, skills, and achievements in one place.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Showcase</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Share your work with the world through professional
+                presentations.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </main>
   );
 }

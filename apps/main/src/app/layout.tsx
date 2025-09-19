@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Script from "next/script";
 import RootProviders from "@/components/RootProviders";
+import HeaderBar from "@/components/HeaderBar";
+import { getThemeScript } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_APP_NAME || "Portfolioly",
-  description: "Authentication demo with Firebase and FastAPI",
+  description: "Your portfolio management platform",
 };
 
 export default function RootLayout({
@@ -16,21 +17,18 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Pre-paint theme sync to avoid FOUC */}
-        <Script id="theme-init" strategy="beforeInteractive">
-          {`
-            try {
-              const ls = localStorage.getItem('theme');
-              const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-              const isDark = ls ? ls === 'dark' : prefersDark;
-              const root = document.documentElement;
-              if (isDark) root.classList.add('dark'); else root.classList.remove('dark');
-            } catch {}
-          `}
-        </Script>
+        {/* Theme initialization script to prevent FOUC */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: getThemeScript(),
+          }}
+        />
       </head>
       <body className="antialiased">
-        <RootProviders>{children}</RootProviders>
+        <RootProviders>
+          <HeaderBar />
+          {children}
+        </RootProviders>
       </body>
     </html>
   );

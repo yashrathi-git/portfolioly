@@ -1,35 +1,29 @@
-import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
+import {
+  initializeApp,
+  getApps,
+  getApp,
+  type FirebaseOptions,
+} from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+import { env, validateEnv } from "./env";
 
 let appInstance: ReturnType<typeof initializeApp> | null = null;
 let authInstance: Auth | null = null;
 
 function getConfig(): FirebaseOptions {
+  // Validate environment variables first
+  validateEnv();
+
   const cfg: FirebaseOptions = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-  } as FirebaseOptions;
+    apiKey: env.FIREBASE_API_KEY!,
+    authDomain: env.FIREBASE_AUTH_DOMAIN!,
+    projectId: env.FIREBASE_PROJECT_ID!,
+    storageBucket: env.FIREBASE_STORAGE_BUCKET!,
+    messagingSenderId: env.FIREBASE_MESSAGING_SENDER_ID!,
+    appId: env.FIREBASE_APP_ID!,
+    measurementId: env.FIREBASE_MEASUREMENT_ID,
+  };
 
-  const requiredKeys: (keyof FirebaseOptions)[] = [
-    "apiKey",
-    "authDomain",
-    "projectId",
-    "storageBucket",
-    "messagingSenderId",
-    "appId",
-  ];
-
-  const missing = requiredKeys.filter((k) => !cfg[k] || String(cfg[k]).trim() === "");
-  if (missing.length) {
-    throw new Error(
-      `Firebase config missing env vars: ${missing.join(", ")}. Ensure NEXT_PUBLIC_* envs are set.`
-    );
-  }
   return cfg;
 }
 
@@ -48,6 +42,12 @@ export function getFirebaseAuth(): Auth {
   if (authInstance) return authInstance;
   const app = getFirebaseApp();
   authInstance = getAuth(app);
+
+  // Set auth language to user's preferred language
+  if (typeof window !== "undefined") {
+    authInstance.languageCode = navigator.language;
+  }
+
   return authInstance;
 }
 
@@ -56,7 +56,7 @@ export async function getIdToken(forceRefresh = false) {
     const user = getFirebaseAuth().currentUser;
     if (!user) return null;
     return user.getIdToken(forceRefresh);
-  } catch (e) {
+  } catch {
     // If auth isn't initialized due to missing config, return null
     return null;
   }

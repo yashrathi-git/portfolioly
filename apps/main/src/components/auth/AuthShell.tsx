@@ -2,7 +2,13 @@
 import { useState } from "react";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function AuthShell() {
@@ -15,7 +21,9 @@ export default function AuthShell() {
         <CardHeader>
           <CardTitle className="text-2xl">{appName}</CardTitle>
           <CardDescription>
-            {mode === "login" ? "Welcome back. Sign in to continue." : "Create an account to get started."}
+            {mode === "login"
+              ? "Welcome back. Sign in to continue."
+              : "Create an account to get started."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -28,13 +36,25 @@ export default function AuthShell() {
           <div className="text-sm text-muted-foreground text-center">
             {mode === "login" ? (
               <>
-                Don't have an account?{" "}
-                <Button variant="link" className="px-1" onClick={() => setMode("signup")}>Sign up</Button>
+                Don&apos;t have an account?{" "}
+                <Button
+                  variant="link"
+                  className="px-1"
+                  onClick={() => setMode("signup")}
+                >
+                  Sign up
+                </Button>
               </>
             ) : (
               <>
                 Already have an account?{" "}
-                <Button variant="link" className="px-1" onClick={() => setMode("login")}>Sign in</Button>
+                <Button
+                  variant="link"
+                  className="px-1"
+                  onClick={() => setMode("login")}
+                >
+                  Sign in
+                </Button>
               </>
             )}
           </div>
