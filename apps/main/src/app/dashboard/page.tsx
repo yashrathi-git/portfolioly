@@ -1,6 +1,4 @@
 "use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -11,36 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Plus, FolderOpen, Settings } from "lucide-react";
+import withAuth from "@/lib/auth/withAuth";
 
-export default function DashboardPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth/sign-in");
-    }
-  }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen grid place-items-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Loading</CardTitle>
-            <CardDescription>Please wait…</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-24 animate-pulse rounded-md bg-muted" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null; // Will redirect via useEffect
-  }
+function DashboardPage() {
+  const { user } = useAuth();
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -48,7 +20,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {user.displayName || user.email?.split("@")[0]}!
+            Welcome back, {user?.displayName || user?.email?.split("@")[0]}!
           </p>
         </div>
 
@@ -155,3 +127,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+export default withAuth(DashboardPage, { requireVerification: true });

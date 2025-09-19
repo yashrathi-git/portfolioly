@@ -36,10 +36,26 @@ export default function HeaderBar() {
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground hidden sm:inline">
                 {user.displayName || user.email}
+                {!user.emailVerified && (
+                  <span className="ml-2 text-xs text-amber-600 font-medium">
+                    (Unverified)
+                  </span>
+                )}
               </span>
-              <Button size="sm" variant="outline" onClick={() => signOut()}>
-                Sign out
-              </Button>
+              {!user.emailVerified ? (
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="default" asChild>
+                    <Link href="/auth/verify-email">Verify Email</Link>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => signOut()}>
+                    Sign out
+                  </Button>
+                </div>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => signOut()}>
+                  Sign out
+                </Button>
+              )}
             </div>
           ) : (
             <div className="flex items-center gap-2">

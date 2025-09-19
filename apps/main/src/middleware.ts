@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow access to auth pages and public routes
+  // Allow access to auth pages, verification pages, and public routes
   if (
     pathname.startsWith("/auth/") ||
     pathname === "/" ||

@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import SignUpForm from "@/components/auth/SignUpForm";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { getPostAuthRedirectPath } from "@/lib/auth/routeGuards";
 import Link from "next/link";
 
 export default function SignUpPage() {
@@ -20,7 +21,7 @@ export default function SignUpPage() {
 
   useEffect(() => {
     if (user && !loading) {
-      router.push("/");
+      router.push(getPostAuthRedirectPath(user));
     }
   }, [user, loading, router]);
 
@@ -49,7 +50,7 @@ export default function SignUpPage() {
         <CardDescription>Create an account to get started.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <SignUpForm onDone={() => router.push("/auth/sign-in")} />
+        <SignUpForm />
 
         <div className="text-sm text-muted-foreground text-center">
           Already have an account?{" "}

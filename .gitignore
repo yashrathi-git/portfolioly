@@ -84,3 +84,4 @@ firebaseServiceKeyJson
 firebaseServiceKeyJson/*
 firebaseServiceKey.json
 *.pyc
+.kiro/

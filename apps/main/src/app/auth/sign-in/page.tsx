@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import LoginForm from "@/components/auth/LoginForm";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { getPostAuthRedirectPath } from "@/lib/auth/routeGuards";
 import Link from "next/link";
 
 export default function SignInPage() {
@@ -20,7 +21,7 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (user && !loading) {
-      router.push("/");
+      router.push(getPostAuthRedirectPath(user));
     }
   }, [user, loading, router]);
 
@@ -49,7 +50,7 @@ export default function SignInPage() {
         <CardDescription>Welcome back. Sign in to continue.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <LoginForm onDone={() => router.push("/")} />
+        <LoginForm onDone={() => router.push("/dashboard")} />
 
         <div className="text-sm text-muted-foreground text-center">
           Don&apos;t have an account?{" "}

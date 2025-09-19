@@ -1,33 +1,54 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { sendEmailVerification } from "firebase/auth";
-import { getFirebaseAuth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 
 export default function SignUpForm({ onDone }: { onDone?: () => void }) {
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, user } = useAuth();
+  const router = useRouter();
+
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [verificationSent, setVerificationSent] = useState(false);
-  const [resending, setResending] = useState(false);
+  const [justRegistered, setJustRegistered] = useState(false);
+
+  // Handle user state changes after signup
+  useEffect(() => {
+    if (user && user.emailVerified && !justRegistered && !loading) {
+      // User is already verified (not just registered), proceed normally
+      onDone?.();
+    }
+    // If user just registered, let parent page handle redirect
+  }, [user, loading, onDone, justRegistered]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Validate name field
+    if (!name.trim()) {
+      setError("Please enter your name");
+      return;
+    }
+
     setLoading(true);
     try {
-      await signUp(email, password);
-      setVerificationSent(true);
-      // Do not call onDone here — keep the user on this screen to see verification instructions
-      // onDone?.();
+      await signUp(email, password, name.trim());
+      setJustRegistered(true);
+      // The parent page will handle the redirect to verification screen
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to sign up");
-    } finally {
+      if (err instanceof Error && err.message.includes("already exists")) {
+        setError(
+          "An account with this email already exists. Please sign in instead."
+        );
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to sign up");
+      }
       setLoading(false);
     }
   };
@@ -37,33 +58,11 @@ export default function SignUpForm({ onDone }: { onDone?: () => void }) {
     setLoading(true);
     try {
       await signInWithGoogle();
-      onDone?.();
+      // Don't call onDone - let the parent page handle the redirect
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Google sign-in failed");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setError(null);
-    setResending(true);
-    try {
-      const auth = getFirebaseAuth();
-      if (auth.currentUser) {
-        await sendEmailVerification(auth.currentUser);
-        setVerificationSent(true);
-      } else {
-        setError("Please sign in again to resend verification.");
-      }
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to resend verification email"
-      );
-    } finally {
-      setResending(false);
     }
   };
 
@@ -107,64 +106,50 @@ export default function SignUpForm({ onDone }: { onDone?: () => void }) {
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t" />
       </div>
 
-      {verificationSent ? (
-        <div className="space-y-3 text-sm">
-          <p className="text-muted-foreground">
-            Verification email sent to{" "}
-            <span className="font-medium">{email}</span>. Please check your
-            inbox and click the link to verify your account.
-          </p>
-          {error && (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleResend}
-              disabled={resending}
-            >
-              {resending ? "Resending…" : "Resend verification email"}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Minimum 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="off"
-            />
-          </div>
-          {error && (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          )}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account…" : "Create Account"}
-          </Button>
-        </>
+      <div className="space-y-2">
+        <Label htmlFor="name">Full name</Label>
+        <Input
+          id="name"
+          type="text"
+          placeholder="Enter your full name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          autoComplete="name"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          type="password"
+          placeholder="Minimum 6 characters"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="new-password"
+        />
+      </div>
+      {error && (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
       )}
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Creating account…" : "Create Account"}
+      </Button>
     </form>
   );
 }

@@ -1,16 +1,30 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm({ onDone }: { onDone?: () => void }) {
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, user } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Handle user state changes after login
+  useEffect(() => {
+    if (user && loading) {
+      setLoading(false);
+      if (user.emailVerified) {
+        // User is verified, proceed normally
+        onDone?.();
+      }
+      // Note: Unverified user redirect is handled by the parent page
+    }
+  }, [user, loading, onDone]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,10 +32,11 @@ export default function LoginForm({ onDone }: { onDone?: () => void }) {
     setLoading(true);
     try {
       await signIn(email, password);
-      onDone?.();
+      // The AuthContext will handle the user state change
+      // If user is verified, onDone will be called via useEffect
+      // If user is unverified, we'll show verification required message
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to sign in");
-    } finally {
       setLoading(false);
     }
   };

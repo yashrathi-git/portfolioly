@@ -1,5 +1,12 @@
 "use client";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 import { getFirebaseAuth } from "@/lib/firebase";
 import {
   onAuthStateChanged,
@@ -17,14 +24,23 @@ import {
 export type AuthContextValue = {
   user: User | null;
   loading: boolean;
+
+  // Verification state
+  verificationStatus: "idle" | "pending" | "verified" | "failed";
+  lastVerificationSent: Date | null;
+
+  // Auth methods
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (
     email: string,
     password: string,
-    displayName?: string
+    displayName: string
   ) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+
+  // Verification methods
+  resendVerification: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -33,6 +49,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Verification state
+  const [verificationStatus, setVerificationStatus] = useState<
+    "idle" | "pending" | "verified" | "failed"
+  >("idle");
+  const [lastVerificationSent, setLastVerificationSent] = useState<Date | null>(
+    null
+  );
+
   useEffect(() => {
     let unsub: (() => void) | undefined;
     try {
@@ -40,6 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsub = onAuthStateChanged(auth, (u) => {
         setUser(u);
         setLoading(false);
+
+        // If user becomes verified, update status
+        if (u?.emailVerified && verificationStatus !== "verified") {
+          setVerificationStatus("verified");
+        }
       });
     } catch (e) {
       console.error("Firebase not initialized:", e);
@@ -48,9 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       if (unsub) unsub();
     };
-  }, []);
+  }, [verificationStatus]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       const auth = getFirebaseAuth();
       await signInWithEmailAndPassword(auth, email, password);
@@ -58,34 +87,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authError = error as AuthError;
       throw new Error(getAuthErrorMessage(authError));
     }
-  };
+  }, []);
 
-  const signUp = async (
-    email: string,
-    password: string,
-    displayName?: string
-  ) => {
-    try {
-      const auth = getFirebaseAuth();
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      if (displayName) {
-        await updateProfile(cred.user, { displayName });
-      }
-      // Send email verification as part of the sign-up flow
+  const signUp = useCallback(
+    async (email: string, password: string, displayName: string) => {
       try {
-        await sendEmailVerification(cred.user);
-      } catch (verificationError) {
-        console.error("Failed to send verification email", verificationError);
-      }
-      // Require email verification before using the app: sign the user out after signup
-      await fbSignOut(auth);
-    } catch (error) {
-      const authError = error as AuthError;
-      throw new Error(getAuthErrorMessage(authError));
-    }
-  };
+        const auth = getFirebaseAuth();
+        const cred = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
 
-  const signOut = async () => {
+        // Update profile with display name (now required)
+        await updateProfile(cred.user, { displayName });
+
+        // Send email verification as part of the sign-up flow
+        try {
+          await sendEmailVerification(cred.user);
+          setLastVerificationSent(new Date());
+          setVerificationStatus("pending");
+        } catch (verificationError) {
+          console.error("Failed to send verification email", verificationError);
+          setVerificationStatus("failed");
+          throw new Error(
+            "Failed to send verification email. Please try again."
+          );
+        }
+
+        // Keep user signed in but unverified
+        // They will be redirected to verification screen by the app logic
+      } catch (error) {
+        const authError = error as AuthError;
+        throw new Error(getAuthErrorMessage(authError));
+      }
+    },
+    []
+  );
+
+  const signOut = useCallback(async () => {
     try {
       const auth = getFirebaseAuth();
       await fbSignOut(auth);
@@ -93,9 +133,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Sign out error:", error);
       throw new Error("Failed to sign out");
     }
-  };
+  }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     try {
       const auth = getFirebaseAuth();
       const provider = new GoogleAuthProvider();
@@ -105,11 +145,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authError = error as AuthError;
       throw new Error(getAuthErrorMessage(authError));
     }
-  };
+  }, []);
+
+  const resendVerification = useCallback(async () => {
+    const auth = getFirebaseAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      throw new Error("Please sign in to resend verification email");
+    }
+
+    // Security control: Check if enough time has passed since last verification email
+    if (lastVerificationSent) {
+      const timeSinceLastSent = Date.now() - lastVerificationSent.getTime();
+      const minWaitTime = 60 * 1000; // 1 minute minimum wait time
+
+      if (timeSinceLastSent < minWaitTime) {
+        const remainingTime = Math.ceil(
+          (minWaitTime - timeSinceLastSent) / 1000
+        );
+        throw new Error(
+          `Please wait ${remainingTime} seconds before requesting another verification email`
+        );
+      }
+    }
+
+    try {
+      await sendEmailVerification(currentUser);
+      setLastVerificationSent(new Date());
+      setVerificationStatus("pending");
+    } catch (error) {
+      const authError = error as AuthError;
+      setVerificationStatus("failed");
+      throw new Error(getAuthErrorMessage(authError));
+    }
+  }, [lastVerificationSent]);
+
+  // Removed internal polling; verification check is handled by the verify page hook
 
   const value = useMemo(
-    () => ({ user, loading, signIn, signUp, signOut, signInWithGoogle }),
-    [user, loading]
+    () => ({
+      user,
+      loading,
+      verificationStatus,
+      lastVerificationSent,
+      signIn,
+      signUp,
+      signOut,
+      signInWithGoogle,
+      resendVerification,
+    }),
+    [
+      user,
+      loading,
+      verificationStatus,
+      lastVerificationSent,
+      resendVerification,
+      signIn,
+      signUp,
+      signOut,
+      signInWithGoogle,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -128,7 +224,7 @@ function getAuthErrorMessage(error: AuthError): string {
     case "auth/invalid-credential":
       return "Invalid email or password";
     case "auth/email-already-in-use":
-      return "An account with this email already exists";
+      return "An account with this email already exists. Please sign in instead.";
     case "auth/weak-password":
       return "Password should be at least 6 characters";
     case "auth/invalid-email":

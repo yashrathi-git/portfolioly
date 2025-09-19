@@ -1,4 +1,6 @@
 "use client";
+import {} from "react";
+import {} from "next/navigation";
 import {
   Card,
   CardContent,
@@ -13,7 +15,11 @@ import Link from "next/link";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
+
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Portfolioly";
+
+  // Optional: No imperative redirect here; let UI and ProtectedRoute handle gating
+  // No redirects from home; UI handles state
 
   if (loading) {
     return (
@@ -53,12 +59,26 @@ export default function HomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" asChild>
-                <Link href="/dashboard">
-                  Go to Dashboard
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              {user.emailVerified ? (
+                <Button className="w-full" asChild>
+                  <Link href="/dashboard">
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Please verify your email to continue
+                  </p>
+                  <Button className="w-full" asChild>
+                    <Link href="/auth/verify-email">
+                      Verify Email
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : (
