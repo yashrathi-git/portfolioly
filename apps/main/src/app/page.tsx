@@ -1,37 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+"use client";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import AuthShell from "@/components/auth/AuthShell";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getIdToken } from "@/lib/firebase";
-import AppHeader from "@/components/AppHeader";
+import { Sun, Moon } from "lucide-react";
 
-export default function App() {
+export default function Home() {
   const { user, loading, signOut } = useAuth();
-  const appName = import.meta.env.VITE_APP_NAME || "Portfolioly";
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Portfolioly";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
-  const [data, setData] = useState<null | {
-    message: string;
-    uid?: string | null;
-    email?: string | null;
-    claims?: Record<string, unknown>;
-  }>(null);
+  const [data, setData] = useState<null | { message: string; uid?: string | null; email?: string | null; claims?: Record<string, unknown> }>(null);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshIndex, setRefreshIndex] = useState(0);
-  const [isDark, setIsDark] = useState(() =>
-    typeof document !== "undefined"
-      ? document.documentElement.classList.contains("dark")
-      : false
-  );
+  const [isDark, setIsDark] = useState(() => (typeof document !== "undefined" ? document.documentElement.classList.contains("dark") : false));
 
+  // Ensure toggle state matches the pre-painted theme on first mount
   useEffect(() => {
     const current = document.documentElement.classList.contains("dark");
     setIsDark(current);
@@ -72,8 +59,7 @@ export default function App() {
         const json = await res.json();
         if (active) setData(json);
       } catch (e: any) {
-        if (active && e.name !== "AbortError")
-          setError(e?.message || "Failed to fetch protected data");
+        if (active && e.name !== "AbortError") setError(e?.message || "Failed to fetch protected data");
       } finally {
         if (active) setFetching(false);
       }
@@ -88,17 +74,31 @@ export default function App() {
 
   const HeaderBar = useMemo(
     () => (
-      <AppHeader
-        appName={appName}
-        isDark={isDark}
-        toggleTheme={toggleTheme}
-        userDisplay={
-          user ? user.displayName || user.email || undefined : undefined
-        }
-        onSignOut={user ? () => signOut() : undefined}
-      />
+      <div className="w-full border-b sticky top-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
+        <div className="mx-auto max-w-4xl px-4 h-14 flex items-center justify-between">
+          <span className="font-semibold tracking-tight">{appName}</span>
+          <div className="flex items-center gap-2 text-sm">
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Toggle theme"
+              onClick={toggleTheme}
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground hidden sm:inline">
+                  {user.displayName || user.email}
+                </span>
+                <Button size="sm" variant="outline" onClick={() => signOut()}>Sign out</Button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
     ),
-    [appName, isDark, toggleTheme, user, signOut]
+    [appName, user, signOut, isDark, toggleTheme]
   );
 
   if (loading) {
@@ -138,10 +138,7 @@ export default function App() {
             <CardDescription>Signed in as {user.email}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              This page demonstrates verifying your Firebase ID token with a
-              FastAPI backend and returning protected data.
-            </p>
+            <p className="text-sm text-muted-foreground">This page demonstrates verifying your Firebase ID token with a FastAPI backend and returning protected data.</p>
           </CardContent>
         </Card>
 
@@ -151,26 +148,17 @@ export default function App() {
             <CardDescription>Fetched from {API_BASE}/protected</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {fetching && (
-              <div className="h-16 animate-pulse rounded-md bg-muted" />
-            )}
+            {fetching && <div className="h-16 animate-pulse rounded-md bg-muted" />}
             {error && (
-              <div className="text-sm text-destructive" role="alert">
-                {error}
-              </div>
+              <div className="text-sm text-destructive" role="alert">{error}</div>
             )}
             {data && (
               <pre className="text-xs p-4 rounded-md bg-muted overflow-auto">
-                {JSON.stringify(data, null, 2)}
+{JSON.stringify(data, null, 2)}
               </pre>
             )}
             <div className="flex gap-2">
-              <Button
-                onClick={() => setRefreshIndex((i) => i + 1)}
-                disabled={fetching}
-              >
-                Refresh
-              </Button>
+              <Button onClick={() => setRefreshIndex((i) => i + 1)} disabled={fetching}>Refresh</Button>
             </div>
           </CardContent>
         </Card>

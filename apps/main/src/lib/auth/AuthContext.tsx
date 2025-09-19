@@ -7,7 +7,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
-  type User,
+  User,
   GoogleAuthProvider,
   signInWithPopup,
   sendEmailVerification,
@@ -17,11 +17,7 @@ export type AuthContextValue = {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (
-    email: string,
-    password: string,
-    displayName?: string
-  ) => Promise<void>;
+  signUp: (email: string, password: string, displayName?: string) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
 };
@@ -54,11 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signUp = async (
-    email: string,
-    password: string,
-    displayName?: string
-  ) => {
+  const signUp = async (email: string, password: string, displayName?: string) => {
     const auth = getFirebaseAuth();
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     if (displayName) {

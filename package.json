@@ -13,5 +13,8 @@
     "dev:main": "yarn workspace main dev",
     "build:main": "yarn workspace main build",
     "start:main": "yarn workspace main start"
+  },
+  "dependencies": {
+    "@radix-ui/react-label": "^2.1.7"
   }
 }

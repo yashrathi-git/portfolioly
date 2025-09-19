@@ -2,18 +2,12 @@
 import { useState } from "react";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function AuthShell() {
   const [mode, setMode] = useState<"login" | "signup">("login");
-  const appName = import.meta.env.VITE_APP_NAME || "Portfolioly";
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Portfolioly";
 
   return (
     <div className="min-h-[70vh] grid place-items-center">
@@ -21,9 +15,7 @@ export default function AuthShell() {
         <CardHeader>
           <CardTitle className="text-2xl">{appName}</CardTitle>
           <CardDescription>
-            {mode === "login"
-              ? "Welcome back. Sign in to continue."
-              : "Create an account to get started."}
+            {mode === "login" ? "Welcome back. Sign in to continue." : "Create an account to get started."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -37,24 +29,12 @@ export default function AuthShell() {
             {mode === "login" ? (
               <>
                 Don't have an account?{" "}
-                <Button
-                  variant="link"
-                  className="px-1"
-                  onClick={() => setMode("signup")}
-                >
-                  Sign up
-                </Button>
+                <Button variant="link" className="px-1" onClick={() => setMode("signup")}>Sign up</Button>
               </>
             ) : (
               <>
                 Already have an account?{" "}
-                <Button
-                  variant="link"
-                  className="px-1"
-                  onClick={() => setMode("login")}
-                >
-                  Sign in
-                </Button>
+                <Button variant="link" className="px-1" onClick={() => setMode("login")}>Sign in</Button>
               </>
             )}
           </div>
