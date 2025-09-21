@@ -16,7 +16,7 @@ import {
 import { Upload, FileText, HelpCircle, CheckCircle, X } from "lucide-react";
 import { PDFUploadState } from "@/hooks/useUpload";
 import { type UploadConfig } from "@/lib/api/upload";
-import { handleValidationError } from "@/lib/utils/simpleErrorHandler";
+
 import Image from "next/image";
 
 export type ParsedPdf = {
@@ -74,23 +74,10 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      // Validate file before upload
-      const validationError = validateFile(file);
-      if (validationError) {
-        handleValidationError(validationError, `${source} PDF validation`);
-        // Clear the file input
-        e.target.value = "";
-        return;
-      }
-
-      try {
-        await onUpload(file);
-      } catch (error) {
-        console.error("Upload failed:", error);
-        // Error is handled by the upload hook
-      }
+      // The upload hook handles both validation and upload errors
+      await onUpload(file);
     },
-    [onUpload, validateFile, source]
+    [onUpload]
   );
 
   const maxFileSizeMB = config?.max_file_size_mb || 15;

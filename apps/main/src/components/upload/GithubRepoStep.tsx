@@ -53,14 +53,9 @@ export function GithubRepoStep({
   const selectedCount = githubState.selectedRepoIds.length;
   const canSelectMore = selectedCount < maxRepos;
 
-  const handleSearch = useCallback(async () => {
+  const handleSearch = useCallback(() => {
     if (!username.trim()) return;
-
-    try {
-      await onSearch(username.trim());
-    } catch (error) {
-      console.error("Failed to search repositories:", error);
-    }
+    onSearch(username.trim());
   }, [username, onSearch]);
 
   const helperText = useMemo(() => {
