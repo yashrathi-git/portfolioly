@@ -46,26 +46,16 @@ export default function UploadPage() {
             {/* Page Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">
-                Let&apos;s enrich your portfolio (optional)
+                Add information from your LinkedIn/Resume/GitHub
               </h1>
               <p className="text-lg text-muted-foreground">
-                You can skip any step and do this later
+                You can skip any or all step
               </p>
             </div>
 
             {/* Upload Wizard */}
             <div className="p-2 sm:p-0">
               <UploadWizard onComplete={handleComplete} />
-            </div>
-
-            {/* Skip Option */}
-            <div className="text-center mt-6">
-              <button
-                onClick={handleComplete}
-                className="text-muted-foreground hover:text-foreground underline text-sm transition-colors"
-              >
-                Skip this step and go to dashboard
-              </button>
             </div>
           </div>
         </div>
