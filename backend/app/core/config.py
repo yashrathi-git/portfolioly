@@ -13,7 +13,7 @@ class UploadSettings(BaseModel):
     """Configuration for upload, GitHub, and rate limiting."""
 
     # File upload limits
-    MAX_FILE_SIZE_MB: int = 15
+    MAX_FILE_SIZE_MB: int = 1.5
     ALLOWED_FILE_TYPES: List[str] = ["application/pdf"]
 
     # GitHub integration

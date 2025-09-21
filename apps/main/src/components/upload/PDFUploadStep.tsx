@@ -153,7 +153,7 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
           {/* Upload Success */}
           {uploadState.result && (
             <div className="rounded-md border p-4 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800/30">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                 <Badge
                   variant="secondary"
@@ -180,10 +180,6 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-sm leading-6 text-muted-foreground line-clamp-5">
-                {uploadState.result.text.slice(0, 300)}
-                {uploadState.result.text.length > 300 ? "..." : ""}
-              </p>
             </div>
           )}
 
