@@ -5,7 +5,7 @@
  * GitHub repository fetching, and related state management.
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   uploadPDF,
   fetchGitHubRepos,
@@ -248,7 +248,7 @@ export function useUpload(): UseUploadReturn {
 
   // Search GitHub repositories (debounced)
   const searchGitHubRepos = useCallback(
-    debounce(async (username: string) => {
+    async (username: string) => {
       if (!username.trim()) {
         setGitHub((prev) => ({ ...prev, repos: [] }));
         return;
@@ -285,8 +285,14 @@ export function useUpload(): UseUploadReturn {
         }));
         handleError(error, "GitHub repository search");
       }
-    }, 500),
+    },
     [github.pagination.perPage]
+  );
+
+  // Create debounced version
+  const debouncedSearchGitHubRepos = useMemo(
+    () => debounce(searchGitHubRepos, 500),
+    [searchGitHubRepos]
   );
 
   // Load more repositories
@@ -400,7 +406,7 @@ export function useUpload(): UseUploadReturn {
 
     // GitHub
     github,
-    searchGitHubRepos,
+    searchGitHubRepos: debouncedSearchGitHubRepos,
     loadMoreRepos,
     toggleRepoSelection,
     clearRepoSelection,

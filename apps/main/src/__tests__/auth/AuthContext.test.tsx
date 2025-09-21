@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { useAuth, AuthProvider } from "@/lib/auth/AuthContext";
 
 // Mock Firebase

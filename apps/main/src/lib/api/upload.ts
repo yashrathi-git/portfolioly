@@ -85,7 +85,7 @@ export interface APIError {
   detail: {
     message: string;
     error_code: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -141,9 +141,15 @@ async function handleResponse<T>(response: Response): Promise<T> {
     const error = new Error(
       errorData.detail?.message || `HTTP ${response.status}`
     );
-    (error as any).code = errorData.detail?.error_code;
-    (error as any).status = response.status;
-    (error as any).details = errorData.detail;
+    (
+      error as Error & { code?: string; status?: number; details?: unknown }
+    ).code = errorData.detail?.error_code;
+    (
+      error as Error & { code?: string; status?: number; details?: unknown }
+    ).status = response.status;
+    (
+      error as Error & { code?: string; status?: number; details?: unknown }
+    ).details = errorData.detail;
     throw error;
   }
 
@@ -256,28 +262,30 @@ export async function fetchGitHubRepos(
     headers,
   });
 
-  const raw = await handleResponse<PaginatedRepoResponse & { repos: any[] }>(
-    response
-  );
+  const raw = await handleResponse<
+    PaginatedRepoResponse & { repos: Record<string, unknown>[] }
+  >(response);
 
   // Normalize repo fields to match client expectations
-  const normalizedRepos: GitHubRepo[] = (raw.repos || []).map((r: any) => ({
-    id: r.id,
-    name: r.name,
-    description: r.description ?? null,
-    stars:
-      typeof r?.stars === "number"
-        ? r.stars
-        : typeof r?.stargazers_count === "number"
-        ? r.stargazers_count
-        : 0,
-    url: r.url ?? r.html_url,
-    language: r.language ?? null,
-    fork: Boolean(r.fork),
-    private: Boolean(r.private),
-    created_at: r.created_at,
-    updated_at: r.updated_at,
-  }));
+  const normalizedRepos: GitHubRepo[] = (raw.repos || []).map(
+    (r: Record<string, unknown>) => ({
+      id: r.id as number,
+      name: r.name as string,
+      description: (r.description as string) ?? null,
+      stars:
+        typeof r?.stars === "number"
+          ? r.stars
+          : typeof r?.stargazers_count === "number"
+          ? r.stargazers_count
+          : 0,
+      url: (r.url ?? r.html_url) as string,
+      language: (r.language as string) ?? null,
+      fork: Boolean(r.fork),
+      private: Boolean(r.private),
+      created_at: r.created_at as string,
+      updated_at: r.updated_at as string,
+    })
+  );
 
   return {
     repos: normalizedRepos,
@@ -326,14 +334,14 @@ export async function getUploadConfig(): Promise<UploadConfig> {
 /**
  * Check upload service health
  */
-export async function checkUploadHealth(): Promise<any> {
+export async function checkUploadHealth(): Promise<Record<string, unknown>> {
   const url = `${API_BASE_URL}/api/upload/health`;
 
   const response = await fetch(url, {
     method: "GET",
   });
 
-  return handleResponse<any>(response);
+  return handleResponse<Record<string, unknown>>(response);
 }
 
 /**
@@ -354,9 +362,9 @@ export async function withRetry<T>(
 
       // Don't retry on client errors (4xx) except 429 (rate limit)
       if (
-        (error as any).status >= 400 &&
-        (error as any).status < 500 &&
-        (error as any).status !== 429
+        (error as Error & { status?: number }).status >= 400 &&
+        (error as Error & { status?: number }).status < 500 &&
+        (error as Error & { status?: number }).status !== 429
       ) {
         throw error;
       }
@@ -378,7 +386,7 @@ export async function withRetry<T>(
 /**
  * Create a debounced version of a function
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {

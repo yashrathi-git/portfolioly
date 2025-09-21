@@ -17,6 +17,7 @@ import { Upload, FileText, HelpCircle, CheckCircle, X } from "lucide-react";
 import { PDFUploadState } from "@/hooks/useUpload";
 import { type UploadConfig } from "@/lib/api/upload";
 import { handleValidationError } from "@/lib/utils/simpleErrorHandler";
+import Image from "next/image";
 
 export type ParsedPdf = {
   filename: string;
@@ -211,11 +212,12 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
               {source === "linkedin" ? (
                 <div className="space-y-3">
                   <div className="rounded-md overflow-hidden border">
-                    <img
+                    <Image
                       src={defaultHelpImage}
                       alt="LinkedIn export help"
                       className="w-full aspect-video object-cover"
-                      loading="lazy"
+                      width={600}
+                      height={338}
                     />
                   </div>
                   <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
@@ -228,11 +230,12 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
               ) : (
                 <div>
                   <div className="rounded-md overflow-hidden border">
-                    <img
+                    <Image
                       src={defaultHelpImage}
                       alt="Help preview"
                       className="w-full aspect-video object-cover"
-                      loading="lazy"
+                      width={600}
+                      height={338}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">

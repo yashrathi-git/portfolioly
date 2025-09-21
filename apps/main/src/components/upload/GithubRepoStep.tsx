@@ -39,7 +39,7 @@ export function GithubRepoStep({
   description = "Enter your GitHub username and pick up to 10 repos.",
   githubState,
   onSearch,
-  onLoadMore,
+  onLoadMore, // eslint-disable-line @typescript-eslint/no-unused-vars
   onToggleSelection,
   onClearSelection,
   config,

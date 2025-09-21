@@ -46,7 +46,7 @@ export default function UploadPage() {
             {/* Page Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">
-                Let's enrich your portfolio (optional)
+                Let&apos;s enrich your portfolio (optional)
               </h1>
               <p className="text-lg text-muted-foreground">
                 You can skip any step and do this later

@@ -69,7 +69,7 @@ export interface StructuredError {
   userMessage: string;
   actionable: boolean;
   suggestedAction?: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**
@@ -262,7 +262,7 @@ const ERROR_MESSAGES: Record<ErrorCode, Partial<StructuredError>> = {
 /**
  * Parse error from API response or JavaScript error
  */
-export function parseError(error: any): StructuredError {
+export function parseError(error: unknown): StructuredError {
   // Handle API errors with structured format
   if (error?.details?.error_code) {
     const code = error.details.error_code as ErrorCode;
@@ -315,7 +315,7 @@ export function parseError(error: any): StructuredError {
 /**
  * Get user-friendly error message
  */
-export function getUserErrorMessage(error: any): string {
+export function getUserErrorMessage(error: unknown): string {
   const structured = parseError(error);
   return structured.userMessage;
 }
@@ -323,7 +323,7 @@ export function getUserErrorMessage(error: any): string {
 /**
  * Check if error is retryable
  */
-export function isRetryableError(error: any): boolean {
+export function isRetryableError(error: unknown): boolean {
   const structured = parseError(error);
   return structured.retryable;
 }
@@ -331,7 +331,7 @@ export function isRetryableError(error: any): boolean {
 /**
  * Get suggested action for error
  */
-export function getSuggestedAction(error: any): string | undefined {
+export function getSuggestedAction(error: unknown): string | undefined {
   const structured = parseError(error);
   return structured.suggestedAction;
 }
@@ -339,7 +339,7 @@ export function getSuggestedAction(error: any): string | undefined {
 /**
  * Get error severity
  */
-export function getErrorSeverity(error: any): ErrorSeverity {
+export function getErrorSeverity(error: unknown): ErrorSeverity {
   const structured = parseError(error);
   return structured.severity;
 }
@@ -347,7 +347,7 @@ export function getErrorSeverity(error: any): ErrorSeverity {
 /**
  * Check if error is actionable by user
  */
-export function isActionableError(error: any): boolean {
+export function isActionableError(error: unknown): boolean {
   const structured = parseError(error);
   return structured.actionable;
 }
@@ -355,7 +355,7 @@ export function isActionableError(error: any): boolean {
 /**
  * Format error for logging (removes sensitive information)
  */
-export function formatErrorForLogging(error: any): any {
+export function formatErrorForLogging(error: unknown): Record<string, unknown> {
   const structured = parseError(error);
 
   return {
@@ -373,7 +373,7 @@ export function formatErrorForLogging(error: any): any {
 /**
  * Create a retry delay based on error type and attempt number
  */
-export function getRetryDelay(error: any, attempt: number): number {
+export function getRetryDelay(error: unknown, attempt: number): number {
   const structured = parseError(error);
 
   if (!structured.retryable) {

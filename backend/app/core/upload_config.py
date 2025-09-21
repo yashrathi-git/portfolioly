@@ -27,7 +27,7 @@ class UploadConfig(BaseModel):
 
     # Rate limiting configuration
     RATE_LIMIT_PDF_UPLOADS_PER_HOUR: int = 10
-    RATE_LIMIT_GITHUB_REQUESTS_PER_HOUR: int = 30
+    RATE_LIMIT_GITHUB_REQUESTS_PER_HOUR: int = 10
     RATE_LIMIT_STORAGE_BACKEND: str = "memory"  # "memory" or "redis"
 
     # GitHub API token (optional for higher rate limits)

@@ -5,7 +5,7 @@ import { getUserErrorMessage, formatErrorForLogging } from "./errorHandling";
  * Simple error handler that shows user-friendly messages via Sonner
  * and logs errors appropriately for production
  */
-export function handleError(error: any, context?: string) {
+export function handleError(error: unknown, context?: string) {
   const userMessage = getUserErrorMessage(error);
 
   // Show user-friendly message
