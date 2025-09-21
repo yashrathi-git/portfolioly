@@ -46,3 +46,15 @@ export async function withErrorHandling<T>(
 export function handleSuccess(message: string) {
   toast.success(message);
 }
+
+/**
+ * Handle validation errors with direct message display
+ * Bypasses the structured error handling for client-side validation
+ */
+export function handleValidationError(message: string, context?: string) {
+  // Show the validation message directly
+  toast.error(message);
+
+  // Log validation error
+  console.error(`Validation error${context ? ` in ${context}` : ""}:`, message);
+}
