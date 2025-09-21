@@ -11,7 +11,7 @@ from collections import defaultdict, deque
 import asyncio
 from datetime import datetime, timedelta
 
-from ..core.upload_config import upload_config
+from ..core.config import settings
 
 
 class InMemoryRateLimiter:
@@ -127,7 +127,7 @@ class RateLimiter:
         Args:
             backend: Backend type ("memory" or "redis"). Defaults to config value.
         """
-        self.backend_type = backend or upload_config.RATE_LIMIT_STORAGE_BACKEND
+        self.backend_type = backend or settings.upload.RATE_LIMIT_STORAGE_BACKEND
 
         if self.backend_type == "memory":
             self.backend = InMemoryRateLimiter()
@@ -205,6 +205,6 @@ def get_rate_limiter() -> RateLimiter:
 class RateLimits:
     """Rate limiting constants for different endpoints."""
 
-    PDF_UPLOAD_PER_HOUR = upload_config.RATE_LIMIT_PDF_UPLOADS_PER_HOUR
-    GITHUB_API_PER_HOUR = upload_config.RATE_LIMIT_GITHUB_REQUESTS_PER_HOUR
+    PDF_UPLOAD_PER_HOUR = settings.upload.RATE_LIMIT_PDF_UPLOADS_PER_HOUR
+    GITHUB_API_PER_HOUR = settings.upload.RATE_LIMIT_GITHUB_REQUESTS_PER_HOUR
     WINDOW_SECONDS = 3600  # 1 hour

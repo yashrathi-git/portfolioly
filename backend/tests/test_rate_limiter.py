@@ -190,16 +190,16 @@ class TestRateLimits:
     def test_rate_limits_use_config_values(self):
         """Test that rate limits use values from upload config."""
         # Test that the constants are loaded from config
-        from app.core.upload_config import upload_config
+        from app.core.config import settings
         from app.services.rate_limiter import RateLimits
 
         assert (
             RateLimits.PDF_UPLOAD_PER_HOUR
-            == upload_config.RATE_LIMIT_PDF_UPLOADS_PER_HOUR
+            == settings.upload.RATE_LIMIT_PDF_UPLOADS_PER_HOUR
         )
         assert (
             RateLimits.GITHUB_API_PER_HOUR
-            == upload_config.RATE_LIMIT_GITHUB_REQUESTS_PER_HOUR
+            == settings.upload.RATE_LIMIT_GITHUB_REQUESTS_PER_HOUR
         )
 
 

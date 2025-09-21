@@ -9,6 +9,7 @@ import asyncio
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import re
+import logging
 
 from github import (
     Github,
@@ -20,7 +21,7 @@ from pydantic import BaseModel, Field
 from pydantic import AliasChoices
 from fastapi import HTTPException
 
-from ..core.upload_config import upload_config
+from ..core.config import settings
 
 
 class GitHubRepo(BaseModel):
@@ -53,7 +54,7 @@ class PaginatedRepoResponse(BaseModel):
 class GitHubImportRequest(BaseModel):
     """GitHub repository import request model."""
 
-    repo_ids: List[int] = Field(..., max_items=upload_config.MAX_GITHUB_REPOS)
+    repo_ids: List[int] = Field(..., max_items=settings.upload.MAX_GITHUB_REPOS)
 
 
 class GitHubImportResponse(BaseModel):
@@ -73,16 +74,24 @@ class GitHubService:
         Args:
             token: Optional GitHub API token for higher rate limits
         """
-        self.token = token or upload_config.GITHUB_API_TOKEN
-        self.timeout = upload_config.GITHUB_API_TIMEOUT
-        self.max_repos = upload_config.MAX_GITHUB_REPOS
-        self.repos_per_page = upload_config.GITHUB_REPOS_PER_PAGE
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+        self.token = token or settings.upload.GITHUB_API_TOKEN
+        self.timeout = settings.upload.GITHUB_API_TIMEOUT
+        self.max_repos = settings.upload.MAX_GITHUB_REPOS
+        self.repos_per_page = settings.upload.GITHUB_REPOS_PER_PAGE
 
         # Initialize GitHub client
         if self.token:
-            self.github = Github(self.token, timeout=self.timeout)
+            self.github = Github(self.token, timeout=self.timeout, retry=None)
+            self.logger.info(
+                "GitHub client initialized with personal access token (retry disabled)"
+            )
         else:
-            self.github = Github(timeout=self.timeout)
+            self.github = Github(timeout=self.timeout, retry=None)
+            self.logger.info(
+                "GitHub client initialized without token (anonymous, retry disabled)"
+            )
 
     async def fetch_user_repos(
         self, username: str, page: int = 1, per_page: Optional[int] = None
@@ -142,6 +151,11 @@ class GitHubService:
         except HTTPException:
             raise
         except RateLimitExceededException as e:
+            self.logger.warning(
+                "GitHub rate limit exceeded: remaining=%s reset_in=%ss",
+                getattr(e, "remaining", "unknown"),
+                getattr(e, "retry_after", 3600),
+            )
             raise HTTPException(
                 status_code=429,
                 detail={
@@ -152,6 +166,7 @@ class GitHubService:
                 headers={"Retry-After": str(getattr(e, "retry_after", 3600))},
             )
         except UnknownObjectException:
+            self.logger.info("GitHub user not found: %s", username)
             raise HTTPException(
                 status_code=404,
                 detail={
@@ -161,6 +176,9 @@ class GitHubService:
                 },
             )
         except GithubException as e:
+            self.logger.error(
+                "GitHub exception (status=%s): %s", getattr(e, "status", "?"), e
+            )
             if e.status == 403:
                 raise HTTPException(
                     status_code=403,
@@ -189,6 +207,9 @@ class GitHubService:
                     },
                 )
         except Exception as e:
+            self.logger.exception(
+                "Unexpected error while fetching repos for %s", username
+            )
             raise HTTPException(
                 status_code=500,
                 detail={
@@ -212,6 +233,17 @@ class GitHubService:
         Returns:
             PaginatedRepoResponse
         """
+        # Log current rate limit before call when available
+        try:
+            rl = self.github.get_rate_limit()
+            self.logger.debug(
+                "RateLimit before request: core.remaining=%s reset=%s",
+                getattr(rl.core, "remaining", None),
+                getattr(getattr(rl.core, "reset", None), "timestamp", lambda: None)(),
+            )
+        except Exception:
+            pass
+
         user = self.github.get_user(username)
 
         # Get public repositories only
@@ -248,13 +280,26 @@ class GitHubService:
         # Check if there are more pages
         has_next = end_index < total_count
 
-        return PaginatedRepoResponse(
+        response = PaginatedRepoResponse(
             repos=repo_list,
             total_count=total_count,
             page=page,
             per_page=per_page,
             has_next=has_next,
         )
+
+        # Log post-call rate limit
+        try:
+            rl = self.github.get_rate_limit()
+            self.logger.debug(
+                "RateLimit after request: core.remaining=%s reset=%s",
+                getattr(rl.core, "remaining", None),
+                getattr(getattr(rl.core, "reset", None), "timestamp", lambda: None)(),
+            )
+        except Exception:
+            pass
+
+        return response
 
     async def get_repo_details(self, owner: str, repo_name: str) -> GitHubRepo:
         """
@@ -290,6 +335,7 @@ class GitHubService:
             )
 
         except UnknownObjectException:
+            self.logger.info("Repository not found: %s/%s", owner, repo_name)
             raise HTTPException(
                 status_code=404,
                 detail={
@@ -299,6 +345,9 @@ class GitHubService:
                 },
             )
         except GithubException as e:
+            self.logger.error(
+                "GitHub service error while reading repo %s/%s: %s", owner, repo_name, e
+            )
             raise HTTPException(
                 status_code=503,
                 detail={

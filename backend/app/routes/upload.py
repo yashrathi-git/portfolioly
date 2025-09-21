@@ -22,7 +22,7 @@ from ..dependencies.rate_limiting import (
     check_pdf_upload_rate_limit,
     check_github_api_rate_limit,
 )
-from ..core.upload_config import upload_config
+from ..core.config import settings
 
 router = APIRouter(prefix="/api", tags=["upload"])
 
@@ -230,13 +230,13 @@ async def get_upload_config(user: UserToken = Depends(require_verified_email)) -
         Dictionary with upload configuration
     """
     return {
-        "max_file_size_mb": upload_config.MAX_FILE_SIZE_MB,
-        "allowed_file_types": upload_config.ALLOWED_FILE_TYPES,
-        "max_github_repos": upload_config.MAX_GITHUB_REPOS,
-        "github_repos_per_page": upload_config.GITHUB_REPOS_PER_PAGE,
+        "max_file_size_mb": settings.upload.MAX_FILE_SIZE_MB,
+        "allowed_file_types": settings.upload.ALLOWED_FILE_TYPES,
+        "max_github_repos": settings.upload.MAX_GITHUB_REPOS,
+        "github_repos_per_page": settings.upload.GITHUB_REPOS_PER_PAGE,
         "rate_limits": {
-            "pdf_uploads_per_hour": upload_config.RATE_LIMIT_PDF_UPLOADS_PER_HOUR,
-            "github_requests_per_hour": upload_config.RATE_LIMIT_GITHUB_REQUESTS_PER_HOUR,
+            "pdf_uploads_per_hour": settings.upload.RATE_LIMIT_PDF_UPLOADS_PER_HOUR,
+            "github_requests_per_hour": settings.upload.RATE_LIMIT_GITHUB_REQUESTS_PER_HOUR,
         },
     }
 
@@ -273,8 +273,8 @@ async def upload_health_check() -> dict:
             },
             "github_rate_limit": github_rate_limit,
             "config": {
-                "max_file_size_mb": upload_config.MAX_FILE_SIZE_MB,
-                "max_github_repos": upload_config.MAX_GITHUB_REPOS,
+                "max_file_size_mb": settings.upload.MAX_FILE_SIZE_MB,
+                "max_github_repos": settings.upload.MAX_GITHUB_REPOS,
             },
         }
 

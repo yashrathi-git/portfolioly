@@ -7,14 +7,13 @@ import logging
 
 from .core.config import settings
 from .core.firebase import initialize_firebase
+from .core.logging_config import init_logging
 from .auth.middleware import AuthenticationError, EmailVerificationError
-from .auth.routes import router as auth_router
-from .api.routes import router as api_router
-from .api.upload_routes import router as upload_router
+from .routes import api_router, auth_router, upload_router
 
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+init_logging()
 logger = logging.getLogger(__name__)
 
 

@@ -36,9 +36,9 @@ class TestPDFUploadEndpoint:
         pdf_content = b"%PDF-1.4\nSample PDF content"
         return ("test.pdf", io.BytesIO(pdf_content), "application/pdf")
 
-    @patch("app.api.upload_routes.require_verified_email")
-    @patch("app.api.upload_routes.check_pdf_upload_rate_limit")
-    @patch("app.api.upload_routes.get_pdf_processor")
+    @patch("app.routes.upload.require_verified_email")
+    @patch("app.routes.upload.check_pdf_upload_rate_limit")
+    @patch("app.routes.upload.get_pdf_processor")
     def test_upload_pdf_success(
         self,
         mock_get_processor,
@@ -94,8 +94,8 @@ class TestPDFUploadEndpoint:
         assert data["meta"]["pages"] == 2
         assert data["user_id"] == "test_user_123"
 
-    @patch("app.api.upload_routes.require_verified_email")
-    @patch("app.api.upload_routes.check_pdf_upload_rate_limit")
+    @patch("app.routes.upload.require_verified_email")
+    @patch("app.routes.upload.check_pdf_upload_rate_limit")
     def test_upload_pdf_invalid_source(
         self, mock_rate_limit, mock_auth, client, mock_auth_headers, mock_pdf_file
     ):
@@ -116,8 +116,8 @@ class TestPDFUploadEndpoint:
         data = response.json()
         assert "INVALID_SOURCE" in str(data["detail"])
 
-    @patch("app.api.upload_routes.require_verified_email")
-    @patch("app.api.upload_routes.check_pdf_upload_rate_limit")
+    @patch("app.routes.upload.require_verified_email")
+    @patch("app.routes.upload.check_pdf_upload_rate_limit")
     def test_upload_pdf_invalid_file_type(
         self, mock_rate_limit, mock_auth, client, mock_auth_headers
     ):
@@ -141,9 +141,9 @@ class TestPDFUploadEndpoint:
         data = response.json()
         assert "INVALID_FILE_TYPE" in str(data["detail"])
 
-    @patch("app.api.upload_routes.require_verified_email")
-    @patch("app.api.upload_routes.check_pdf_upload_rate_limit")
-    @patch("app.api.upload_routes.get_pdf_processor")
+    @patch("app.routes.upload.require_verified_email")
+    @patch("app.routes.upload.check_pdf_upload_rate_limit")
+    @patch("app.routes.upload.get_pdf_processor")
     def test_upload_pdf_processing_failure(
         self,
         mock_get_processor,
@@ -203,9 +203,9 @@ class TestGitHubReposEndpoint:
     def mock_auth_headers(self):
         return {"Authorization": "Bearer mock_token"}
 
-    @patch("app.api.upload_routes.require_verified_email")
-    @patch("app.api.upload_routes.check_github_api_rate_limit")
-    @patch("app.api.upload_routes.get_github_service")
+    @patch("app.routes.upload.require_verified_email")
+    @patch("app.routes.upload.check_github_api_rate_limit")
+    @patch("app.routes.upload.get_github_service")
     def test_get_github_repos_success(
         self, mock_get_service, mock_rate_limit, mock_auth, client, mock_auth_headers
     ):
@@ -250,8 +250,8 @@ class TestGitHubReposEndpoint:
         assert data["total_count"] == 1
         assert data["has_next"] is False
 
-    @patch("app.api.upload_routes.require_verified_email")
-    @patch("app.api.upload_routes.check_github_api_rate_limit")
+    @patch("app.routes.upload.require_verified_email")
+    @patch("app.routes.upload.check_github_api_rate_limit")
     def test_get_github_repos_missing_username(
         self, mock_rate_limit, mock_auth, client, mock_auth_headers
     ):
@@ -277,8 +277,8 @@ class TestGitHubImportEndpoint:
     def mock_auth_headers(self):
         return {"Authorization": "Bearer mock_token"}
 
-    @patch("app.api.upload_routes.require_verified_email")
-    @patch("app.api.upload_routes.get_github_service")
+    @patch("app.routes.upload.require_verified_email")
+    @patch("app.routes.upload.get_github_service")
     def test_import_github_repos_success(
         self, mock_get_service, mock_auth, client, mock_auth_headers
     ):
@@ -308,7 +308,7 @@ class TestGitHubImportEndpoint:
         assert data["imported"] == 3
         assert "Successfully imported" in data["message"]
 
-    @patch("app.api.upload_routes.require_verified_email")
+    @patch("app.routes.upload.require_verified_email")
     def test_import_github_repos_empty_list(self, mock_auth, client, mock_auth_headers):
         """Test GitHub import with empty repository list."""
         mock_user = Mock()

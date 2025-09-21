@@ -15,7 +15,7 @@ import hashlib
 import asyncio
 from datetime import datetime
 
-from ..core.upload_config import upload_config
+from ..core.config import settings
 
 
 class PDFMetadata(BaseModel):
@@ -43,8 +43,8 @@ class PDFProcessor:
     """PDF processing service with validation and text extraction."""
 
     def __init__(self):
-        self.max_file_size = upload_config.max_file_size_bytes
-        self.allowed_types = upload_config.ALLOWED_FILE_TYPES
+        self.max_file_size = settings.upload.max_file_size_bytes
+        self.allowed_types = settings.upload.ALLOWED_FILE_TYPES
 
     async def parse_pdf(self, file: UploadFile, source: str) -> PDFParseResult:
         """
@@ -109,9 +109,9 @@ class PDFProcessor:
             raise HTTPException(
                 status_code=413,
                 detail={
-                    "message": f"File too large (max {upload_config.MAX_FILE_SIZE_MB}MB)",
+                    "message": f"File too large (max {settings.upload.MAX_FILE_SIZE_MB}MB)",
                     "error_code": "FILE_TOO_LARGE",
-                    "max_size_mb": upload_config.MAX_FILE_SIZE_MB,
+                    "max_size_mb": settings.upload.MAX_FILE_SIZE_MB,
                 },
             )
 
