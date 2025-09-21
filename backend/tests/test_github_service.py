@@ -27,7 +27,7 @@ class TestGitHubService:
 
     @pytest.fixture
     def mock_repo_data(self):
-        """Mock repository data."""
+        """Mock repository data matching GitHub API format."""
         return {
             "id": 123456,
             "name": "test-repo",
@@ -40,6 +40,14 @@ class TestGitHubService:
             "created_at": datetime(2023, 1, 1),
             "updated_at": datetime(2023, 12, 1),
         }
+
+    @pytest.fixture
+    def mock_github_repo(self, mock_repo_data):
+        """Create a mock GitHub repository object."""
+        mock_repo = Mock()
+        for key, value in mock_repo_data.items():
+            setattr(mock_repo, key, value)
+        return mock_repo
 
     def test_validate_username_valid(self, github_service):
         """Test that valid usernames are accepted."""
@@ -104,21 +112,19 @@ class TestGitHubService:
     @pytest.mark.asyncio
     @patch("app.services.github_service.Github")
     async def test_fetch_user_repos_success(
-        self, mock_github_class, github_service, mock_repo_data
+        self, mock_github_class, github_service, mock_github_repo
     ):
         """Test successful repository fetching."""
-        # Mock GitHub API objects
-        mock_repo = Mock()
-        for key, value in mock_repo_data.items():
-            setattr(mock_repo, key, value)
-
+        # Mock the paginated repository list
         mock_repos = Mock()
         mock_repos.totalCount = 1
-        mock_repos.__iter__ = Mock(return_value=iter([mock_repo]))
+        mock_repos.__iter__ = Mock(return_value=iter([mock_github_repo]))
 
+        # Mock the user object
         mock_user = Mock()
         mock_user.get_repos.return_value = mock_repos
 
+        # Mock the GitHub client
         mock_github = Mock()
         mock_github.get_user.return_value = mock_user
         mock_github_class.return_value = mock_github
@@ -126,6 +132,7 @@ class TestGitHubService:
         # Test the method
         result = await github_service.fetch_user_repos("testuser", page=1, per_page=20)
 
+        # Verify the result structure
         assert isinstance(result, PaginatedRepoResponse)
         assert len(result.repos) == 1
         assert result.total_count == 1
@@ -133,11 +140,22 @@ class TestGitHubService:
         assert result.per_page == 20
         assert result.has_next is False
 
+        # Verify repository data
         repo = result.repos[0]
-        assert repo.id == mock_repo_data["id"]
-        assert repo.name == mock_repo_data["name"]
-        assert repo.description == mock_repo_data["description"]
-        assert repo.stars == mock_repo_data["stargazers_count"]
+        assert repo.id == 123456
+        assert repo.name == "test-repo"
+        assert repo.description == "A test repository"
+        assert repo.stars == 42
+        assert repo.url == "https://github.com/testuser/test-repo"
+        assert repo.language == "Python"
+        assert repo.fork is False
+        assert repo.private is False
+
+        # Verify API calls
+        mock_github.get_user.assert_called_once_with("testuser")
+        mock_user.get_repos.assert_called_once_with(
+            type="public", sort="updated", direction="desc"
+        )
 
     @pytest.mark.asyncio
     @patch("app.services.github_service.Github")
@@ -159,18 +177,26 @@ class TestGitHubService:
     @patch("app.services.github_service.Github")
     async def test_fetch_user_repos_rate_limit(self, mock_github_class, github_service):
         """Test handling of rate limit exceeded."""
-        mock_github = Mock()
+        # Create a proper rate limit exception
         rate_limit_exception = RateLimitExceededException(403, "Rate limit exceeded")
+        # Add retry_after attribute
         rate_limit_exception.retry_after = 3600
+
+        # Mock the GitHub client
+        mock_github = Mock()
         mock_github.get_user.side_effect = rate_limit_exception
         mock_github_class.return_value = mock_github
 
+        # Test the exception handling
         with pytest.raises(HTTPException) as exc_info:
             await github_service.fetch_user_repos("testuser")
 
+        # Verify the exception details
         assert exc_info.value.status_code == 429
         assert "GITHUB_RATE_LIMIT" in str(exc_info.value.detail)
-        assert "Retry-After" in exc_info.value.headers
+        assert exc_info.value.detail["error_code"] == "GITHUB_RATE_LIMIT"
+        assert exc_info.value.detail["retry_after"] == 3600
+        assert exc_info.value.headers["Retry-After"] == "3600"
 
     @pytest.mark.asyncio
     @patch("app.services.github_service.Github")
@@ -178,36 +204,71 @@ class TestGitHubService:
         self, mock_github_class, github_service
     ):
         """Test handling of general GitHub exceptions."""
+        # Create a GitHub exception with proper status
+        github_exception = GithubException(503, "Service Unavailable")
+        github_exception.status = 503
+
+        # Mock the GitHub client
         mock_github = Mock()
-        mock_github.get_user.side_effect = GithubException(503, "Service Unavailable")
+        mock_github.get_user.side_effect = github_exception
         mock_github_class.return_value = mock_github
 
+        # Test the exception handling
         with pytest.raises(HTTPException) as exc_info:
             await github_service.fetch_user_repos("testuser")
 
+        # Verify the exception details
         assert exc_info.value.status_code == 503
-        assert "GITHUB_SERVICE_ERROR" in str(exc_info.value.detail)
+        assert exc_info.value.detail["error_code"] == "GITHUB_SERVICE_ERROR"
+        assert "GitHub API service unavailable" in exc_info.value.detail["message"]
+
+    @pytest.mark.asyncio
+    @patch("app.services.github_service.Github")
+    async def test_fetch_user_repos_forbidden(self, mock_github_class, github_service):
+        """Test handling of GitHub API forbidden access."""
+        # Create a GitHub exception with 403 status
+        github_exception = GithubException(403, "Forbidden")
+        github_exception.status = 403
+
+        # Mock the GitHub client
+        mock_github = Mock()
+        mock_github.get_user.side_effect = github_exception
+        mock_github_class.return_value = mock_github
+
+        # Test the exception handling
+        with pytest.raises(HTTPException) as exc_info:
+            await github_service.fetch_user_repos("testuser")
+
+        # Verify the exception details
+        assert exc_info.value.status_code == 403
+        assert exc_info.value.detail["error_code"] == "GITHUB_FORBIDDEN"
+        assert "GitHub API access forbidden" in exc_info.value.detail["message"]
 
     @pytest.mark.asyncio
     @patch("app.services.github_service.Github")
     async def test_get_repo_details_success(
-        self, mock_github_class, github_service, mock_repo_data
+        self, mock_github_class, github_service, mock_github_repo
     ):
         """Test successful repository detail fetching."""
-        mock_repo = Mock()
-        for key, value in mock_repo_data.items():
-            setattr(mock_repo, key, value)
-
+        # Mock the GitHub client
         mock_github = Mock()
-        mock_github.get_repo.return_value = mock_repo
+        mock_github.get_repo.return_value = mock_github_repo
         mock_github_class.return_value = mock_github
 
+        # Test the method
         result = await github_service.get_repo_details("testuser", "test-repo")
 
+        # Verify the result
         assert isinstance(result, GitHubRepo)
-        assert result.id == mock_repo_data["id"]
-        assert result.name == mock_repo_data["name"]
-        assert result.description == mock_repo_data["description"]
+        assert result.id == 123456
+        assert result.name == "test-repo"
+        assert result.description == "A test repository"
+        assert result.stars == 42
+        assert result.url == "https://github.com/testuser/test-repo"
+        assert result.language == "Python"
+
+        # Verify API call
+        mock_github.get_repo.assert_called_once_with("testuser/test-repo")
 
     @pytest.mark.asyncio
     @patch("app.services.github_service.Github")
@@ -259,36 +320,51 @@ class TestGitHubService:
     @patch("app.services.github_service.Github")
     async def test_get_rate_limit_info_success(self, mock_github_class, github_service):
         """Test successful rate limit info retrieval."""
+        # Mock the reset timestamp object
+        mock_reset_time = Mock()
+        mock_reset_time.timestamp.return_value = 1640995200.0
+
+        # Mock the core rate limit
         mock_core = Mock()
         mock_core.limit = 5000
         mock_core.remaining = 4500
-        mock_core.reset = Mock()
-        mock_core.reset.timestamp.return_value = 1640995200.0
+        mock_core.reset = mock_reset_time
         mock_core.used = 500
 
+        # Mock the search rate limit
         mock_search = Mock()
         mock_search.limit = 30
         mock_search.remaining = 25
-        mock_search.reset = Mock()
-        mock_search.reset.timestamp.return_value = 1640995200.0
+        mock_search.reset = mock_reset_time
         mock_search.used = 5
 
+        # Mock the rate limit object
         mock_rate_limit = Mock()
         mock_rate_limit.core = mock_core
         mock_rate_limit.search = mock_search
 
+        # Mock the GitHub client
         mock_github = Mock()
         mock_github.get_rate_limit.return_value = mock_rate_limit
         mock_github_class.return_value = mock_github
 
+        # Test the method
         result = await github_service.get_rate_limit_info()
 
+        # Verify the result structure
         assert "core" in result
         assert "search" in result
         assert result["core"]["limit"] == 5000
         assert result["core"]["remaining"] == 4500
+        assert result["core"]["reset"] == 1640995200.0
+        assert result["core"]["used"] == 500
         assert result["search"]["limit"] == 30
         assert result["search"]["remaining"] == 25
+        assert result["search"]["reset"] == 1640995200.0
+        assert result["search"]["used"] == 5
+
+        # Verify API call
+        mock_github.get_rate_limit.assert_called_once()
 
     @pytest.mark.asyncio
     @patch("app.services.github_service.Github")
@@ -326,9 +402,16 @@ class TestGitHubModels:
 
         assert repo.id == 123
         assert repo.name == "test-repo"
-        assert repo.stars == 42  # Should use alias
-        assert repo.url == "https://github.com/user/repo"  # Should use alias
+        assert repo.description == "Test repository"
+        assert repo.stars == 42  # Should use alias from stargazers_count
+        assert (
+            repo.url == "https://github.com/user/repo"
+        )  # Should use alias from html_url
         assert repo.language == "Python"
+        assert repo.fork is False
+        assert repo.private is False
+        assert repo.created_at == datetime(2023, 1, 1)
+        assert repo.updated_at == datetime(2023, 12, 1)
 
     def test_github_repo_model_minimal(self):
         """Test GitHubRepo model with minimal required fields."""
@@ -347,8 +430,11 @@ class TestGitHubModels:
         assert repo.id == 123
         assert repo.name == "test-repo"
         assert repo.description is None
-        assert repo.stars == 0  # Default value
+        assert repo.stars == 0  # Default value when stargazers_count not provided
+        assert repo.url == "https://github.com/user/repo"
         assert repo.language is None
+        assert repo.fork is False
+        assert repo.private is False
 
     def test_paginated_repo_response_model(self):
         """Test PaginatedRepoResponse model."""
@@ -411,16 +497,16 @@ async def test_pagination_logic():
     """Test pagination logic in repository fetching."""
     service = GitHubService()
 
-    # Mock data for testing pagination
+    # Create mock repositories for pagination testing
     mock_repos = []
     for i in range(25):  # 25 repos total
         mock_repo = Mock()
-        mock_repo.id = i
+        mock_repo.id = i + 1
         mock_repo.name = f"repo-{i}"
         mock_repo.description = f"Description {i}"
-        mock_repo.stargazers_count = i
+        mock_repo.stargazers_count = i * 2
         mock_repo.html_url = f"https://github.com/user/repo-{i}"
-        mock_repo.language = "Python"
+        mock_repo.language = "Python" if i % 2 == 0 else "JavaScript"
         mock_repo.fork = False
         mock_repo.private = False
         mock_repo.created_at = datetime(2023, 1, 1)
@@ -428,26 +514,31 @@ async def test_pagination_logic():
         mock_repos.append(mock_repo)
 
     with patch("app.services.github_service.Github") as mock_github_class:
+        # Mock the paginated repository list
         mock_repos_paginated = Mock()
         mock_repos_paginated.totalCount = 25
         mock_repos_paginated.__iter__ = Mock(return_value=iter(mock_repos))
 
+        # Mock the user object
         mock_user = Mock()
         mock_user.get_repos.return_value = mock_repos_paginated
 
+        # Mock the GitHub client
         mock_github = Mock()
         mock_github.get_user.return_value = mock_user
         mock_github_class.return_value = mock_github
 
-        # Test first page
+        # Test first page (repos 0-9)
         result = await service.fetch_user_repos("testuser", page=1, per_page=10)
         assert len(result.repos) == 10
         assert result.page == 1
+        assert result.per_page == 10
+        assert result.total_count == 25
         assert result.has_next is True
         assert result.repos[0].name == "repo-0"
         assert result.repos[9].name == "repo-9"
 
-        # Test second page
+        # Test second page (repos 10-19)
         result = await service.fetch_user_repos("testuser", page=2, per_page=10)
         assert len(result.repos) == 10
         assert result.page == 2
@@ -455,7 +546,7 @@ async def test_pagination_logic():
         assert result.repos[0].name == "repo-10"
         assert result.repos[9].name == "repo-19"
 
-        # Test last page
+        # Test last page (repos 20-24)
         result = await service.fetch_user_repos("testuser", page=3, per_page=10)
         assert len(result.repos) == 5  # Only 5 repos left
         assert result.page == 3
