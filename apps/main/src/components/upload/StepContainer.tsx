@@ -32,9 +32,7 @@ export function StepContainer({
       <div className="space-y-1">
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
         {description ? (
-          <p className="text-base text-muted-foreground text-center">
-            {description}
-          </p>
+          <p className="text-base text-muted-foreground">{description}</p>
         ) : null}
       </div>
 

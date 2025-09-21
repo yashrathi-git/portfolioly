@@ -49,7 +49,7 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
   const {
     label,
     description,
-    helpTitle = "How this works",
+    helpTitle,
     helpImageUrl,
     source,
     uploadState,
@@ -61,13 +61,6 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
     onBack,
     onSkip,
   } = props;
-
-  const defaultHelpImage = useMemo(
-    () =>
-      helpImageUrl ??
-      "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1470&auto=format&fit=crop",
-    [helpImageUrl]
-  );
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,52 +176,58 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
             </div>
           )}
 
-          {/* Help Section */}
-          <Collapsible>
-            <CollapsibleTrigger className="text-sm inline-flex items-center gap-2 underline underline-offset-4">
-              <HelpCircle className="h-4 w-4" />
-              {source === "linkedin"
-                ? "Where to export LinkedIn PDF"
-                : helpTitle}
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-3">
-              {source === "linkedin" ? (
-                <div className="space-y-3">
-                  <div className="rounded-md overflow-hidden border">
-                    <Image
-                      src={defaultHelpImage}
-                      alt="LinkedIn export help"
-                      className="w-full aspect-video object-cover"
-                      width={600}
-                      height={338}
-                    />
+          {/* Help Section - Only show if helpTitle or helpImageUrl is provided */}
+          {(helpTitle || helpImageUrl) && (
+            <Collapsible>
+              <CollapsibleTrigger className="text-sm inline-flex items-center gap-2 underline underline-offset-4 cursor-help">
+                <HelpCircle className="h-4 w-4" />
+                {source === "linkedin"
+                  ? "Where to export LinkedIn PDF"
+                  : helpTitle}
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                {source === "linkedin" ? (
+                  <div className="space-y-3">
+                    {helpImageUrl && (
+                      <div className="rounded-md overflow-hidden border">
+                        <Image
+                          src={helpImageUrl}
+                          alt="LinkedIn export help"
+                          className="w-full aspect-video object-cover"
+                          width={600}
+                          height={338}
+                        />
+                      </div>
+                    )}
+                    <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
+                      <li>Open LinkedIn and go to your Profile.</li>
+                      <li>Click the More button and choose Save to PDF.</li>
+                      <li>Download the PDF to your computer.</li>
+                      <li>Upload it here to pre-fill your profile details.</li>
+                    </ol>
                   </div>
-                  <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
-                    <li>Open LinkedIn and go to your Profile.</li>
-                    <li>Click the More button and choose Save to PDF.</li>
-                    <li>Download the PDF to your computer.</li>
-                    <li>Upload it here to pre-fill your profile details.</li>
-                  </ol>
-                </div>
-              ) : (
-                <div>
-                  <div className="rounded-md overflow-hidden border">
-                    <Image
-                      src={defaultHelpImage}
-                      alt="Help preview"
-                      className="w-full aspect-video object-cover"
-                      width={600}
-                      height={338}
-                    />
+                ) : (
+                  <div>
+                    {helpImageUrl && (
+                      <div className="rounded-md overflow-hidden border">
+                        <Image
+                          src={helpImageUrl}
+                          alt="Help preview"
+                          className="w-full aspect-video object-cover"
+                          width={600}
+                          height={338}
+                        />
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      We extract headline, experience bullets, skills, and links
+                      from your resume.
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    We extract headline, experience bullets, skills, and links
-                    from your resume.
-                  </p>
-                </div>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
       </StepContainer>
     </div>

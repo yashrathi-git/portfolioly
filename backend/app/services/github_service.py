@@ -246,23 +246,27 @@ class GitHubService:
 
         user = self.github.get_user(username)
 
-        # Get public repositories only
-        repos = user.get_repos(type="public", sort="updated", direction="desc")
+        # Get public repositories with proper pagination
+        # Note: GitHub API doesn't support sorting by stars directly, so we use 'updated' sort
+        # We'll sort each page by stars after fetching
+        repos_paginated = user.get_repos(
+            type="public", sort="updated", direction="desc"
+        )
 
-        # Calculate pagination
-        total_count = repos.totalCount
+        total_count = repos_paginated.totalCount
+
+        # Calculate which repos to fetch for this page
         start_index = (page - 1) * per_page
         end_index = start_index + per_page
 
-        # Get the page of repositories
+        # Convert to our model - only fetch the repos we need for this page
         repo_list = []
-        for i, repo in enumerate(repos):
+        for i, repo in enumerate(repos_paginated):
             if i < start_index:
                 continue
             if i >= end_index:
                 break
 
-            # Convert to our model
             repo_data = GitHubRepo(
                 id=repo.id,
                 name=repo.name,
@@ -276,6 +280,9 @@ class GitHubService:
                 updated_at=repo.updated_at,
             )
             repo_list.append(repo_data)
+
+        # Sort this page by stars (only the current page)
+        repo_list.sort(key=lambda r: r.stars, reverse=True)
 
         # Check if there are more pages
         has_next = end_index < total_count

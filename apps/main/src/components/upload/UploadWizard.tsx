@@ -54,7 +54,7 @@ export function UploadWizard({ onComplete }: UploadWizardProps) {
             label="Upload LinkedIn PDF (optional)"
             description="We will parse headline, experience and skills."
             helpTitle="Where to export LinkedIn PDF?"
-            helpImageUrl="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1470&auto=format&fit=crop"
+            // helpImageUrl="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1470&auto=format&fit=crop"
             source="linkedin"
             uploadState={upload.linkedin}
             onUpload={upload.uploadLinkedInPDF}
@@ -73,8 +73,6 @@ export function UploadWizard({ onComplete }: UploadWizardProps) {
             totalSteps={TOTAL_STEPS}
             label="Upload Resume PDF (optional)"
             description="Attach your current resume to enhance matching."
-            helpTitle="Resume tips"
-            helpImageUrl="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=1470&auto=format&fit=crop"
             source="resume"
             uploadState={upload.resume}
             onUpload={upload.uploadResumePDF}
