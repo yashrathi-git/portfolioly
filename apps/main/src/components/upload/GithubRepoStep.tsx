@@ -100,7 +100,7 @@ export function GithubRepoStep({
         onSkip={onSkip}
         onNext={onNext}
         nextLabel="Next"
-        nextDisabled={false}
+        nextDisabled={githubState.loading}
         loadingText={
           githubState.loading && githubState.repos.length === 0
             ? "Fetching repos…"
