@@ -11,8 +11,6 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] grid place-items-center p-4">
-      {children}
-    </div>
+    <div className="min-h-full grid place-items-center p-4">{children}</div>
   );
 }

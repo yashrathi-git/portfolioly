@@ -70,7 +70,7 @@ export default function VerificationRequiredScreen() {
   }
 
   return (
-    <div className="min-h-screen grid place-items-center bg-background px-4">
+    <div className="min-h-full grid place-items-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-3">
           <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 text-primary grid place-items-center">

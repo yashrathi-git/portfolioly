@@ -10,6 +10,7 @@ from .core.firebase import initialize_firebase
 from .auth.middleware import AuthenticationError, EmailVerificationError
 from .auth.routes import router as auth_router
 from .api.routes import router as api_router
+from .api.upload_routes import router as upload_router
 
 
 # Configure logging
@@ -67,6 +68,7 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(api_router)
     app.include_router(auth_router)
+    app.include_router(upload_router)
 
     @app.on_event("startup")
     async def startup_event():

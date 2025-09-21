@@ -116,11 +116,15 @@
 }
 
 @layer base {
+  html {
+    height: 100%;
+  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    /* Prevent accidental horizontal scrollbars and apply theme colors */
+    @apply bg-background text-foreground overflow-x-hidden;
   }
 }
 

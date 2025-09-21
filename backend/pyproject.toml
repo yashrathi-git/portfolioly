@@ -11,4 +11,14 @@ dependencies = [
     "pydantic[email]>=2.11.9",
     "python-dotenv>=1.1.1",
     "python-multipart>=0.0.20",
+    "PyMuPDF>=1.24.0",
+    "PyGithub>=2.4.0",
+    "aiofiles>=24.1.0",
+    "python-magic>=0.4.27",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
 ]

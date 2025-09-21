@@ -3,13 +3,13 @@ import { User } from "firebase/auth";
 
 /**
  * Returns the canonical path to navigate to for an authenticated user.
- * - Verified → "/dashboard"
+ * - Verified → "/upload" (onboarding flow)
  * - Unverified → "/auth/verify-email"
  */
 export function getPostAuthRedirectPath(
   user: User
-): "/dashboard" | "/auth/verify-email" {
-  return user.emailVerified ? "/dashboard" : "/auth/verify-email";
+): "/upload" | "/auth/verify-email" {
+  return user.emailVerified ? "/upload" : "/auth/verify-email";
 }
 
 /**

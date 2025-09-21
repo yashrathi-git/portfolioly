@@ -49,7 +49,7 @@ export default function ProtectedRoute({
 
   if (loading) {
     return (
-      <div className="min-h-screen grid place-items-center">
+      <div className="min-h-full grid place-items-center">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Loading</CardTitle>

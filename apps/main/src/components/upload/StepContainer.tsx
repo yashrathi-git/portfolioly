@@ -1,14 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, SkipForward } from "lucide-react";
 
@@ -36,19 +28,17 @@ export function StepContainer({
   loadingText,
 }: StepContainerProps) {
   return (
-    <Card className="rounded-xl shadow-sm border-border/80">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-semibold tracking-tight">
-          {title}
-        </CardTitle>
+    <section className="space-y-4 sm:space-y-6">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
         {description ? (
-          <CardDescription className="text-base text-muted-foreground">
-            {description}
-          </CardDescription>
+          <p className="text-base text-muted-foreground">{description}</p>
         ) : null}
-      </CardHeader>
-      <CardContent className="pt-4">{children}</CardContent>
-      <CardFooter className="mt-2 border-t pt-4 flex items-center justify-between gap-3">
+      </div>
+
+      <div className="px-1 sm:px-0">{children}</div>
+
+      <div className="mt-2 border-t pt-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {onBack ? (
             <Button
@@ -92,8 +82,8 @@ export function StepContainer({
             )}
           </Button>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </section>
   );
 }
 

@@ -1,0 +1,120 @@
+# New feature: Upload route
+
+## Overview
+
+Add a protected post-auth onboarding page at `/upload` to optionally collect:
+
+- LinkedIn profile PDF (optional)
+- Resume PDF (optional)
+- GitHub username → user selects up to 10 repos to import (optional)
+
+Keep implementation simple and reliable: send files directly to our backend for parsing and return extracted text immediately; optionally enable Azure Blob storage via a config flag later.
+
+## Goals
+
+- Smooth, skippable onboarding to enrich user data without blocking.
+- Minimize moving parts while maintaining reliability and security.
+- Make storage optional; text extraction is the primary requirement.
+
+## Scope
+
+- Redirect verified users to `/upload` after sign-in/sign-up.
+- Guard `/upload` behind auth with verified email.
+- Provide a guided, 3-step wizard UI with clear “Skip” on every step.
+- Backend endpoints to accept PDFs and (optionally) proxy GitHub fetches/imports.
+
+## Architecture and flow
+
+1. Auth success → verified users go to `/upload`; unverified → `/auth/verify-email`.
+2. `/upload` wizard (all steps optional):
+   - Step 1: Upload LinkedIn PDF
+   - Step 2: Upload Resume PDF
+   - Step 3: Enter GitHub username → fetch repos → select up to 10
+3. Finish → navigate to `/dashboard`.
+
+All backend calls authenticated via Firebase ID token (`Authorization: Bearer <idToken>`).
+
+## Frontend implementation
+
+- Page: `apps/main/src/app/upload/page.tsx` using existing design system.
+- Guard with `ProtectedRoute` (`requireVerification=true`).
+- Components (illustrative):
+  - `components/upload/UploadWizard.tsx`
+  - `components/upload/LinkedInUploader.tsx`
+  - `components/upload/ResumeUploader.tsx`
+  - `components/upload/GitHubSelector.tsx` (username input, fetch, modal multi-select)
+- Assets: place LinkedIn how-to screenshot/GIF under `apps/main/public/` and embed with accessible alt text.
+- API helpers use `env.API_BASE_URL` and `getIdToken()` to set headers.
+
+## Backend APIs (FastAPI)
+
+- Reuse existing Firebase auth middleware to protect endpoints.
+- Endpoints (keep them small and purpose-built):
+  - `POST /ingest/pdf?source=linkedin|resume`
+    - Accepts `multipart/form-data` (`file`)
+    - Parse with `pypdf` and return `{ text, meta }`
+    - If Azure is enabled, also upload raw PDF and return `blobUrl`
+  - `GET /github/repos?username=<name>`
+    - Option A (simplest): call GitHub API directly from frontend; skip this endpoint initially
+    - Option B (proxy): backend fetches and returns repos (optional server token for higher limits)
+  - `POST /github/import`
+    - Accepts up to 10 selected repos; minimal version returns `{ imported: n }`
+
+### Data contracts
+
+`POST /ingest/pdf?source=...` → Response shape:
+
+```
+{
+  "text": string,
+  "meta": {
+    "source": "linkedin" | "resume",
+    "pages"?: number,
+    "filename": string,
+    "size": number,
+    "blobUrl"?: string
+  }
+}
+```
+
+## Storage strategy
+
+- Default: do not persist PDFs; parse and return text only.
+- Optional: enable Azure Blob storage via env flags; upload raw PDF and return `blobUrl`.
+
+## UX guidelines
+
+- Title: “Let’s enrich your portfolio (optional)”
+- Subtitle: “You can skip any step and do this later.”
+- Each step shows clear context and has primary action + “Skip this step”.
+- LinkedIn step includes a collapsible “How to export your LinkedIn as PDF” with the screenshot/GIF and 2–3 bullets.
+- Show lightweight progress (“Parsing…”) and a tiny text preview on success.
+- GitHub selection modal: searchable list, show name/description/stars, limit to 10.
+
+## Security and validation
+
+- Enforce Firebase auth server-side on all endpoints.
+- Validate content-type and size (e.g., max 15 MB). Reject non-PDFs.
+- Sanitize filenames; do not trust client-provided metadata.
+
+## Error handling & observability
+
+- Return specific HTTP statuses: 400/413/415/422 where appropriate.
+- Surface friendly error toasts in UI with retry options.
+- Log parse failures and GitHub fetch issues with minimal PII.
+
+## Rollout plan
+
+1. Create `/upload` page and wizard UI with skips and LinkedIn help asset.
+2. Update post-auth redirect to `/upload`; keep unverified flow unchanged.
+3. Implement `POST /ingest/pdf` and wire it from the wizard.
+4. Implement GitHub username → fetch repos (frontend direct to GitHub first).
+5. Add optional backend GitHub proxy and `POST /github/import` if needed.
+6. Add Azure Blob upload behind a config flag (optional).
+
+## Future scope
+
+- Daily usage limits on the final LLM submission (e.g., 5/day per user) enforced server-side (e.g., Firestore transactional counter or Redis) with 429 on exceed and reset-at headers.
+- Secondary PDF parsing fallback (e.g., pdfminer.six) when `pypdf` yields empty text.
+- Asynchronous orchestrator endpoint for one-click ingest (returns jobId to poll).
+- Repo enrichment (READMEs/languages) during import.

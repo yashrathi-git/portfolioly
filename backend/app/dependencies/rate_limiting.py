@@ -10,12 +10,12 @@ from fastapi.responses import JSONResponse
 import time
 
 from ..services.rate_limiter import get_rate_limiter, RateLimits, RateLimiter
-from ..auth.middleware import get_current_user
+from ..auth.middleware import require_authenticated_user
 
 
 async def check_pdf_upload_rate_limit(
     request: Request,
-    user=Depends(get_current_user),
+    user=Depends(require_authenticated_user),
     rate_limiter: RateLimiter = Depends(get_rate_limiter),
 ):
     """
@@ -55,7 +55,7 @@ async def check_pdf_upload_rate_limit(
 
 async def check_github_api_rate_limit(
     request: Request,
-    user=Depends(get_current_user),
+    user=Depends(require_authenticated_user),
     rate_limiter: RateLimiter = Depends(get_rate_limiter),
 ):
     """

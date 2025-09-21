@@ -24,10 +24,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased">
+      <body className="min-h-dvh antialiased grid grid-rows-[auto_1fr]">
         <RootProviders>
           <HeaderBar />
-          {children}
+          <main className="min-h-0">{children}</main>
         </RootProviders>
       </body>
     </html>

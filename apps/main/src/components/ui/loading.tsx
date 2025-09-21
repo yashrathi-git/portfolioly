@@ -36,7 +36,7 @@ interface LoadingPageProps {
 
 export function LoadingPage({ message = "Loading..." }: LoadingPageProps) {
   return (
-    <div className="min-h-screen grid place-items-center">
+    <div className="min-h-full grid place-items-center">
       <div className="text-center space-y-4">
         <LoadingSpinner size="lg" className="mx-auto" />
         <p className="text-muted-foreground">{message}</p>

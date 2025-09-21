@@ -8,7 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Github, User, Search, Star, BookOpen } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Github,
+  Search,
+  Star,
+  BookOpen,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
+import { GitHubReposState } from "@/hooks/useUpload";
+import { type UploadConfig } from "@/lib/api/upload";
+import {
+  getUserErrorMessage,
+  isRetryableError,
+} from "@/lib/utils/errorHandling";
 
 export type Repo = {
   id: number;
@@ -20,87 +34,64 @@ export type Repo = {
 export type GithubRepoStepProps = {
   label?: string;
   description?: string;
+  githubState: GitHubReposState;
+  onSearch: (username: string) => Promise<void>;
+  onLoadMore: () => Promise<void>;
+  onToggleSelection: (repoId: number) => void;
+  onClearSelection: () => void;
+  config: UploadConfig | null;
   onBack?: () => void;
   onSkip?: () => void;
   onNext?: () => void;
-  onFetched?: (repos: Repo[], username: string) => void;
-  onSelectionChange?: (selectedIds: number[], repos: Repo[]) => void;
 };
-
-function makeDummyRepos(username: string, count = 12): Repo[] {
-  const baseNames = [
-    "awesome-project",
-    "portfolio-site",
-    "api-server",
-    "design-system",
-    "cli-tools",
-    "react-widgets",
-    "nextjs-app",
-    "data-pipelines",
-    "ml-notebooks",
-    "infra-scripts",
-    "ui-library",
-    "testing-utils",
-  ];
-  return Array.from({ length: count }).map((_, i) => ({
-    id: i + 1,
-    name: `${username || "user"}-${baseNames[i % baseNames.length]}`,
-    description: "Dummy description for demonstration purposes.",
-    stars: Math.floor(Math.random() * 2000),
-  }));
-}
 
 export function GithubRepoStep({
   label = "Select GitHub repositories",
   description = "Enter your GitHub username and pick up to 10 repos.",
+  githubState,
+  onSearch,
+  onLoadMore,
+  onToggleSelection,
+  onClearSelection,
+  config,
   onBack,
   onSkip,
   onNext,
-  onFetched,
-  onSelectionChange,
 }: GithubRepoStepProps) {
   const [username, setUsername] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [repos, setRepos] = useState<Repo[]>([]);
-  const [selected, setSelected] = useState<number[]>([]);
 
-  const selectedCount = selected.length;
-  const canSelectMore = selectedCount < 10;
+  const maxRepos = config?.max_github_repos || 10;
+  const selectedCount = githubState.selectedRepoIds.length;
+  const canSelectMore = selectedCount < maxRepos;
 
-  const handleFetch = useCallback(() => {
-    setLoading(true);
-    setTimeout(() => {
-      const data = makeDummyRepos(username, 12);
-      setRepos(data);
-      onFetched?.(data, username);
-      console.log("[GithubRepoStep] fetched repos for", username, data);
-      setLoading(false);
-    }, 900);
-  }, [username, onFetched]);
+  const handleSearch = useCallback(async () => {
+    if (!username.trim()) return;
 
-  const toggleSelection = useCallback(
-    (id: number) => {
-      setSelected((curr) => {
-        const exists = curr.includes(id);
-        let next = curr;
-        if (exists) {
-          next = curr.filter((x) => x !== id);
-        } else if (canSelectMore) {
-          next = [...curr, id];
-        }
-        onSelectionChange?.(next, repos);
-        console.log("[GithubRepoStep] selected", next);
-        return next;
-      });
-    },
-    [canSelectMore, onSelectionChange, repos]
-  );
+    try {
+      await onSearch(username.trim());
+    } catch (error) {
+      console.error("Failed to search repositories:", error);
+    }
+  }, [username, onSearch]);
+
+  const handleLoadMore = useCallback(async () => {
+    try {
+      await onLoadMore();
+    } catch (error) {
+      console.error("Failed to load more repositories:", error);
+    }
+  }, [onLoadMore]);
 
   const helperText = useMemo(() => {
-    if (loading) return "Fetching repos…";
-    if (!repos.length) return "No repos yet. Enter a username and click Fetch.";
-    return `${selectedCount} selected • up to 10`;
-  }, [loading, repos.length, selectedCount]);
+    if (githubState.loading && githubState.repos.length === 0)
+      return "Fetching repos…";
+    if (githubState.error) return "Error loading repositories";
+    if (!githubState.repos.length && !githubState.username)
+      return "No repos yet. Enter a username and click Fetch.";
+    if (!githubState.repos.length && githubState.username)
+      return "No repositories found";
+    return `${selectedCount} selected • up to ${maxRepos}`;
+  }, [githubState, selectedCount, maxRepos]);
 
   return (
     <StepContainer
@@ -111,9 +102,14 @@ export function GithubRepoStep({
       onNext={onNext}
       nextLabel="Next"
       nextDisabled={false}
-      loadingText={loading ? "Fetching repos…" : undefined}
+      loadingText={
+        githubState.loading && githubState.repos.length === 0
+          ? "Fetching repos…"
+          : undefined
+      }
     >
       <div className="space-y-4">
+        {/* Search Input */}
         <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
           <div className="grid gap-2">
             <Label
@@ -133,22 +129,49 @@ export function GithubRepoStep({
           <div className="flex items-end">
             <Button
               type="button"
-              onClick={handleFetch}
-              disabled={!username || loading}
+              onClick={handleSearch}
+              disabled={!username || githubState.loading}
               className="w-full sm:w-auto gap-2"
             >
-              <Search className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              {loading ? "Fetching…" : "Fetch"}
+              <Search
+                className={`h-4 w-4 ${
+                  githubState.loading ? "animate-spin" : ""
+                }`}
+              />
+              {githubState.loading ? "Fetching…" : "Fetch"}
             </Button>
           </div>
         </div>
 
+        {/* Error Display */}
+        {githubState.error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>{getUserErrorMessage(githubState.error)}</span>
+              {isRetryableError(githubState.error) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSearch}
+                  disabled={githubState.loading}
+                >
+                  Retry
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex items-center justify-between text-sm">
-          <div className="font-medium">Select up to 10 repositories</div>
+          <div className="font-medium">
+            Select up to {maxRepos} repositories
+          </div>
           <div className="text-muted-foreground">
-            {selectedCount}/10 selected
+            {selectedCount}/{maxRepos} selected
           </div>
         </div>
+
         <div className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
           <Github className="h-3.5 w-3.5" />
           {helperText}
@@ -156,11 +179,11 @@ export function GithubRepoStep({
 
         <ScrollArea className="h-64 rounded-md border">
           <ul className="divide-y">
-            {repos.map((r) => {
-              const checked = selected.includes(r.id);
+            {githubState.repos.map((repo) => {
+              const checked = githubState.selectedRepoIds.includes(repo.id);
               const disabled = !checked && !canSelectMore;
               return (
-                <li key={r.id} className="p-3 hover:bg-muted/40">
+                <li key={repo.id} className="p-3 hover:bg-muted/40">
                   <label
                     className={`flex items-start gap-3 ${
                       disabled ? "opacity-50" : ""
@@ -168,33 +191,49 @@ export function GithubRepoStep({
                   >
                     <Checkbox
                       checked={checked}
-                      onCheckedChange={() => toggleSelection(r.id)}
+                      onCheckedChange={() => onToggleSelection(repo.id)}
                       disabled={disabled}
                     />
                     <div className="min-w-0">
                       <div className="font-medium truncate inline-flex items-center gap-2">
                         <BookOpen className="h-4 w-4 text-muted-foreground" />
-                        {r.name}
+                        {repo.name}
                       </div>
                       <div className="text-sm text-muted-foreground line-clamp-2">
-                        {r.description}
+                        {repo.description}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1.5">
                         <Star className="h-3.5 w-3.5 text-yellow-500" />
-                        {r.stars.toLocaleString()} stars
+                        {(typeof (repo as { stars?: number }).stars === "number"
+                          ? (repo as { stars: number }).stars
+                          : 0
+                        ).toLocaleString()}{" "}
+                        stars
                       </div>
                     </div>
                   </label>
                 </li>
               );
             })}
-            {!repos.length && !loading ? (
+            {!githubState.repos.length && !githubState.loading ? (
               <li className="p-6 text-sm text-muted-foreground text-center">
                 Nothing to show.
               </li>
             ) : null}
           </ul>
         </ScrollArea>
+
+        {/* Clear Selection */}
+        {selectedCount > 0 && (
+          <div className="flex justify-between items-center">
+            <Button variant="outline" size="sm" onClick={onClearSelection}>
+              Clear selection
+            </Button>
+            <Badge variant="secondary">
+              {selectedCount} repositories selected
+            </Badge>
+          </div>
+        )}
       </div>
     </StepContainer>
   );

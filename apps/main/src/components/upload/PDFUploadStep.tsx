@@ -1,16 +1,32 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { StepContainer } from "./StepContainer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Upload, FileText, HelpCircle, Linkedin } from "lucide-react";
+import {
+  Upload,
+  FileText,
+  HelpCircle,
+  AlertCircle,
+  CheckCircle,
+  X,
+} from "lucide-react";
+import { PDFUploadState } from "@/hooks/useUpload";
+import { type UploadConfig } from "@/lib/api/upload";
+import {
+  getUserErrorMessage,
+  isRetryableError,
+} from "@/lib/utils/errorHandling";
 
 export type ParsedPdf = {
   filename: string;
@@ -27,8 +43,12 @@ export type PDFUploadStepProps = {
   description?: string;
   helpTitle?: string;
   helpImageUrl?: string;
-  source: ParsedPdf["source"];
-  onParsed?: (data: ParsedPdf) => void;
+  source: "linkedin" | "resume";
+  uploadState: PDFUploadState;
+  onUpload: (file: File) => Promise<void>;
+  onClear: () => void;
+  validateFile: (file: File) => string | null;
+  config: UploadConfig | null;
   onNext?: () => void;
   onBack?: () => void;
   onSkip?: () => void;
@@ -41,14 +61,15 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
     helpTitle = "How this works",
     helpImageUrl,
     source,
-    onParsed,
+    uploadState,
+    onUpload,
+    onClear,
+    validateFile,
+    config,
     onNext,
     onBack,
     onSkip,
   } = props;
-  const [file, setFile] = useState<File | null>(null);
-  const [parsed, setParsed] = useState<ParsedPdf | null>(null);
-  const [parsing, setParsing] = useState(false);
 
   const defaultHelpImage = useMemo(
     () =>
@@ -58,149 +79,216 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
   );
 
   const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const f = e.target.files?.[0] ?? null;
-      setFile(f);
-      if (f) {
-        setParsing(true);
-        // Simulate parsing delay
-        setTimeout(() => {
-          const dummy: ParsedPdf = {
-            filename: f.name,
-            sizeKB: Math.max(42, Math.round(f.size / 1024)) || 128,
-            pages: 2 + Math.floor(Math.random() * 5),
-            previewText:
-              "Experienced software engineer with a passion for building usable products. Highlights: TypeScript, React, Node.js, system design. Led projects improving performance by 30%.",
-            source,
-          };
-          setParsed(dummy);
-          onParsed?.(dummy);
-          console.log(`[PDFUploadStep] Parsed ${source} PDF`, dummy);
-          setParsing(false);
-        }, 1200);
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // Validate file before upload
+      const validationError = validateFile(file);
+      if (validationError) {
+        // Show validation error (this will be handled by the upload state)
+        return;
+      }
+
+      try {
+        await onUpload(file);
+      } catch (error) {
+        console.error("Upload failed:", error);
+        // Error is handled by the upload hook
       }
     },
-    [onParsed, source]
+    [onUpload, validateFile]
   );
 
+  const handleRetry = useCallback(async () => {
+    if (uploadState.file) {
+      try {
+        await onUpload(uploadState.file);
+      } catch (error) {
+        console.error("Retry failed:", error);
+      }
+    }
+  }, [uploadState.file, onUpload]);
+
+  const maxFileSizeMB = config?.max_file_size_mb || 15;
+
   return (
-    <StepContainer
-      title={label}
-      description={description}
-      onBack={onBack}
-      onSkip={onSkip}
-      onNext={onNext}
-      loadingText={parsing ? "Parsing…" : undefined}
-      nextLabel={"Next"}
-      nextDisabled={false}
-    >
-      <div className="space-y-4">
-        <div className="grid gap-2">
-          <Label
-            htmlFor={`pdf-${source}`}
-            className="inline-flex items-center gap-2"
-          >
-            {source === "linkedin" ? (
-              <Linkedin className="h-4 w-4 text-[#0A66C2]" />
-            ) : (
+    <div className="rounded-xl border border-border/70 bg-card shadow-sm p-4 sm:p-6">
+      <StepContainer
+        title={label}
+        description={description}
+        onBack={onBack}
+        onSkip={onSkip}
+        onNext={onNext}
+        loadingText={uploadState.uploading ? "Processing PDF…" : undefined}
+        nextLabel="Next"
+        nextDisabled={false}
+      >
+        <div className="space-y-4">
+          {/* Upload Area */}
+          <div className="grid gap-2">
+            <Label
+              htmlFor={`pdf-${source}`}
+              className="inline-flex items-center gap-2"
+            >
               <FileText className="h-4 w-4" />
-            )}
-            Upload PDF
-          </Label>
+              Upload PDF
+            </Label>
 
-          {/* Visually-hidden input, styled clickable dropzone label */}
-          <Input
-            id={`pdf-${source}`}
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-            className="sr-only"
-          />
-          <label
-            htmlFor={`pdf-${source}`}
-            className="flex cursor-pointer select-none items-center justify-center rounded-lg border border-dashed bg-card/40 px-4 py-10 transition-colors hover:bg-muted/50"
-          >
-            <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <Upload className="h-5 w-5 text-muted-foreground" />
+            {!uploadState.result && (
+              <>
+                <Input
+                  id={`pdf-${source}`}
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                  className="sr-only"
+                  disabled={uploadState.uploading}
+                />
+                <label
+                  htmlFor={`pdf-${source}`}
+                  className={`flex cursor-pointer select-none items-center justify-center rounded-lg border border-dashed bg-muted/40 dark:bg-muted/20 px-4 py-10 transition-colors hover:bg-muted/60 dark:hover:bg-muted/30 ${
+                    uploadState.uploading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-background border">
+                      <Upload className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="font-medium">
+                      {uploadState.uploading
+                        ? "Processing..."
+                        : "Upload a file or drag and drop"}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      PDF up to {maxFileSizeMB}MB
+                    </div>
+                  </div>
+                </label>
+              </>
+            )}
+          </div>
+
+          {/* Upload Progress */}
+          {uploadState.uploading && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>Processing PDF...</span>
+                <span>{Math.round(uploadState.progress)}%</span>
               </div>
-              <div className="font-medium">Upload a file or drag and drop</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                PDF up to 10MB
-              </div>
+              <Progress value={uploadState.progress} className="h-2" />
             </div>
-          </label>
-          <p className="text-xs text-muted-foreground">
-            Optional. This demo won't upload anything to a server.
-          </p>
+          )}
+
+          {/* Upload Error */}
+          {uploadState.error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>{getUserErrorMessage(uploadState.error)}</span>
+                <div className="flex gap-2">
+                  {isRetryableError(uploadState.error) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRetry}
+                      disabled={uploadState.uploading}
+                    >
+                      Retry
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" onClick={onClear}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Upload Success */}
+          {uploadState.result && (
+            <div className="rounded-md border p-4 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800/30">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+                >
+                  {uploadState.result.meta.source === "linkedin"
+                    ? "LinkedIn"
+                    : "Resume"}
+                </Badge>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">
+                  {uploadState.result.meta.filename}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  • {Math.round(uploadState.result.meta.size / 1024)} KB •{" "}
+                  {uploadState.result.meta.pages} pages
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={onClear}
+                  className="ml-auto"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm leading-6 text-muted-foreground line-clamp-5">
+                {uploadState.result.text.slice(0, 300)}
+                {uploadState.result.text.length > 300 ? "..." : ""}
+              </p>
+            </div>
+          )}
+
+          {/* Help Section */}
+          <Collapsible>
+            <CollapsibleTrigger className="text-sm inline-flex items-center gap-2 underline underline-offset-4">
+              <HelpCircle className="h-4 w-4" />
+              {source === "linkedin"
+                ? "Where to export LinkedIn PDF"
+                : helpTitle}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-3">
+              {source === "linkedin" ? (
+                <div className="space-y-3">
+                  <div className="rounded-md overflow-hidden border">
+                    <img
+                      src={defaultHelpImage}
+                      alt="LinkedIn export help"
+                      className="w-full aspect-video object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
+                    <li>Open LinkedIn and go to your Profile.</li>
+                    <li>Click the More button and choose Save to PDF.</li>
+                    <li>Download the PDF to your computer.</li>
+                    <li>Upload it here to pre-fill your profile details.</li>
+                  </ol>
+                </div>
+              ) : (
+                <div>
+                  <div className="rounded-md overflow-hidden border">
+                    <img
+                      src={defaultHelpImage}
+                      alt="Help preview"
+                      className="w-full aspect-video object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    We extract headline, experience bullets, skills, and links
+                    from your resume.
+                  </p>
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
-
-        {parsed ? (
-          <div className="rounded-md border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary">
-                {parsed.source === "linkedin" ? "LinkedIn" : "Resume"}
-              </Badge>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{parsed.filename}</span>
-              <span className="text-sm text-muted-foreground">
-                • {parsed.sizeKB} KB • {parsed.pages} pages
-              </span>
-            </div>
-            <p className="text-sm leading-6 text-muted-foreground line-clamp-5">
-              {parsed.previewText}
-            </p>
-          </div>
-        ) : file ? (
-          <div className="text-sm text-muted-foreground">
-            <Upload className="h-4 w-4 inline-block mr-2" /> Preparing to parse
-            "{file.name}"…
-          </div>
-        ) : null}
-
-        <Collapsible>
-          <CollapsibleTrigger className="text-sm inline-flex items-center gap-2 underline underline-offset-4">
-            <HelpCircle className="h-4 w-4" />
-            {source === "linkedin" ? "Where to export LinkedIn PDF" : helpTitle}
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-3">
-            {source === "linkedin" ? (
-              <div className="space-y-3">
-                <div className="rounded-md overflow-hidden border">
-                  <img
-                    src={defaultHelpImage}
-                    alt="LinkedIn export help"
-                    className="w-full h-48 object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
-                  <li>Open LinkedIn and go to your Profile.</li>
-                  <li>Click the More button and choose Save to PDF.</li>
-                  <li>Download the PDF to your computer.</li>
-                  <li>Upload it here to pre-fill your profile details.</li>
-                </ol>
-              </div>
-            ) : (
-              <div>
-                <div className="rounded-md overflow-hidden border">
-                  <img
-                    src={defaultHelpImage}
-                    alt="Help preview"
-                    className="w-full h-48 object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  We extract headline, experience bullets, skills, and links. In
-                  production this would call your backend service.
-                </p>
-              </div>
-            )}
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
-    </StepContainer>
+      </StepContainer>
+    </div>
   );
 }
 
