@@ -7,26 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  Upload,
-  FileText,
-  HelpCircle,
-  AlertCircle,
-  CheckCircle,
-  X,
-} from "lucide-react";
+import { Upload, FileText, HelpCircle, CheckCircle, X } from "lucide-react";
 import { PDFUploadState } from "@/hooks/useUpload";
 import { type UploadConfig } from "@/lib/api/upload";
-import {
-  getUserErrorMessage,
-  isRetryableError,
-} from "@/lib/utils/errorHandling";
 
 export type ParsedPdf = {
   filename: string;
@@ -100,16 +89,6 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
     [onUpload, validateFile]
   );
 
-  const handleRetry = useCallback(async () => {
-    if (uploadState.file) {
-      try {
-        await onUpload(uploadState.file);
-      } catch (error) {
-        console.error("Retry failed:", error);
-      }
-    }
-  }, [uploadState.file, onUpload]);
-
   const maxFileSizeMB = config?.max_file_size_mb || 15;
 
   return (
@@ -178,31 +157,6 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
               </div>
               <Progress value={uploadState.progress} className="h-2" />
             </div>
-          )}
-
-          {/* Upload Error */}
-          {uploadState.error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="flex items-center justify-between">
-                <span>{getUserErrorMessage(uploadState.error)}</span>
-                <div className="flex gap-2">
-                  {isRetryableError(uploadState.error) && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleRetry}
-                      disabled={uploadState.uploading}
-                    >
-                      Retry
-                    </Button>
-                  )}
-                  <Button size="sm" variant="ghost" onClick={onClear}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
           )}
 
           {/* Upload Success */}

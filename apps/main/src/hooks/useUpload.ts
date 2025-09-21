@@ -15,11 +15,11 @@ import {
   withRetry,
   debounce,
   type PDFUploadResponse,
-  type PaginatedRepoResponse,
   type GitHubRepo,
   type GitHubImportResponse,
   type UploadConfig,
 } from "@/lib/api/upload";
+import { handleError } from "@/lib/utils/simpleErrorHandler";
 
 /**
  * PDF upload state
@@ -29,7 +29,6 @@ export interface PDFUploadState {
   uploading: boolean;
   progress: number;
   result: PDFUploadResponse | null;
-  error: string | null;
 }
 
 /**
@@ -46,7 +45,6 @@ export interface GitHubReposState {
     totalCount: number;
     hasNext: boolean;
   };
-  error: string | null;
 }
 
 /**
@@ -56,7 +54,6 @@ export interface UseUploadReturn {
   // Configuration
   config: UploadConfig | null;
   configLoading: boolean;
-  configError: string | null;
 
   // LinkedIn PDF upload
   linkedin: PDFUploadState;
@@ -70,7 +67,7 @@ export interface UseUploadReturn {
 
   // GitHub repositories
   github: GitHubReposState;
-  searchGitHubRepos: (username: string) => Promise<void>;
+  searchGitHubRepos: (username: string) => void;
   loadMoreRepos: () => Promise<void>;
   toggleRepoSelection: (repoId: number) => void;
   clearRepoSelection: () => void;
@@ -91,7 +88,6 @@ const initialPDFState: PDFUploadState = {
   uploading: false,
   progress: 0,
   result: null,
-  error: null,
 };
 
 /**
@@ -108,7 +104,6 @@ const initialGitHubState: GitHubReposState = {
     totalCount: 0,
     hasNext: false,
   },
-  error: null,
 };
 
 /**
@@ -118,7 +113,6 @@ export function useUpload(): UseUploadReturn {
   // Configuration state
   const [config, setConfig] = useState<UploadConfig | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
-  const [configError, setConfigError] = useState<string | null>(null);
 
   // PDF upload states
   const [linkedin, setLinkedIn] = useState<PDFUploadState>(initialPDFState);
@@ -132,15 +126,10 @@ export function useUpload(): UseUploadReturn {
     const loadConfig = async () => {
       try {
         setConfigLoading(true);
-        setConfigError(null);
         const configData = await getUploadConfig();
         setConfig(configData);
       } catch (error) {
-        setConfigError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load configuration"
-        );
+        handleError(error, "loading upload configuration");
       } finally {
         setConfigLoading(false);
       }
@@ -164,12 +153,16 @@ export function useUpload(): UseUploadReturn {
   const uploadLinkedInPDF = useCallback(
     async (file: File) => {
       if (!config) {
-        throw new Error("Configuration not loaded");
+        handleError(
+          new Error("Configuration not loaded"),
+          "LinkedIn PDF upload"
+        );
+        return;
       }
 
       const validationError = validateFile(file, config);
       if (validationError) {
-        setLinkedIn((prev) => ({ ...prev, error: validationError }));
+        handleError(new Error(validationError), "LinkedIn PDF validation");
         return;
       }
 
@@ -178,7 +171,6 @@ export function useUpload(): UseUploadReturn {
         file,
         uploading: true,
         progress: 0,
-        error: null,
         result: null,
       }));
 
@@ -200,8 +192,8 @@ export function useUpload(): UseUploadReturn {
           ...prev,
           uploading: false,
           progress: 0,
-          error: error instanceof Error ? error.message : "Upload failed",
         }));
+        handleError(error, "LinkedIn PDF upload");
       }
     },
     [config]
@@ -211,12 +203,13 @@ export function useUpload(): UseUploadReturn {
   const uploadResumePDF = useCallback(
     async (file: File) => {
       if (!config) {
-        throw new Error("Configuration not loaded");
+        handleError(new Error("Configuration not loaded"), "Resume PDF upload");
+        return;
       }
 
       const validationError = validateFile(file, config);
       if (validationError) {
-        setResume((prev) => ({ ...prev, error: validationError }));
+        handleError(new Error(validationError), "Resume PDF validation");
         return;
       }
 
@@ -225,7 +218,6 @@ export function useUpload(): UseUploadReturn {
         file,
         uploading: true,
         progress: 0,
-        error: null,
         result: null,
       }));
 
@@ -247,8 +239,8 @@ export function useUpload(): UseUploadReturn {
           ...prev,
           uploading: false,
           progress: 0,
-          error: error instanceof Error ? error.message : "Upload failed",
         }));
+        handleError(error, "Resume PDF upload");
       }
     },
     [config]
@@ -258,7 +250,7 @@ export function useUpload(): UseUploadReturn {
   const searchGitHubRepos = useCallback(
     debounce(async (username: string) => {
       if (!username.trim()) {
-        setGitHub((prev) => ({ ...prev, repos: [], error: null }));
+        setGitHub((prev) => ({ ...prev, repos: [] }));
         return;
       }
 
@@ -266,7 +258,6 @@ export function useUpload(): UseUploadReturn {
         ...prev,
         username,
         loading: true,
-        error: null,
         repos: [],
         pagination: { ...prev.pagination, page: 1 },
       }));
@@ -291,11 +282,8 @@ export function useUpload(): UseUploadReturn {
         setGitHub((prev) => ({
           ...prev,
           loading: false,
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch repositories",
         }));
+        handleError(error, "GitHub repository search");
       }
     }, 500),
     [github.pagination.perPage]
@@ -307,7 +295,7 @@ export function useUpload(): UseUploadReturn {
       return;
     }
 
-    setGitHub((prev) => ({ ...prev, loading: true, error: null }));
+    setGitHub((prev) => ({ ...prev, loading: true }));
 
     try {
       const nextPage = github.pagination.page + 1;
@@ -330,11 +318,8 @@ export function useUpload(): UseUploadReturn {
       setGitHub((prev) => ({
         ...prev,
         loading: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load more repositories",
       }));
+      handleError(error, "loading more repositories");
     }
   }, [github.username, github.loading, github.pagination]);
 
@@ -402,7 +387,6 @@ export function useUpload(): UseUploadReturn {
     // Configuration
     config,
     configLoading,
-    configError,
 
     // LinkedIn PDF
     linkedin,

@@ -8,21 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Github,
-  Search,
-  Star,
-  BookOpen,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+
+import { Github, Search, Star, BookOpen } from "lucide-react";
 import { GitHubReposState } from "@/hooks/useUpload";
 import { type UploadConfig } from "@/lib/api/upload";
-import {
-  getUserErrorMessage,
-  isRetryableError,
-} from "@/lib/utils/errorHandling";
 
 export type Repo = {
   id: number;
@@ -74,18 +63,9 @@ export function GithubRepoStep({
     }
   }, [username, onSearch]);
 
-  const handleLoadMore = useCallback(async () => {
-    try {
-      await onLoadMore();
-    } catch (error) {
-      console.error("Failed to load more repositories:", error);
-    }
-  }, [onLoadMore]);
-
   const helperText = useMemo(() => {
     if (githubState.loading && githubState.repos.length === 0)
       return "Fetching repos…";
-    if (githubState.error) return "Error loading repositories";
     if (!githubState.repos.length && !githubState.username)
       return "No repos yet. Enter a username and click Fetch.";
     if (!githubState.repos.length && githubState.username)
@@ -142,26 +122,6 @@ export function GithubRepoStep({
             </Button>
           </div>
         </div>
-
-        {/* Error Display */}
-        {githubState.error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>{getUserErrorMessage(githubState.error)}</span>
-              {isRetryableError(githubState.error) && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleSearch}
-                  disabled={githubState.loading}
-                >
-                  Retry
-                </Button>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
 
         <div className="flex items-center justify-between text-sm">
           <div className="font-medium">

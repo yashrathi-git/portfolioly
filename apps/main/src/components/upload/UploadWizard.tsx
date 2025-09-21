@@ -2,10 +2,10 @@
 
 import { useCallback, useMemo, useState } from "react";
 import ProgressIndicator from "./ProgressIndicator";
-import PDFUploadStep, { ParsedPdf } from "./PDFUploadStep";
-import GithubRepoStep, { Repo } from "./GithubRepoStep";
-import { UploadErrorBoundary } from "./UploadErrorBoundary";
+import PDFUploadStep from "./PDFUploadStep";
+import GithubRepoStep from "./GithubRepoStep";
 import { useUpload } from "@/hooks/useUpload";
+import { handleError, handleSuccess } from "@/lib/utils/simpleErrorHandler";
 
 const TOTAL_STEPS = 3;
 
@@ -37,10 +37,10 @@ export function UploadWizard({ onComplete }: UploadWizardProps) {
         selectedRepoIds: upload.github.selectedRepoIds,
       });
 
+      handleSuccess("Upload completed successfully!");
       onComplete?.();
     } catch (error) {
-      console.error("Failed to complete upload wizard:", error);
-      // Error will be handled by the error boundary
+      handleError(error, "upload wizard completion");
     }
   }, [upload, onComplete]);
 
@@ -107,15 +107,13 @@ export function UploadWizard({ onComplete }: UploadWizardProps) {
   }, [step, upload, goBack, goNext, skip, handleFinish]);
 
   return (
-    <UploadErrorBoundary>
-      <div className="space-y-4 sm:space-y-6">
-        <ProgressIndicator currentStep={step} totalSteps={TOTAL_STEPS} />
-        <p className="text-center text-sm text-muted-foreground -mt-1">
-          These steps help pre‑fill your profile. All steps are optional.
-        </p>
-        {content}
-      </div>
-    </UploadErrorBoundary>
+    <div className="space-y-4 sm:space-y-6">
+      <ProgressIndicator currentStep={step} totalSteps={TOTAL_STEPS} />
+      <p className="text-center text-sm text-muted-foreground -mt-1">
+        These steps help pre‑fill your profile. All steps are optional.
+      </p>
+      {content}
+    </div>
   );
 }
 

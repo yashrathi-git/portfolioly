@@ -42,7 +42,6 @@ export function UploadIntegrationTest() {
             <h3 className="font-semibold mb-2">Configuration Status</h3>
             <div className="text-sm space-y-1">
               <div>Loading: {upload.configLoading ? "Yes" : "No"}</div>
-              <div>Error: {upload.configError || "None"}</div>
               {upload.config && (
                 <div className="bg-gray-50 p-2 rounded text-xs">
                   <div>Max file size: {upload.config.max_file_size_mb}MB</div>
@@ -81,14 +80,12 @@ export function UploadIntegrationTest() {
                 <h4 className="font-medium">LinkedIn PDF</h4>
                 <div>Uploading: {upload.linkedin.uploading ? "Yes" : "No"}</div>
                 <div>Progress: {upload.linkedin.progress}%</div>
-                <div>Error: {upload.linkedin.error || "None"}</div>
                 <div>Result: {upload.linkedin.result ? "Success" : "None"}</div>
               </div>
               <div>
                 <h4 className="font-medium">Resume PDF</h4>
                 <div>Uploading: {upload.resume.uploading ? "Yes" : "No"}</div>
                 <div>Progress: {upload.resume.progress}%</div>
-                <div>Error: {upload.resume.error || "None"}</div>
                 <div>Result: {upload.resume.result ? "Success" : "None"}</div>
               </div>
             </div>
@@ -102,7 +99,6 @@ export function UploadIntegrationTest() {
               <div>Loading: {upload.github.loading ? "Yes" : "No"}</div>
               <div>Repositories: {upload.github.repos.length}</div>
               <div>Selected: {upload.github.selectedRepoIds.length}</div>
-              <div>Error: {upload.github.error || "None"}</div>
               <div>
                 Has Next: {upload.github.pagination.hasNext ? "Yes" : "No"}
               </div>
