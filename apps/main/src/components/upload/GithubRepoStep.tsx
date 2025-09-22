@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useRef } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { StepContainer } from "./StepContainer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +48,6 @@ export function GithubRepoStep({
   onNext,
 }: GithubRepoStepProps) {
   const [username, setUsername] = useState("");
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const maxRepos = config?.max_github_repos || 10;
   const selectedCount = githubState.selectedRepoIds.length;
@@ -59,27 +58,7 @@ export function GithubRepoStep({
     onSearch(username.trim());
   }, [username, onSearch]);
 
-  const handleScroll = useCallback(
-    (event: React.UIEvent<HTMLDivElement>) => {
-      const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
-
-      if (
-        isNearBottom &&
-        !githubState.loading &&
-        githubState.pagination.hasNext &&
-        githubState.repos.length > 0
-      ) {
-        onLoadMore();
-      }
-    },
-    [
-      githubState.loading,
-      githubState.pagination.hasNext,
-      githubState.repos.length,
-      onLoadMore,
-    ]
-  );
+  // Scroll-based loading removed; using explicit "Load more" button instead
 
   const helperText = useMemo(() => {
     if (githubState.loading && githubState.repos.length === 0)
@@ -156,11 +135,7 @@ export function GithubRepoStep({
             {helperText}
           </div>
 
-          <ScrollArea
-            className="h-64 rounded-md border"
-            ref={scrollAreaRef}
-            onScrollCapture={handleScroll}
-          >
+          <ScrollArea className="h-64 rounded-md border">
             <ul className="divide-y">
               {githubState.repos.map((repo) => {
                 const checked = githubState.selectedRepoIds.includes(repo.id);
@@ -204,10 +179,23 @@ export function GithubRepoStep({
                   Nothing to show.
                 </li>
               ) : null}
-              {/* Loading indicator for pagination */}
+              {/* Loading indicator for manual pagination */}
               {githubState.loading && githubState.repos.length > 0 && (
                 <li className="p-4 text-sm text-muted-foreground text-center">
                   Loading more repositories...
+                </li>
+              )}
+              {/* Load more button when more pages are available */}
+              {githubState.pagination.hasNext && !githubState.loading && (
+                <li className="p-4 text-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onLoadMore()}
+                    className="gap-2"
+                  >
+                    Load more
+                  </Button>
                 </li>
               )}
             </ul>
