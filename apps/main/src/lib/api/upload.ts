@@ -191,6 +191,28 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 /**
+ * Optionally retry a request once if backend returns 403 with EMAIL_VERIFICATION_REQUIRED.
+ * This performs a one-time forced token refresh and retries the request.
+ */
+async function fetchWithEmailVerifiedRetry(
+  makeRequest: () => Promise<Response>
+): Promise<Response> {
+  const response = await makeRequest();
+  if (response.status !== 403) return response;
+
+  // Force-refresh token once and retry
+  const auth = getFirebaseAuth();
+  const user = auth.currentUser;
+  if (!user) return response;
+  try {
+    await user.getIdToken(true);
+  } catch {
+    return response;
+  }
+  return makeRequest();
+}
+
+/**
  * Validate file before upload
  */
 export function validateFile(file: File, config: UploadConfig): string | null {
@@ -285,15 +307,16 @@ export async function fetchGitHubRepos(
   page: number = 1,
   perPage: number = 20
 ): Promise<PaginatedRepoResponse> {
-  const headers = await getAuthHeaders();
-
   const url = `${API_BASE_URL}/api/github/repos?username=${encodeURIComponent(
     username
   )}&page=${page}&per_page=${perPage}`;
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers,
+  const response = await fetchWithEmailVerifiedRetry(async () => {
+    const headers = await getAuthHeaders();
+    return fetch(url, {
+      method: "GET",
+      headers,
+    });
   });
 
   const raw = await handleResponse<
@@ -336,14 +359,15 @@ export async function fetchGitHubRepos(
 export async function submitUploadData(
   request: UploadSubmissionRequest
 ): Promise<UploadSubmissionResponse> {
-  const headers = await getAuthHeaders();
-
   const url = `${API_BASE_URL}/api/submit`;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(request),
+  const response = await fetchWithEmailVerifiedRetry(async () => {
+    const headers = await getAuthHeaders();
+    return fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(request),
+    });
   });
 
   return handleResponse<UploadSubmissionResponse>(response);
@@ -353,13 +377,14 @@ export async function submitUploadData(
  * Get upload configuration
  */
 export async function getUploadConfig(): Promise<UploadConfig> {
-  const headers = await getAuthHeaders();
-
   const url = `${API_BASE_URL}/api/upload/config`;
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers,
+  const response = await fetchWithEmailVerifiedRetry(async () => {
+    const headers = await getAuthHeaders();
+    return fetch(url, {
+      method: "GET",
+      headers,
+    });
   });
 
   return handleResponse<UploadConfig>(response);

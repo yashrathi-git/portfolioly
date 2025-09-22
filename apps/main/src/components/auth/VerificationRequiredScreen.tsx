@@ -10,20 +10,31 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useVerificationPolling } from "@/hooks/useVerificationPolling";
+import { getPostAuthRedirectPath } from "@/lib/auth/routeGuards";
 import { useRouter } from "next/navigation";
 import { MailCheck } from "lucide-react";
 
 export default function VerificationRequiredScreen() {
-  const { user, resendVerification, signOut } = useAuth();
+  const { user, resendVerification, signOut, refreshUser } = useAuth();
   const router = useRouter();
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { isPolling, startPolling, pollingError } = useVerificationPolling(
     user,
-    () => {
-      // When verification is detected, redirect to dashboard
-      router.push("/dashboard");
+    async () => {
+      // When verification is detected, refresh user and force-refresh token, then redirect
+      const refreshed = await refreshUser();
+      try {
+        if (refreshed) {
+          await refreshed.getIdToken(true);
+        }
+      } catch {}
+      if (refreshed) {
+        router.push(getPostAuthRedirectPath(refreshed));
+      } else {
+        router.push("/auth/sign-in");
+      }
     }
   );
 
@@ -32,7 +43,9 @@ export default function VerificationRequiredScreen() {
     if (user && !user.emailVerified) {
       startPolling();
     }
-  }, [user, startPolling]);
+    // Do not restart polling on every re-render; only when user reference changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleResend = async () => {
     setError(null);
@@ -65,7 +78,7 @@ export default function VerificationRequiredScreen() {
   }
 
   if (user.emailVerified) {
-    router.push("/dashboard");
+    router.push(getPostAuthRedirectPath(user));
     return null;
   }
 

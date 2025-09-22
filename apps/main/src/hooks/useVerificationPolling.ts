@@ -12,13 +12,15 @@ export type UseVerificationPollingReturn = {
 
 export function useVerificationPolling(
   user: User | null,
-  onVerificationDetected: () => void
+  onVerificationDetected: () => void | Promise<void>
 ): UseVerificationPollingReturn {
   const [isPolling, setIsPolling] = useState(false);
   const [verificationDetected, setVerificationDetected] = useState(false);
   const [pollingError, setPollingError] = useState<string | null>(null);
 
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isPollingRef = useRef(false);
+  const isCheckingRef = useRef(false);
   const pollCountRef = useRef(0);
   const maxPollsRef = useRef(200); // ~10 minutes max
 
@@ -26,6 +28,10 @@ export function useVerificationPolling(
     if (!user) return false;
 
     try {
+      if (isCheckingRef.current) {
+        return false;
+      }
+      isCheckingRef.current = true;
       // Reload user to get fresh verification status
       await user.reload();
       return user.emailVerified;
@@ -35,6 +41,8 @@ export function useVerificationPolling(
         "Connection issue. Verification status will be checked again shortly."
       );
       return false;
+    } finally {
+      isCheckingRef.current = false;
     }
   };
 
@@ -44,14 +52,16 @@ export function useVerificationPolling(
       pollingIntervalRef.current = null;
     }
     setIsPolling(false);
+    isPollingRef.current = false;
     pollCountRef.current = 0;
     setPollingError(null);
   };
 
   const startPolling = () => {
-    if (isPolling || !user) return;
+    if (isPollingRef.current || isPolling || !user) return;
 
     setIsPolling(true);
+    isPollingRef.current = true;
     setPollingError(null);
     pollCountRef.current = 0;
 
@@ -62,7 +72,7 @@ export function useVerificationPolling(
         if (isVerified) {
           setVerificationDetected(true);
           stopPolling();
-          onVerificationDetected();
+          await onVerificationDetected();
           return;
         }
 
@@ -101,8 +111,8 @@ export function useVerificationPolling(
       }
     };
 
-    // Start first poll immediately
-    poll();
+    // Start first poll after a short delay to avoid rapid loops on re-render
+    pollingIntervalRef.current = setTimeout(poll, 1000);
   };
 
   // Cleanup on unmount or user change

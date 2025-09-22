@@ -50,7 +50,14 @@ export default function SignInPage() {
         <CardDescription>Welcome back. Sign in to continue.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <LoginForm onDone={() => router.push("/dashboard")} />
+        <LoginForm
+          onDone={() => {
+            const u = user;
+            if (u) {
+              router.push(getPostAuthRedirectPath(u));
+            }
+          }}
+        />
 
         <div className="text-sm text-muted-foreground text-center">
           Don&apos;t have an account?{" "}

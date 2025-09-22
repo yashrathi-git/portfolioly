@@ -41,6 +41,8 @@ export type AuthContextValue = {
 
   // Verification methods
   resendVerification: () => Promise<void>;
+  // Force-refresh the Firebase user and update context consumers
+  refreshUser: () => Promise<User | null>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -78,6 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (unsub) unsub();
     };
   }, [verificationStatus]);
+
+  // Note: We intentionally avoid listening to onIdTokenChanged to prevent reload loops.
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
@@ -183,6 +187,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Removed internal polling; verification check is handled by the verify page hook
 
+  const refreshUser = useCallback(async (): Promise<User | null> => {
+    try {
+      const auth = getFirebaseAuth();
+      const current = auth.currentUser;
+      if (!current) {
+        setUser(null);
+        return null;
+      }
+      await current.reload();
+      // Create a new object reference preserving prototype to trigger React updates
+      const reloadedUser = Object.create(
+        Object.getPrototypeOf(current),
+        Object.getOwnPropertyDescriptors(current)
+      ) as User;
+      setUser(reloadedUser);
+      if (current.emailVerified && verificationStatus !== "verified") {
+        setVerificationStatus("verified");
+      }
+      return current;
+    } catch (error) {
+      console.error("Refresh user error:", error);
+      return null;
+    }
+  }, [verificationStatus]);
+
+  // Refresh on window focus/visibility change to pick up verification quickly
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = () => {
+      void refreshUser();
+    };
+    window.addEventListener("focus", handler);
+    document.addEventListener("visibilitychange", handler);
+    return () => {
+      window.removeEventListener("focus", handler);
+      document.removeEventListener("visibilitychange", handler);
+    };
+  }, [refreshUser]);
+
   const value = useMemo(
     () => ({
       user,
@@ -194,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut,
       signInWithGoogle,
       resendVerification,
+      refreshUser,
     }),
     [
       user,
@@ -205,6 +249,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signOut,
       signInWithGoogle,
+      refreshUser,
     ]
   );
 
