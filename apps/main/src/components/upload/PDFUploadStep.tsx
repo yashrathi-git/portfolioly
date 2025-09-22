@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { StepContainer } from "./StepContainer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,8 +38,8 @@ export type PDFUploadStepProps = {
   uploadState: PDFUploadState;
   onUpload: (file: File) => Promise<void>;
   onClear: () => void;
-  validateFile: (file: File) => string | null;
   config: UploadConfig | null;
+  accept?: string;
   onNext?: () => void;
   onBack?: () => void;
   onSkip?: () => void;
@@ -55,8 +55,8 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
     uploadState,
     onUpload,
     onClear,
-    validateFile,
     config,
+    accept,
     onNext,
     onBack,
     onSkip,
@@ -103,7 +103,7 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
                 <Input
                   id={`pdf-${source}`}
                   type="file"
-                  accept="application/pdf"
+                  accept={accept ?? "application/pdf"}
                   onChange={handleFileChange}
                   className="sr-only"
                   disabled={uploadState.uploading}

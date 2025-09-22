@@ -1,6 +1,20 @@
 import { toast } from "sonner";
 import { getUserErrorMessage, formatErrorForLogging } from "./errorHandling";
 
+// Deduplicate identical error toasts shown within a short time window
+const RECENT_ERROR_TOASTS = new Map<string, number>();
+const TOAST_DEDUP_WINDOW_MS = 1500;
+
+function shouldShowErrorToast(message: string): boolean {
+  const now = Date.now();
+  const last = RECENT_ERROR_TOASTS.get(message) || 0;
+  if (now - last < TOAST_DEDUP_WINDOW_MS) {
+    return false;
+  }
+  RECENT_ERROR_TOASTS.set(message, now);
+  return true;
+}
+
 /**
  * Simple error handler that shows user-friendly messages via Sonner
  * and logs errors appropriately for production
@@ -9,7 +23,9 @@ export function handleError(error: unknown, context?: string) {
   const userMessage = getUserErrorMessage(error);
 
   // Show user-friendly message
-  toast.error(userMessage);
+  if (shouldShowErrorToast(userMessage)) {
+    toast.error(userMessage);
+  }
 
   // Log error details
   const logData = formatErrorForLogging(error);
@@ -53,7 +69,9 @@ export function handleSuccess(message: string) {
  */
 export function handleValidationError(message: string, context?: string) {
   // Show the validation message directly
-  toast.error(message);
+  if (shouldShowErrorToast(message)) {
+    toast.error(message);
+  }
 
   // Log validation error
   console.error(`Validation error${context ? ` in ${context}` : ""}:`, message);

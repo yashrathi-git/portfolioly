@@ -5,7 +5,7 @@
  * GitHub repository fetching, and related state management.
  */
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   uploadPDF,
   fetchGitHubRepos,
@@ -20,7 +20,10 @@ import {
   type UploadSubmissionResponse,
   type UploadConfig,
 } from "@/lib/api/upload";
-import { handleError } from "@/lib/utils/simpleErrorHandler";
+import {
+  handleError,
+  handleValidationError,
+} from "@/lib/utils/simpleErrorHandler";
 
 /**
  * PDF upload state
@@ -83,6 +86,10 @@ export interface UseUploadReturn {
   resetAll: () => void;
 }
 
+export interface UseUploadOptions {
+  disableClientValidation?: boolean;
+}
+
 /**
  * Initial PDF upload state
  */
@@ -112,10 +119,14 @@ const initialGitHubState: GitHubReposState = {
 /**
  * Custom hook for upload functionality
  */
-export function useUpload(): UseUploadReturn {
+export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
+  const { disableClientValidation = false } = options;
   // Configuration state
   const [config, setConfig] = useState<UploadConfig | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
+
+  // Prevent double fetch/toast in React Strict Mode (dev) by ensuring one-time execution
+  const didLoadConfigRef = useRef(false);
 
   // PDF upload states
   const [linkedin, setLinkedIn] = useState<PDFUploadState>(initialPDFState);
@@ -126,6 +137,9 @@ export function useUpload(): UseUploadReturn {
 
   // Load configuration on mount
   useEffect(() => {
+    if (didLoadConfigRef.current) return;
+    didLoadConfigRef.current = true;
+
     const loadConfig = async () => {
       try {
         setConfigLoading(true);
@@ -147,9 +161,12 @@ export function useUpload(): UseUploadReturn {
       if (!config) {
         return "Configuration not loaded";
       }
+      if (disableClientValidation) {
+        return null;
+      }
       return validateFile(file, config);
     },
-    [config]
+    [config, disableClientValidation]
   );
 
   // Upload LinkedIn PDF
@@ -163,10 +180,12 @@ export function useUpload(): UseUploadReturn {
         return;
       }
 
-      const validationError = validateFile(file, config);
-      if (validationError) {
-        handleError(new Error(validationError), "LinkedIn PDF validation");
-        return;
+      if (!disableClientValidation) {
+        const validationError = validateFile(file, config);
+        if (validationError) {
+          handleValidationError(validationError, "LinkedIn PDF validation");
+          return;
+        }
       }
 
       setLinkedIn((prev) => ({
@@ -199,7 +218,7 @@ export function useUpload(): UseUploadReturn {
         handleError(error, "LinkedIn PDF upload");
       }
     },
-    [config]
+    [config, disableClientValidation]
   );
 
   // Upload Resume PDF
@@ -210,10 +229,12 @@ export function useUpload(): UseUploadReturn {
         return;
       }
 
-      const validationError = validateFile(file, config);
-      if (validationError) {
-        handleError(new Error(validationError), "Resume PDF validation");
-        return;
+      if (!disableClientValidation) {
+        const validationError = validateFile(file, config);
+        if (validationError) {
+          handleValidationError(validationError, "Resume PDF validation");
+          return;
+        }
       }
 
       setResume((prev) => ({
@@ -246,7 +267,7 @@ export function useUpload(): UseUploadReturn {
         handleError(error, "Resume PDF upload");
       }
     },
-    [config]
+    [config, disableClientValidation]
   );
 
   // Search GitHub repositories (debounced)
@@ -294,7 +315,10 @@ export function useUpload(): UseUploadReturn {
 
   // Create debounced version
   const debouncedSearchGitHubRepos = useMemo(
-    () => debounce(searchGitHubRepos, 500),
+    () =>
+      debounce((username: string) => {
+        void searchGitHubRepos(username);
+      }, 500),
     [searchGitHubRepos]
   );
 

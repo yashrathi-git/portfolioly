@@ -263,38 +263,61 @@ const ERROR_MESSAGES: Record<ErrorCode, Partial<StructuredError>> = {
  * Parse error from API response or JavaScript error
  */
 export function parseError(error: unknown): StructuredError {
+  const e = error as {
+    name?: string;
+    message?: string;
+    details?: { error_code?: string; message?: string; [k: string]: unknown };
+  };
+
   // Handle API errors with structured format
-  if (error?.details?.error_code) {
-    const code = error.details.error_code as ErrorCode;
-    const template = ERROR_MESSAGES[code];
+  const errorCode = e?.details?.error_code as ErrorCode | undefined;
+  if (errorCode) {
+    const template = ERROR_MESSAGES[errorCode];
 
     return {
-      code,
-      message: error.message || error.details.message || "Unknown error",
+      code: errorCode,
+      message: e.message || e.details?.message || "Unknown error",
       severity: template?.severity || ErrorSeverity.MEDIUM,
       retryable: template?.retryable || false,
       userMessage:
-        template?.userMessage || error.details.message || "An error occurred",
+        template?.userMessage || e.details?.message || "An error occurred",
       actionable: template?.actionable || false,
       suggestedAction: template?.suggestedAction,
-      details: error.details,
+      details: e.details,
     };
   }
 
-  // Handle network errors
-  if (error?.name === "TypeError" && error?.message?.includes("fetch")) {
+  // Handle network errors (fetch failures)
+  const message: string | undefined = e?.message;
+  if (e?.name === "TypeError" && message?.toLowerCase().includes("fetch")) {
     return {
       code: ErrorCode.NETWORK_ERROR,
-      message: error.message,
+      message: message,
       ...ERROR_MESSAGES[ErrorCode.NETWORK_ERROR],
     } as StructuredError;
   }
 
+  // Generic network wording detection (e.g., XHR upload errors)
+  if (typeof message === "string") {
+    const lower = message.toLowerCase();
+    if (
+      lower.includes("network error") ||
+      lower.includes("failed to fetch") ||
+      lower.includes("network")
+    ) {
+      return {
+        code: ErrorCode.NETWORK_ERROR,
+        message,
+        ...ERROR_MESSAGES[ErrorCode.NETWORK_ERROR],
+      } as StructuredError;
+    }
+  }
+
   // Handle timeout errors
-  if (error?.name === "AbortError" || error?.message?.includes("timeout")) {
+  if (e?.name === "AbortError" || e?.message?.includes("timeout")) {
     return {
       code: ErrorCode.TIMEOUT_ERROR,
-      message: error.message,
+      message: e.message || "timeout",
       ...ERROR_MESSAGES[ErrorCode.TIMEOUT_ERROR],
     } as StructuredError;
   }
@@ -302,7 +325,7 @@ export function parseError(error: unknown): StructuredError {
   // Handle generic JavaScript errors
   return {
     code: ErrorCode.INTERNAL_ERROR,
-    message: error?.message || "Unknown error",
+    message: e?.message || "Unknown error",
     severity: ErrorSeverity.MEDIUM,
     retryable: true,
     userMessage: "An unexpected error occurred. Please try again.",

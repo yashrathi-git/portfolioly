@@ -11,11 +11,17 @@ const TOTAL_STEPS = 3;
 
 export type UploadWizardProps = {
   onComplete?: () => void;
+  disableClientValidation?: boolean;
+  acceptOverride?: string;
 };
 
-export function UploadWizard({ onComplete }: UploadWizardProps) {
+export function UploadWizard({
+  onComplete,
+  disableClientValidation = false,
+  acceptOverride,
+}: UploadWizardProps) {
   const [step, setStep] = useState(1);
-  const upload = useUpload();
+  const upload = useUpload({ disableClientValidation });
 
   const goNext = useCallback(
     () => setStep((s) => Math.min(TOTAL_STEPS, s + 1)),
@@ -53,8 +59,8 @@ export function UploadWizard({ onComplete }: UploadWizardProps) {
             uploadState={upload.linkedin}
             onUpload={upload.uploadLinkedInPDF}
             onClear={upload.clearLinkedInUpload}
-            validateFile={upload.validatePDFFile}
             config={upload.config}
+            accept={acceptOverride}
             onBack={undefined}
             onSkip={skip}
             onNext={goNext}
@@ -71,8 +77,8 @@ export function UploadWizard({ onComplete }: UploadWizardProps) {
             uploadState={upload.resume}
             onUpload={upload.uploadResumePDF}
             onClear={upload.clearResumeUpload}
-            validateFile={upload.validatePDFFile}
             config={upload.config}
+            accept={acceptOverride}
             onBack={goBack}
             onSkip={skip}
             onNext={goNext}
@@ -96,7 +102,7 @@ export function UploadWizard({ onComplete }: UploadWizardProps) {
           />
         );
     }
-  }, [step, upload, goBack, goNext, skip, handleFinish]);
+  }, [step, upload, goBack, goNext, skip, handleFinish, acceptOverride]);
 
   return (
     <div className="space-y-4 sm:space-y-6">

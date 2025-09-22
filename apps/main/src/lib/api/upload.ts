@@ -395,10 +395,12 @@ export async function withRetry<T>(
       lastError = error as Error;
 
       // Don't retry on client errors (4xx) except 429 (rate limit)
+      const status = (error as Error & { status?: number }).status;
       if (
-        (error as Error & { status?: number }).status >= 400 &&
-        (error as Error & { status?: number }).status < 500 &&
-        (error as Error & { status?: number }).status !== 429
+        typeof status === "number" &&
+        status >= 400 &&
+        status < 500 &&
+        status !== 429
       ) {
         throw error;
       }
@@ -420,14 +422,16 @@ export async function withRetry<T>(
 /**
  * Create a debounced version of a function
  */
-export function debounce<T extends (...args: unknown[]) => unknown>(
-  func: T,
+export function debounce<A extends unknown[]>(
+  func: (...args: A) => void | Promise<void>,
   wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
+): (...args: A) => void {
+  let timeout: ReturnType<typeof setTimeout>;
 
-  return (...args: Parameters<T>) => {
+  return (...args: A) => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => {
+      void func(...args);
+    }, wait);
   };
 }
