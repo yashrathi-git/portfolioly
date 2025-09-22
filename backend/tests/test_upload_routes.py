@@ -9,12 +9,8 @@ from fastapi.testclient import TestClient
 from fastapi import UploadFile
 
 from app.main import app
-from app.services.pdf_processor import PDFParseResult, PDFMetadata
-from app.services.github_service import (
-    PaginatedRepoResponse,
-    GitHubRepo,
-    GitHubImportResponse,
-)
+from app.schemas.pdf import PDFParseResult, PDFMetadata
+from app.schemas.github import PaginatedRepoResponse, GitHubRepo
 from datetime import datetime
 
 
@@ -266,63 +262,9 @@ class TestGitHubReposEndpoint:
         assert response.status_code == 422  # Validation error
 
 
-class TestGitHubImportEndpoint:
-    """Test cases for GitHub import endpoint."""
-
-    @pytest.fixture
-    def client(self):
-        return TestClient(app)
-
-    @pytest.fixture
-    def mock_auth_headers(self):
-        return {"Authorization": "Bearer mock_token"}
-
-    @patch("app.routes.upload.require_verified_email")
-    @patch("app.routes.upload.get_github_service")
-    def test_import_github_repos_success(
-        self, mock_get_service, mock_auth, client, mock_auth_headers
-    ):
-        """Test successful GitHub repository import."""
-        # Mock authentication
-        mock_user = Mock()
-        mock_user.uid = "test_user_123"
-        mock_auth.return_value = mock_user
-
-        # Mock GitHub service
-        mock_response = GitHubImportResponse(
-            imported=3, message="Successfully imported 3 repositories"
-        )
-
-        mock_service = Mock()
-        mock_service.import_repositories = AsyncMock(return_value=mock_response)
-        mock_get_service.return_value = mock_service
-
-        request_data = {"repo_ids": [123, 456, 789]}
-
-        response = client.post(
-            "/api/github/import", json=request_data, headers=mock_auth_headers
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["imported"] == 3
-        assert "Successfully imported" in data["message"]
-
-    @patch("app.routes.upload.require_verified_email")
-    def test_import_github_repos_empty_list(self, mock_auth, client, mock_auth_headers):
-        """Test GitHub import with empty repository list."""
-        mock_user = Mock()
-        mock_user.uid = "test_user_123"
-        mock_auth.return_value = mock_user
-
-        request_data = {"repo_ids": []}
-
-        response = client.post(
-            "/api/github/import", json=request_data, headers=mock_auth_headers
-        )
-
-        # This should be handled by the service layer
-        assert response.status_code in [400, 422]
+# Note: GitHub import endpoint has been removed and replaced with
+# a unified upload submission endpoint (/api/submit).
+# Import-specific tests are no longer needed.
 
 
 class TestConfigEndpoint:

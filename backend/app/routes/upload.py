@@ -6,17 +6,22 @@ functionality in the upload onboarding flow.
 """
 
 from typing import Literal, List, Optional
+from datetime import datetime
 from fastapi import APIRouter, UploadFile, File, Query, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 from ..auth.middleware import require_verified_email
-from ..auth.models import UserToken
-from ..services.pdf_processor import get_pdf_processor, PDFParseResult
-from ..services.github_service import (
-    get_github_service,
-    PaginatedRepoResponse,
+from ..schemas.auth import UserToken
+from ..schemas.pdf import PDFParseResult
+from ..schemas.github import PaginatedRepoResponse
+from ..schemas.upload import (
+    GitHubRepoData,
+    PDFData,
+    UploadSubmissionRequest,
+    UploadSubmissionResponse,
 )
+from ..services.pdf_processor import get_pdf_processor
+from ..services.github_service import get_github_service
 from ..dependencies.rate_limiting import (
     check_pdf_upload_rate_limit,
     check_github_api_rate_limit,
@@ -169,46 +174,10 @@ async def get_github_repos(
         )
 
 
-class GitHubRepoData(BaseModel):
-    """GitHub repository data for submission"""
-
-    id: int
-    name: str
-    description: Optional[str]
-    stars: int
-    url: str
-    language: Optional[str]
-    fork: bool
-    private: bool
-    created_at: str
-    updated_at: str
-
-
-class PDFData(BaseModel):
-    """PDF upload data for submission"""
-
-    text: str
-    source: str
-    filename: str
-    pages: int
-    size: int
-    checksum: str
-    processed_at: str
-    blob_url: Optional[str]
-
-
-class UploadSubmissionRequest(BaseModel):
-    """Complete upload submission request"""
-
-    linkedin_pdf: Optional[PDFData] = None
-    resume_pdf: Optional[PDFData] = None
-    github_repos: List[GitHubRepoData] = []
-
-
-@router.post("/submit")
+@router.post("/submit", response_model=UploadSubmissionResponse)
 async def submit_upload_data(
     request: UploadSubmissionRequest, user: UserToken = Depends(require_verified_email)
-) -> dict:
+) -> UploadSubmissionResponse:
     """
     Submit complete upload data including PDFs and GitHub repositories.
 
@@ -262,17 +231,17 @@ async def submit_upload_data(
         # 3. Processing the data for portfolio auto-population
         # 4. Triggering any background processing tasks
 
-        return {
-            "success": True,
-            "message": "Upload data submitted successfully",
-            "data": {
+        return UploadSubmissionResponse(
+            success=True,
+            message="Upload data submitted successfully",
+            data={
                 "user_id": user.uid,
                 "linkedin_pdf_submitted": request.linkedin_pdf is not None,
                 "resume_pdf_submitted": request.resume_pdf is not None,
                 "github_repos_count": len(request.github_repos),
-                "submitted_at": "2024-01-01T00:00:00Z",  # Would use actual timestamp
+                "submitted_at": datetime.utcnow().isoformat() + "Z",
             },
-        }
+        )
 
     except Exception as e:
         print(f"[UPLOAD SUBMISSION ERROR] {str(e)}")

@@ -1,4 +1,4 @@
-"""Authentication models and schemas."""
+"""Authentication-related Pydantic schemas."""
 
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, EmailStr

@@ -7,7 +7,8 @@ import io
 from unittest.mock import Mock, patch, AsyncMock
 from fastapi import UploadFile, HTTPException
 
-from app.services.pdf_processor import PDFProcessor, PDFParseResult, PDFMetadata
+from app.services.pdf_processor import PDFProcessor
+from app.schemas.pdf import PDFParseResult, PDFMetadata
 
 
 class TestPDFProcessor:

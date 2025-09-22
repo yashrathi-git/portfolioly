@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from ..auth.middleware import require_authenticated_user, require_verified_email
-from ..auth.models import UserToken, AuthResponse
+from ..schemas.auth import UserToken, AuthResponse
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

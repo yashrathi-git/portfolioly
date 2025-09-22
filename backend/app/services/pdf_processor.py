@@ -9,7 +9,7 @@ import fitz  # PyMuPDF
 import io
 from typing import Dict, Any, Optional, Tuple
 from fastapi import UploadFile, HTTPException
-from pydantic import BaseModel
+
 import magic
 import hashlib
 import asyncio
@@ -18,25 +18,8 @@ from datetime import datetime
 from ..core.config import settings
 
 
-class PDFMetadata(BaseModel):
-    """PDF metadata model."""
-
-    source: str  # "linkedin" or "resume"
-    pages: int
-    filename: str
-    size: int
-    checksum: str
-    processed_at: datetime
-    blob_url: Optional[str] = None
-
-
-class PDFParseResult(BaseModel):
-    """Result of PDF parsing operation."""
-
-    text: str
-    metadata: PDFMetadata
-    success: bool
-    error_message: Optional[str] = None
+# Import schemas from centralized location
+from ..schemas.pdf import PDFMetadata, PDFParseResult
 
 
 class PDFProcessor:

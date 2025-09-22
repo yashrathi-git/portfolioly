@@ -9,13 +9,8 @@ from fastapi import HTTPException
 
 from github import GithubException, UnknownObjectException, RateLimitExceededException
 
-from app.services.github_service import (
-    GitHubService,
-    GitHubRepo,
-    PaginatedRepoResponse,
-    GitHubImportRequest,
-    GitHubImportResponse,
-)
+from app.services.github_service import GitHubService
+from app.schemas.github import GitHubRepo, PaginatedRepoResponse
 
 
 class TestGitHubService:
@@ -284,37 +279,8 @@ class TestGitHubService:
         assert exc_info.value.status_code == 404
         assert "REPO_NOT_FOUND" in str(exc_info.value.detail)
 
-    @pytest.mark.asyncio
-    async def test_import_repositories_success(self, github_service):
-        """Test successful repository import."""
-        repo_ids = [123, 456, 789]
-
-        result = await github_service.import_repositories(repo_ids)
-
-        assert isinstance(result, GitHubImportResponse)
-        assert result.imported == 3
-        assert "Successfully imported 3 repositories" in result.message
-
-    @pytest.mark.asyncio
-    async def test_import_repositories_too_many(self, github_service):
-        """Test import with too many repositories."""
-        # Create more repo IDs than the maximum allowed
-        repo_ids = list(range(github_service.max_repos + 1))
-
-        with pytest.raises(HTTPException) as exc_info:
-            await github_service.import_repositories(repo_ids)
-
-        assert exc_info.value.status_code == 400
-        assert "TOO_MANY_REPOS" in str(exc_info.value.detail)
-
-    @pytest.mark.asyncio
-    async def test_import_repositories_empty_list(self, github_service):
-        """Test import with empty repository list."""
-        with pytest.raises(HTTPException) as exc_info:
-            await github_service.import_repositories([])
-
-        assert exc_info.value.status_code == 400
-        assert "NO_REPOS_SELECTED" in str(exc_info.value.detail)
+    # Note: Repository import functionality has been removed.
+    # Import-related tests are no longer needed.
 
     @pytest.mark.asyncio
     @patch("app.services.github_service.Github")
@@ -458,23 +424,7 @@ class TestGitHubModels:
         assert response.per_page == 20
         assert response.has_next is False
 
-    def test_github_import_request_validation(self):
-        """Test GitHubImportRequest validation."""
-        # Valid request
-        request = GitHubImportRequest(repo_ids=[1, 2, 3])
-        assert len(request.repo_ids) == 3
-
-        # Test max_items validation would be handled by Pydantic
-        # This is more of an integration test with the actual validation
-
-    def test_github_import_response_model(self):
-        """Test GitHubImportResponse model."""
-        response = GitHubImportResponse(
-            imported=5, message="Successfully imported 5 repositories"
-        )
-
-        assert response.imported == 5
-        assert "Successfully imported" in response.message
+    # Note: Import model tests removed as import functionality no longer exists
 
 
 def test_get_github_service_singleton():

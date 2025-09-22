@@ -6,7 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from ..core.firebase import get_firebase_auth
 from ..core.config import settings
-from .models import UserToken
+from ..schemas.auth import UserToken
 
 
 # Security scheme for Swagger documentation
