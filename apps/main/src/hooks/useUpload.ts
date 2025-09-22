@@ -9,14 +9,15 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   uploadPDF,
   fetchGitHubRepos,
-  importGitHubRepos,
+  submitUploadData,
   getUploadConfig,
   validateFile,
   withRetry,
   debounce,
   type PDFUploadResponse,
   type GitHubRepo,
-  type GitHubImportResponse,
+  type UploadSubmissionRequest,
+  type UploadSubmissionResponse,
   type UploadConfig,
 } from "@/lib/api/upload";
 import { handleError } from "@/lib/utils/simpleErrorHandler";
@@ -71,7 +72,9 @@ export interface UseUploadReturn {
   loadMoreRepos: () => Promise<void>;
   toggleRepoSelection: (repoId: number) => void;
   clearRepoSelection: () => void;
-  importSelectedRepos: () => Promise<GitHubImportResponse>;
+
+  // Submission
+  submitAllData: () => Promise<UploadSubmissionResponse>;
 
   // Validation
   validatePDFFile: (file: File) => string | null;
@@ -362,15 +365,48 @@ export function useUpload(): UseUploadReturn {
     setGitHub((prev) => ({ ...prev, selectedRepoIds: [] }));
   }, []);
 
-  // Import selected repositories
-  const importSelectedRepos =
-    useCallback(async (): Promise<GitHubImportResponse> => {
-      if (github.selectedRepoIds.length === 0) {
-        throw new Error("No repositories selected");
+  // Submit all upload data
+  const submitAllData =
+    useCallback(async (): Promise<UploadSubmissionResponse> => {
+      // Get selected repositories with full data
+      const selectedRepos = github.repos.filter((repo) =>
+        github.selectedRepoIds.includes(repo.id)
+      );
+
+      const request: UploadSubmissionRequest = {
+        github_repos: selectedRepos,
+      };
+
+      // Add LinkedIn PDF data if available
+      if (linkedin.result) {
+        request.linkedin_pdf = {
+          text: linkedin.result.text,
+          source: linkedin.result.meta.source,
+          filename: linkedin.result.meta.filename,
+          pages: linkedin.result.meta.pages,
+          size: linkedin.result.meta.size,
+          checksum: linkedin.result.meta.checksum,
+          processed_at: linkedin.result.meta.processed_at,
+          blob_url: linkedin.result.meta.blob_url,
+        };
       }
 
-      return withRetry(() => importGitHubRepos(github.selectedRepoIds));
-    }, [github.selectedRepoIds]);
+      // Add Resume PDF data if available
+      if (resume.result) {
+        request.resume_pdf = {
+          text: resume.result.text,
+          source: resume.result.meta.source,
+          filename: resume.result.meta.filename,
+          pages: resume.result.meta.pages,
+          size: resume.result.meta.size,
+          checksum: resume.result.meta.checksum,
+          processed_at: resume.result.meta.processed_at,
+          blob_url: resume.result.meta.blob_url,
+        };
+      }
+
+      return withRetry(() => submitUploadData(request));
+    }, [linkedin.result, resume.result, github.repos, github.selectedRepoIds]);
 
   // Clear LinkedIn upload
   const clearLinkedInUpload = useCallback(() => {
@@ -410,7 +446,9 @@ export function useUpload(): UseUploadReturn {
     loadMoreRepos,
     toggleRepoSelection,
     clearRepoSelection,
-    importSelectedRepos,
+
+    // Submission
+    submitAllData,
 
     // Validation
     validatePDFFile,

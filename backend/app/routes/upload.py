@@ -5,9 +5,10 @@ This module provides API endpoints for PDF upload and GitHub integration
 functionality in the upload onboarding flow.
 """
 
-from typing import Literal
+from typing import Literal, List, Optional
 from fastapi import APIRouter, UploadFile, File, Query, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from ..auth.middleware import require_verified_email
 from ..auth.models import UserToken
@@ -15,8 +16,6 @@ from ..services.pdf_processor import get_pdf_processor, PDFParseResult
 from ..services.github_service import (
     get_github_service,
     PaginatedRepoResponse,
-    GitHubImportRequest,
-    GitHubImportResponse,
 )
 from ..dependencies.rate_limiting import (
     check_pdf_upload_rate_limit,
@@ -170,45 +169,117 @@ async def get_github_repos(
         )
 
 
-@router.post("/github/import", response_model=GitHubImportResponse)
-async def import_github_repos(
-    request: GitHubImportRequest, user: UserToken = Depends(require_verified_email)
-) -> GitHubImportResponse:
-    """
-    Import selected GitHub repositories for portfolio inclusion.
+class GitHubRepoData(BaseModel):
+    """GitHub repository data for submission"""
 
-    This endpoint accepts a list of repository IDs and imports them
-    for the authenticated user's portfolio.
+    id: int
+    name: str
+    description: Optional[str]
+    stars: int
+    url: str
+    language: Optional[str]
+    fork: bool
+    private: bool
+    created_at: str
+    updated_at: str
+
+
+class PDFData(BaseModel):
+    """PDF upload data for submission"""
+
+    text: str
+    source: str
+    filename: str
+    pages: int
+    size: int
+    checksum: str
+    processed_at: str
+    blob_url: Optional[str]
+
+
+class UploadSubmissionRequest(BaseModel):
+    """Complete upload submission request"""
+
+    linkedin_pdf: Optional[PDFData] = None
+    resume_pdf: Optional[PDFData] = None
+    github_repos: List[GitHubRepoData] = []
+
+
+@router.post("/submit")
+async def submit_upload_data(
+    request: UploadSubmissionRequest, user: UserToken = Depends(require_verified_email)
+) -> dict:
+    """
+    Submit complete upload data including PDFs and GitHub repositories.
+
+    This endpoint accepts all the upload data from the onboarding flow
+    and processes it for the user's portfolio.
 
     Args:
-        request: Repository import request with repo IDs
+        request: Complete upload submission data
         user: Authenticated user with verified email
 
     Returns:
-        GitHubImportResponse with import results
+        Success response with submission details
 
     Raises:
-        HTTPException: For validation errors or import failures
+        HTTPException: For validation errors or processing failures
     """
     try:
-        github_service = get_github_service()
-        result = await github_service.import_repositories(request.repo_ids)
+        # Log the received data for now
+        print(f"[UPLOAD SUBMISSION] User: {user.uid}")
+        print(
+            f"[UPLOAD SUBMISSION] LinkedIn PDF: {'Yes' if request.linkedin_pdf else 'No'}"
+        )
+        print(
+            f"[UPLOAD SUBMISSION] Resume PDF: {'Yes' if request.resume_pdf else 'No'}"
+        )
+        print(f"[UPLOAD SUBMISSION] GitHub Repos: {len(request.github_repos)}")
 
-        # TODO: Associate imported repositories with user in database
+        if request.linkedin_pdf:
+            print(
+                f"[UPLOAD SUBMISSION] LinkedIn PDF - Pages: {request.linkedin_pdf.pages}, Size: {request.linkedin_pdf.size}"
+            )
+            print(
+                f"[UPLOAD SUBMISSION] LinkedIn PDF - Text length: {request.linkedin_pdf.text}"
+            )
+
+        if request.resume_pdf:
+            print(
+                f"[UPLOAD SUBMISSION] Resume PDF - Pages: {request.resume_pdf.pages}, Size: {request.resume_pdf.size}"
+            )
+            print(
+                f"[UPLOAD SUBMISSION] Resume PDF - Text length: {request.resume_pdf.text}"
+            )
+
+        for repo in request.github_repos:
+            print(f"[UPLOAD SUBMISSION] GitHub Repo: {repo.name} ({repo.stars} stars)")
+
+        # TODO: Implement actual data processing and storage
         # This would typically involve:
-        # 1. Storing the repository IDs with the user's profile
-        # 2. Potentially fetching additional repository details
-        # 3. Updating the user's portfolio data
+        # 1. Storing PDF text and metadata in the database
+        # 2. Storing selected GitHub repositories with user profile
+        # 3. Processing the data for portfolio auto-population
+        # 4. Triggering any background processing tasks
 
-        return result
+        return {
+            "success": True,
+            "message": "Upload data submitted successfully",
+            "data": {
+                "user_id": user.uid,
+                "linkedin_pdf_submitted": request.linkedin_pdf is not None,
+                "resume_pdf_submitted": request.resume_pdf is not None,
+                "github_repos_count": len(request.github_repos),
+                "submitted_at": "2024-01-01T00:00:00Z",  # Would use actual timestamp
+            },
+        }
 
-    except HTTPException:
-        raise
     except Exception as e:
+        print(f"[UPLOAD SUBMISSION ERROR] {str(e)}")
         raise HTTPException(
             status_code=500,
             detail={
-                "message": "Internal server error during repository import",
+                "message": "Internal server error during upload submission",
                 "error_code": "INTERNAL_ERROR",
                 "details": str(e),
             },

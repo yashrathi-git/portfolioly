@@ -57,11 +57,45 @@ export interface PaginatedRepoResponse {
 }
 
 /**
- * GitHub import response interface
+ * Upload submission request interface
  */
-export interface GitHubImportResponse {
-  imported: number;
+export interface UploadSubmissionRequest {
+  linkedin_pdf?: {
+    text: string;
+    source: string;
+    filename: string;
+    pages: number;
+    size: number;
+    checksum: string;
+    processed_at: string;
+    blob_url?: string;
+  };
+  resume_pdf?: {
+    text: string;
+    source: string;
+    filename: string;
+    pages: number;
+    size: number;
+    checksum: string;
+    processed_at: string;
+    blob_url?: string;
+  };
+  github_repos: GitHubRepo[];
+}
+
+/**
+ * Upload submission response interface
+ */
+export interface UploadSubmissionResponse {
+  success: boolean;
   message: string;
+  data: {
+    user_id: string;
+    linkedin_pdf_submitted: boolean;
+    resume_pdf_submitted: boolean;
+    github_repos_count: number;
+    submitted_at: string;
+  };
 }
 
 /**
@@ -297,22 +331,22 @@ export async function fetchGitHubRepos(
 }
 
 /**
- * Import selected GitHub repositories
+ * Submit complete upload data
  */
-export async function importGitHubRepos(
-  repoIds: number[]
-): Promise<GitHubImportResponse> {
+export async function submitUploadData(
+  request: UploadSubmissionRequest
+): Promise<UploadSubmissionResponse> {
   const headers = await getAuthHeaders();
 
-  const url = `${API_BASE_URL}/api/github/import`;
+  const url = `${API_BASE_URL}/api/submit`;
 
   const response = await fetch(url, {
     method: "POST",
     headers,
-    body: JSON.stringify({ repo_ids: repoIds }),
+    body: JSON.stringify(request),
   });
 
-  return handleResponse<GitHubImportResponse>(response);
+  return handleResponse<UploadSubmissionResponse>(response);
 }
 
 /**

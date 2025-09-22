@@ -51,19 +51,6 @@ class PaginatedRepoResponse(BaseModel):
     has_next: bool
 
 
-class GitHubImportRequest(BaseModel):
-    """GitHub repository import request model."""
-
-    repo_ids: List[int] = Field(..., max_items=settings.upload.MAX_GITHUB_REPOS)
-
-
-class GitHubImportResponse(BaseModel):
-    """GitHub repository import response model."""
-
-    imported: int
-    message: str
-
-
 class GitHubService:
     """GitHub API integration service."""
 
@@ -383,52 +370,6 @@ class GitHubService:
         # - Maximum 39 characters
         pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$"
         return bool(re.match(pattern, username))
-
-    async def import_repositories(self, repo_ids: List[int]) -> GitHubImportResponse:
-        """
-        Import selected repositories (placeholder for actual import logic).
-
-        Args:
-            repo_ids: List of repository IDs to import
-
-        Returns:
-            GitHubImportResponse with import results
-
-        Raises:
-            HTTPException: If validation fails
-        """
-        if len(repo_ids) > self.max_repos:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "message": f"Maximum {self.max_repos} repositories allowed",
-                    "error_code": "TOO_MANY_REPOS",
-                    "max_allowed": self.max_repos,
-                    "requested": len(repo_ids),
-                },
-            )
-
-        if not repo_ids:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "message": "No repositories selected for import",
-                    "error_code": "NO_REPOS_SELECTED",
-                },
-            )
-
-        # TODO: Implement actual repository import logic
-        # This would typically involve:
-        # 1. Fetching repository details for each ID
-        # 2. Storing repository information in the database
-        # 3. Associating repositories with the user's portfolio
-
-        imported_count = len(repo_ids)
-
-        return GitHubImportResponse(
-            imported=imported_count,
-            message=f"Successfully imported {imported_count} repositories",
-        )
 
     async def get_rate_limit_info(self) -> Dict[str, Any]:
         """

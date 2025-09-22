@@ -26,16 +26,10 @@ export function UploadWizard({ onComplete }: UploadWizardProps) {
 
   const handleFinish = useCallback(async () => {
     try {
-      // Import selected repositories if any
-      if (upload.github.selectedRepoIds.length > 0) {
-        await upload.importSelectedRepos();
-      }
+      // Submit all upload data
+      const result = await upload.submitAllData();
 
-      console.log("[UploadWizard] complete", {
-        linkedin: upload.linkedin.result,
-        resume: upload.resume.result,
-        selectedRepoIds: upload.github.selectedRepoIds,
-      });
+      console.log("[UploadWizard] complete", result);
 
       handleSuccess("Upload completed successfully!");
       onComplete?.();
