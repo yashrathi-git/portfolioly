@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
   useCallback,
+  useRef,
 } from "react";
 import { getFirebaseAuth } from "@/lib/firebase";
 import {
@@ -50,6 +51,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const refreshInFlightRef = useRef<Promise<User | null> | null>(null);
 
   // Verification state
   const [verificationStatus, setVerificationStatus] = useState<
@@ -188,43 +190,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Removed internal polling; verification check is handled by the verify page hook
 
   const refreshUser = useCallback(async (): Promise<User | null> => {
-    try {
-      const auth = getFirebaseAuth();
-      const current = auth.currentUser;
-      if (!current) {
-        setUser(null);
+    if (refreshInFlightRef.current) return refreshInFlightRef.current;
+    const promise = (async () => {
+      try {
+        const auth = getFirebaseAuth();
+        const current = auth.currentUser;
+        if (!current) {
+          setUser(null);
+          return null;
+        }
+        await current.reload();
+        // Create a new object reference preserving prototype to trigger React updates
+        const reloadedUser = Object.create(
+          Object.getPrototypeOf(current),
+          Object.getOwnPropertyDescriptors(current)
+        ) as User;
+        setUser(reloadedUser);
+        if (current.emailVerified && verificationStatus !== "verified") {
+          setVerificationStatus("verified");
+        }
+        return current;
+      } catch (error) {
+        console.error("Refresh user error:", error);
         return null;
+      } finally {
+        refreshInFlightRef.current = null;
       }
-      await current.reload();
-      // Create a new object reference preserving prototype to trigger React updates
-      const reloadedUser = Object.create(
-        Object.getPrototypeOf(current),
-        Object.getOwnPropertyDescriptors(current)
-      ) as User;
-      setUser(reloadedUser);
-      if (current.emailVerified && verificationStatus !== "verified") {
-        setVerificationStatus("verified");
-      }
-      return current;
-    } catch (error) {
-      console.error("Refresh user error:", error);
-      return null;
-    }
+    })();
+    refreshInFlightRef.current = promise;
+    return promise;
   }, [verificationStatus]);
 
-  // Refresh on window focus/visibility change to pick up verification quickly
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handler = () => {
-      void refreshUser();
-    };
-    window.addEventListener("focus", handler);
-    document.addEventListener("visibilitychange", handler);
-    return () => {
-      window.removeEventListener("focus", handler);
-      document.removeEventListener("visibilitychange", handler);
-    };
-  }, [refreshUser]);
+  // Intentionally avoid auto-refresh on focus/visibility to prevent identity lookup spam.
 
   const value = useMemo(
     () => ({
