@@ -16,6 +16,7 @@ dependencies = [
     "aiofiles>=24.1.0",
     "python-magic>=0.4.27",
     "azure-ai-inference>=1.0.0b9",
+    "tiktoken>=0.8.0",
 ]
 
 [dependency-groups]

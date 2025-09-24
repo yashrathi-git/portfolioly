@@ -1,0 +1,6 @@
+# Ignore all prompt cache files
+*.txt
+*.log
+
+# But keep this .gitignore file
+!.gitignore

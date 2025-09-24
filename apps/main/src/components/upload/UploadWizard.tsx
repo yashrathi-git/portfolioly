@@ -4,8 +4,10 @@ import { useCallback, useMemo, useState } from "react";
 import ProgressIndicator from "./ProgressIndicator";
 import PDFUploadStep from "./PDFUploadStep";
 import GithubRepoStep from "./GithubRepoStep";
+import { PlaceholderCompletionScreen } from "./PlaceholderCompletionScreen";
 import { useUpload } from "@/hooks/useUpload";
 import { handleError, handleSuccess } from "@/lib/utils/simpleErrorHandler";
+import type { UploadSubmissionResponse } from "@/lib/api/upload";
 
 const TOTAL_STEPS = 3;
 
@@ -21,6 +23,8 @@ export function UploadWizard({
   acceptOverride,
 }: UploadWizardProps) {
   const [step, setStep] = useState(1);
+  const [completionData, setCompletionData] =
+    useState<UploadSubmissionResponse | null>(null);
   const upload = useUpload({ disableClientValidation });
 
   const goNext = useCallback(
@@ -37,12 +41,24 @@ export function UploadWizard({
 
       console.log("[UploadWizard] complete", result);
 
-      handleSuccess("Upload completed successfully!");
-      onComplete?.();
+      // Store completion data and show completion screen
+      setCompletionData(result);
+      setStep(4); // Move to completion screen
+
+      // Show success message based on processing type
+      if (result.data.processing_type === "ai_extraction") {
+        handleSuccess("Portfolio created successfully using AI extraction!");
+      } else if (result.data.processing_type === "github_only") {
+        handleSuccess("GitHub repositories added to your portfolio!");
+      } else if (result.data.processing_type === "placeholder") {
+        handleSuccess("Upload received! AI processing will be available soon.");
+      } else {
+        handleSuccess("Upload completed successfully!");
+      }
     } catch (error) {
       handleError(error, "upload wizard completion");
     }
-  }, [upload, onComplete]);
+  }, [upload]);
 
   const content = useMemo(() => {
     switch (step) {
@@ -85,7 +101,6 @@ export function UploadWizard({
           />
         );
       case 3:
-      default:
         return (
           <GithubRepoStep
             label="Connect GitHub (optional)"
@@ -101,15 +116,38 @@ export function UploadWizard({
             onNext={handleFinish}
           />
         );
+      case 4:
+      default:
+        return completionData ? (
+          <PlaceholderCompletionScreen
+            processingType={completionData.data.processing_type}
+            message={completionData.message}
+            onContinue={() => onComplete?.()}
+          />
+        ) : null;
     }
-  }, [step, upload, goBack, goNext, skip, handleFinish, acceptOverride]);
+  }, [
+    step,
+    upload,
+    goBack,
+    goNext,
+    skip,
+    handleFinish,
+    acceptOverride,
+    completionData,
+    onComplete,
+  ]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ProgressIndicator currentStep={step} totalSteps={TOTAL_STEPS} />
-      <p className="text-center text-sm text-muted-foreground -mt-1">
-        These steps help pre‑fill your profile. All steps are optional.
-      </p>
+      {step <= TOTAL_STEPS && (
+        <>
+          <ProgressIndicator currentStep={step} totalSteps={TOTAL_STEPS} />
+          <p className="text-center text-sm text-muted-foreground -mt-1">
+            These steps help pre‑fill your profile. All steps are optional.
+          </p>
+        </>
+      )}
       {content}
     </div>
   );

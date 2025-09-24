@@ -100,10 +100,17 @@ export interface UploadSubmissionResponse {
   message: string;
   data: {
     user_id: string;
+    processing_type:
+      | "ai_extraction"
+      | "github_only"
+      | "placeholder"
+      | "no_data";
     linkedin_pdf_submitted: boolean;
     resume_pdf_submitted: boolean;
     github_repos_count: number;
     submitted_at: string;
+    ai_processing_failed?: boolean;
+    error_message?: string;
   };
 }
 

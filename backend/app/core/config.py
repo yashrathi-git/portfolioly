@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     # Security settings
     require_email_verification: bool = True
 
+    # Azure AI settings
+    azure_ai_endpoint: Optional[str] = None
+    azure_ai_api_key: Optional[str] = None
+
     # Nested groups
     upload: UploadSettings = UploadSettings()
 
