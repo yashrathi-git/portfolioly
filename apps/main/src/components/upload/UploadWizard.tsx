@@ -1,31 +1,29 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import ProgressIndicator from "./ProgressIndicator";
 import PDFUploadStep from "./PDFUploadStep";
 import GithubRepoStep from "./GithubRepoStep";
-import { PlaceholderCompletionScreen } from "./PlaceholderCompletionScreen";
+import { LoadingScreen } from "./LoadingScreen";
 import { useUpload } from "@/hooks/useUpload";
 import { handleError, handleSuccess } from "@/lib/utils/simpleErrorHandler";
-import type { UploadSubmissionResponse } from "@/lib/api/upload";
 
 const TOTAL_STEPS = 3;
 
 export type UploadWizardProps = {
-  onComplete?: () => void;
   disableClientValidation?: boolean;
   acceptOverride?: string;
 };
 
 export function UploadWizard({
-  onComplete,
   disableClientValidation = false,
   acceptOverride,
 }: UploadWizardProps) {
   const [step, setStep] = useState(1);
-  const [completionData, setCompletionData] =
-    useState<UploadSubmissionResponse | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const upload = useUpload({ disableClientValidation });
+  const router = useRouter();
 
   const goNext = useCallback(
     () => setStep((s) => Math.min(TOTAL_STEPS, s + 1)),
@@ -35,32 +33,32 @@ export function UploadWizard({
   const skip = useCallback(() => goNext(), [goNext]);
 
   const handleFinish = useCallback(async () => {
+    setIsProcessing(true);
+
     try {
       // Submit all upload data
       const result = await upload.submitAllData();
 
       console.log("[UploadWizard] complete", result);
 
-      // Store completion data and show completion screen
-      setCompletionData(result);
-      setStep(4); // Move to completion screen
+      // Show success message
+      handleSuccess("Portfolio data processed successfully!");
 
-      // Show success message based on processing type
-      if (result.data.processing_type === "ai_extraction") {
-        handleSuccess("Portfolio created successfully using AI extraction!");
-      } else if (result.data.processing_type === "github_only") {
-        handleSuccess("GitHub repositories added to your portfolio!");
-      } else if (result.data.processing_type === "placeholder") {
-        handleSuccess("Upload received! AI processing will be available soon.");
-      } else {
-        handleSuccess("Upload completed successfully!");
-      }
+      // Redirect to edit page
+      router.push("/edit");
     } catch (error) {
+      setIsProcessing(false);
       handleError(error, "upload wizard completion");
     }
-  }, [upload]);
+  }, [upload, router]);
 
   const content = useMemo(() => {
+    if (isProcessing) {
+      return (
+        <LoadingScreen message="Processing your data and generating your portfolio..." />
+      );
+    }
+
     switch (step) {
       case 1:
         return (
@@ -70,7 +68,6 @@ export function UploadWizard({
             label="Upload LinkedIn PDF (optional)"
             description="We will parse headline, experience and skills."
             helpTitle="Where to export LinkedIn PDF?"
-            // helpImageUrl="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1470&auto=format&fit=crop"
             source="linkedin"
             uploadState={upload.linkedin}
             onUpload={upload.uploadLinkedInPDF}
@@ -116,31 +113,23 @@ export function UploadWizard({
             onNext={handleFinish}
           />
         );
-      case 4:
       default:
-        return completionData ? (
-          <PlaceholderCompletionScreen
-            processingType={completionData.data.processing_type}
-            message={completionData.message}
-            onContinue={() => onComplete?.()}
-          />
-        ) : null;
+        return null;
     }
   }, [
     step,
+    isProcessing,
     upload,
     goBack,
     goNext,
     skip,
     handleFinish,
     acceptOverride,
-    completionData,
-    onComplete,
   ]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {step <= TOTAL_STEPS && (
+      {!isProcessing && step <= TOTAL_STEPS && (
         <>
           <ProgressIndicator currentStep={step} totalSteps={TOTAL_STEPS} />
           <p className="text-center text-sm text-muted-foreground -mt-1">
