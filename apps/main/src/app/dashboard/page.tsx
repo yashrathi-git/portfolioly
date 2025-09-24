@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Plus, FolderOpen, Settings } from "lucide-react";
 import withAuth from "@/lib/auth/withAuth";
+import Link from "next/link";
 
 function DashboardPage() {
   const { user } = useAuth();
@@ -29,15 +30,15 @@ function DashboardPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Plus className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Create Portfolio</CardTitle>
+                <CardTitle className="text-lg">Edit Portfolio</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Start building a new portfolio to showcase your work and skills.
+                Create and edit your portfolio to showcase your work and skills.
               </CardDescription>
-              <Button className="w-full mt-4" disabled>
-                Coming Soon
+              <Button className="w-full mt-4" asChild>
+                <Link href="/edit">Edit Portfolio</Link>
               </Button>
             </CardContent>
           </Card>
