@@ -34,6 +34,16 @@ export default function HeaderBar() {
           </Button>
           {user ? (
             <div className="flex items-center gap-3">
+              {user.emailVerified && (
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="ghost" asChild>
+                    <Link href="/dashboard">Dashboard</Link>
+                  </Button>
+                  <Button size="sm" variant="ghost" asChild>
+                    <Link href="/edit">Edit Portfolio</Link>
+                  </Button>
+                </div>
+              )}
               <span className="text-muted-foreground hidden sm:inline">
                 {user.displayName || user.email}
                 {!user.emailVerified && (
