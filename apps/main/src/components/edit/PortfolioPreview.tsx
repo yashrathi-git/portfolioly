@@ -1,8 +1,14 @@
 "use client";
 
-import { ChatPortfolio } from "@portfolioly/template-components/src/client";
-import type { Profile, Suggestion } from "@portfolioly/template-components";
-import type { PortfolioData } from "@/types/portfolio";
+import { ChatPortfolio } from "@portfolioly/template-components";
+import type {
+  Profile,
+  Suggestion,
+  PortfolioData,
+} from "@portfolioly/template-components";
+
+// Import the compiled CSS styles to ensure they're loaded
+import "@portfolioly/template-components/style.css";
 
 export interface PortfolioPreviewProps {
   data: PortfolioData;
@@ -44,6 +50,7 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
       profile={profile}
       suggestions={suggestions}
       presets={presets}
+      portfolioData={data}
     />
   );
 }

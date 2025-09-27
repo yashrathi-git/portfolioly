@@ -1,5 +1,8 @@
-import { ChatPortfolio } from "@portfolioly/template-components/src/client";
-import type { Profile } from "@portfolioly/template-components";
+import {
+  ChatPortfolio,
+  examplePortfolioData,
+} from "@portfolioly/template-components/src/client";
+import type { Profile, Suggestion } from "@portfolioly/template-components";
 
 export default function Home() {
   const profile: Profile = {
@@ -12,7 +15,7 @@ export default function Home() {
     ],
   };
 
-  const suggestions = [
+  const suggestions: Suggestion[] = [
     { id: "me", label: "Me", icon: "user", color: "bg-[oklch(0.74_0.15_310)]" },
     {
       id: "projects",
@@ -43,6 +46,7 @@ export default function Home() {
     { id: "latest", label: "Latest Work", icon: "folderGit2" },
     { id: "about", label: "About", icon: "user" },
     { id: "hobbies", label: "Hobbies", icon: "smile" },
+    { id: "education", label: "Education", icon: "user" },
   ];
 
   const presets: Record<string, string> = {
@@ -55,6 +59,7 @@ export default function Home() {
     "Latest Work": `Recently shipped Aura 1.2 with faster sync and new semantic search. Want a demo?`,
     About: `I love building calm software with delightful motion and accessibility at the core.`,
     Hobbies: `Film photography, specialty coffee, cycling, and learning generative art.`,
+    Education: `I studied Computer Science at University of Somewhere, graduating in 2019.`,
   };
 
   return (
@@ -62,6 +67,7 @@ export default function Home() {
       profile={profile}
       suggestions={suggestions}
       presets={presets}
+      portfolioData={examplePortfolioData}
     />
   );
 }

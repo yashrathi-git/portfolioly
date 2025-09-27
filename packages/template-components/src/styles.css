@@ -2,3 +2,29 @@
    This file only declares a Tailwind v4 @source so the app can scan package sources
    if the app chooses to import this file. Prefer adding @source to the app instead. */
 @source "./";
+
+/* Minimal, sleek scrollbar utility - localized to portfolio template components */
+.thin-scrollbar {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--input) transparent; /* Firefox */
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklch, var(--input) 70%, transparent);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.thin-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklch, var(--input) 85%, transparent);
+}

@@ -6,19 +6,23 @@ import ChatHeader from "./chat/Header";
 import { EmptyState } from "./chat/EmptyState";
 import { Thread } from "./chat/Thread";
 import { Composer } from "./chat/Composer";
-import { Suggestions } from "./Suggestions";
-import type { Message, Profile, Suggestion } from "./types";
+import { Suggestions } from "./chat/Suggestions";
+import type { Message, Profile, Suggestion } from "./chat/types";
+import type { PortfolioData } from "../types/portfolio";
+import styles from "./portfolio-theme.module.css";
 
 export type ChatPortfolioProps = {
   profile: Profile;
   suggestions: Suggestion[]; // full list
   presets: Record<string, string>; // label -> assistant reply
+  portfolioData: PortfolioData;
 };
 
 export const ChatPortfolio = ({
   profile,
   suggestions,
   presets,
+  portfolioData,
 }: ChatPortfolioProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -28,6 +32,149 @@ export const ChatPortfolio = ({
 
   const hasStarted = messages.length > 0;
 
+  // Dummy data for widgets (replace with real data later)
+  const aboutData = {
+    name: profile.name,
+    title: "Frontend Engineer · Crafting calm, fast UIs",
+    summary:
+      "I design and build elegant interfaces with React/Next.js, focusing on performance, accessibility, and delightful motion.",
+    location: "San Francisco, CA · Remote-friendly",
+    largeImage: true,
+    paragraphs: [
+      "I'm a product-focused engineer who sweats the details — from micro-interactions and tactile motion to crisp typography and thoughtful spacing.",
+      "My process blends design intuition with engineering rigor: fast prototypes, accessibility-first reviews, and performance budgets to ship delightful, durable work.",
+    ],
+    strengths: [
+      "Building design systems that scale across products",
+      "Crafting smooth, meaningful motion with performance in mind",
+      "Accessibility (WCAG) baked into the workflow",
+      "Clear communication with design and product",
+    ],
+  };
+
+  const projectsData = {
+    heading: "Selected Projects",
+    projects: (portfolioData.projects || []).map((p: any, i: number) => ({
+      // schema-based fields, plus dummy stars for now
+      name: p.name,
+      role: p.role,
+      one_line_description: p.one_line_description,
+      highlights: p.highlights,
+      technologies: p.technologies,
+      github: p.github,
+      live_link: p.live_link,
+      stars: 128 + i * 7, // dummy stars until API integration
+    })),
+  } as const;
+
+  const skillsData = {
+    heading: "Skills",
+    categories: [
+      {
+        title: "Core",
+        items: [
+          { name: "React", level: 90 },
+          { name: "Next.js (App Router)", level: 88 },
+          { name: "TypeScript", level: 85 },
+          { name: "Tailwind v4", level: 86 },
+        ],
+      },
+      {
+        title: "UX & Motion",
+        items: [
+          { name: "Accessibility (WCAG)", level: 80 },
+          { name: "Framer Motion", level: 82 },
+          { name: "Design Systems", level: 84 },
+        ],
+      },
+      {
+        title: "Tooling",
+        items: [
+          { name: "Vite", chip: true },
+          { name: "Vitest", chip: true },
+          { name: "Playwright", chip: true },
+          { name: "Turborepo", chip: true },
+        ],
+      },
+      {
+        title: "Cloud & Data",
+        items: [
+          { name: "Edge/RSC", chip: true },
+          { name: "REST/GraphQL", chip: true },
+          { name: "Charts", chip: true },
+        ],
+      },
+    ],
+  };
+
+  const contactData = {
+    heading: "Contact",
+    items: [
+      {
+        id: "email",
+        kind: "email",
+        label: "alex@example.com",
+        href: "mailto:alex@example.com",
+        sub: "Email",
+      },
+      {
+        id: "github",
+        kind: "github",
+        label: "github.com/alexchen",
+        href: "#",
+        sub: "GitHub",
+      },
+      {
+        id: "site",
+        kind: "website",
+        label: "alexchen.dev",
+        href: "#",
+        sub: "Website",
+      },
+      {
+        id: "linkedin",
+        kind: "linkedin",
+        label: "linkedin.com/in/alexchen",
+        href: "#",
+        sub: "LinkedIn",
+      },
+    ],
+  } as const;
+
+  const experienceData = {
+    heading: "Work Experience",
+    items: [
+      {
+        companyName: "Acme Inc.",
+        role: "Senior Frontend Engineer",
+        location: "San Francisco, CA (Hybrid)",
+        start: "Jan 2022",
+        end: "Present",
+        points: [
+          "Led migration to Next.js App Router and RSC, improving TTI by 38%",
+          "Built design system components with Shadcn/UI + Tailwind v4",
+          "Partnered with Design to craft micro-interactions using Framer Motion",
+        ],
+      },
+      {
+        companyName: "Nimbus Labs",
+        role: "Frontend Engineer",
+        location: "Remote",
+        start: "Jul 2019",
+        end: "Dec 2021",
+        points: [
+          "Shipped analytics dashboard with realtime charts and theming",
+          "Improved accessibility scores to AA across core flows",
+        ],
+      },
+    ],
+  };
+
+  const educationData = {
+    heading: "Education",
+    items: portfolioData.education || [],
+  } as const;
+
   // Auto-scroll on new messages
   useEffect(() => {
     listRef.current?.scrollTo({
@@ -35,6 +182,58 @@ export const ChatPortfolio = ({
       behavior: "smooth",
     });
   }, [messages, isThinking]);
+
+  const chooseWidget = (text: string) => {
+    const t = text.toLowerCase();
+    if (
+      /(^|\b)(work experience|experience|employment|resume|career)(\b|$)/.test(
+        t
+      )
+    ) {
+      return { name: "experience" as const, props: experienceData };
+    }
+    if (/(^|\b)(me|about|yourself|who are you)(\b|$)/.test(t)) {
+      return { name: "about" as const, props: aboutData };
+    }
+    if (
+      t.includes("project") ||
+      t.includes("work") ||
+      t.includes("portfolio") ||
+      t.includes("latest")
+    ) {
+      return { name: "projects" as const, props: projectsData };
+    }
+    if (t.includes("skill") || t.includes("stack") || t.includes("tech")) {
+      return { name: "skills" as const, props: skillsData };
+    }
+    if (
+      t.includes("education") ||
+      t.includes("school") ||
+      t.includes("university") ||
+      t.includes("college") ||
+      t.includes("degree")
+    ) {
+      return { name: "education" as const, props: educationData };
+    }
+    if (t.includes("contact") || t.includes("email") || t.includes("reach")) {
+      return { name: "contact" as const, props: contactData };
+    }
+    // Match suggestion labels exact
+    const hit = suggestions.find((s) => s.label.toLowerCase() === t);
+    if (hit) {
+      if (hit.id === "me" || hit.id === "about")
+        return { name: "about" as const, props: aboutData };
+      if (hit.id === "projects" || hit.id === "latest")
+        return { name: "projects" as const, props: projectsData };
+      if (hit.id === "skills" || hit.id === "stack")
+        return { name: "skills" as const, props: skillsData };
+      if (hit.id === "contact")
+        return { name: "contact" as const, props: contactData };
+      if (hit.id === "education")
+        return { name: "education" as const, props: educationData };
+    }
+    return null;
+  };
 
   const sendUserMessage = (text: string) => {
     const value = text.trim();
@@ -47,18 +246,22 @@ export const ChatPortfolio = ({
     };
     setMessages((m) => [...m, userMsg]);
 
-    // Simulate assistant thinking then reply with placeholder
+    // Simulate assistant thinking then reply with either widget or text
     setIsThinking(true);
+
+    const widget = chooseWidget(value);
     const assistantContent =
       presets[value] ||
-      "Thanks for your message! This portfolio uses placeholder responses. Try the suggestions or ask about projects, skills, or contact.";
+      "Thanks for your message! This portfolio uses rich UI replies. Try asking about projects, skills, or contact.";
 
     setTimeout(() => {
-      const reply: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: assistantContent,
-      };
+      const reply: Message = widget
+        ? { id: crypto.randomUUID(), role: "assistant", content: "", widget }
+        : {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: assistantContent,
+          };
       setMessages((m) => [...m, reply]);
       setIsThinking(false);
     }, 600);
@@ -73,7 +276,9 @@ export const ChatPortfolio = ({
   const onPickSuggestion = (s: Suggestion) => sendUserMessage(s.label);
 
   return (
-    <div className="min-h-[100svh] w-full relative overflow-hidden bg-[var(--background)] text-[var(--foreground)] flex flex-col px-3 sm:px-0">
+    <div
+      className={`${styles.portfolioTheme} min-h-[100svh] w-full relative overflow-hidden bg-[var(--background)] text-[var(--foreground)] flex flex-col px-3 sm:px-0`}
+    >
       {/* Ambient gradient orbs */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 -left-32 h-80 w-80 rounded-full blur-3xl opacity-40 dark:opacity-20 bg-[oklch(0.84_0.07_250)]" />
@@ -101,7 +306,7 @@ export const ChatPortfolio = ({
           ) : (
             <div
               ref={listRef}
-              className="absolute inset-0 overflow-y-auto pb-40"
+              className="absolute inset-0 overflow-y-auto pb-40 thin-scrollbar"
             >
               <div className="mx-auto w-full max-w-3xl">
                 <Thread messages={messages} isThinking={isThinking} />

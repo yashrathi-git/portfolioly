@@ -1,9 +1,9 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import { Suggestions } from "../Suggestions";
+import { Suggestions } from "./Suggestions";
 import { Composer } from "./Composer";
-import type { Suggestion } from "../types";
+import type { Suggestion } from "./types";
 
 type EmptyStateProps = {
   title: string;
@@ -49,12 +49,7 @@ export const EmptyState = ({
 
         <Suggestions
           items={suggestions}
-          onPick={
-            onPick
-              ? onPick
-              : (s) =>
-                  onSubmitFromSuggestion(s, inputValue, onInputChange, onSubmit)
-          }
+          onPick={onPick ? onPick : (s) => onSubmitFromSuggestion(s, inputValue, onInputChange, onSubmit)}
           variant="initial"
           className="mt-6"
           // ensure only first five are shown initially
@@ -62,8 +57,7 @@ export const EmptyState = ({
         />
 
         <div className="mt-8 text-[11px] md:text-xs text-[color:var(--muted-foreground)]">
-          Built as a minimal, aesthetic chat portfolio. Future replies may
-          include rich components.
+          Built as a minimal, aesthetic chat portfolio. Future replies may include rich components.
         </div>
       </div>
     </div>

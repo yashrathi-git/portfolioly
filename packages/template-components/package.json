@@ -5,10 +5,20 @@
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./style.css": "./dist/style.css",
+    "./styles.css": "./styles.css"
+  },
   "files": [
     "dist",
     "styles.css"
   ],
+  "style": "dist/style.css",
   "peerDependencies": {
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.544.0",

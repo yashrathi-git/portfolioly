@@ -1,0 +1,75 @@
+:local(.portfolioTheme) {
+  /* Light mode tuning for the portfolio preview only */
+  /* Slightly warmer neutrals and softer borders */
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.18 0 0);
+
+  --card: oklch(0.985 0 0);
+  --card-foreground: var(--foreground);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.28 0.02 260);
+  --primary-foreground: oklch(0.985 0 0);
+
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: var(--foreground);
+
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.48 0 0);
+
+  --accent: oklch(0.96 0 0);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.62 0.22 25);
+
+  --border: oklch(0.92 0 0 / 80%);
+  --input: oklch(0.92 0 0 / 85%);
+  --ring: oklch(0.72 0 0);
+
+  /* Charts keep existing brand hues but with comfortable contrast */
+  --chart-1: oklch(0.64 0.22 41);
+  --chart-2: oklch(0.6 0.12 185);
+  --chart-3: oklch(0.46 0.08 228);
+  --chart-4: oklch(0.83 0.19 84);
+  --chart-5: oklch(0.77 0.19 70);
+}
+
+:global(.dark) :local(.portfolioTheme) {
+  /* Softer dark palette for preview embed */
+  --background: oklch(0.22 0.01 260);
+  --foreground: oklch(0.96 0 0);
+
+  --card: oklch(0.255 0.01 260);
+  --card-foreground: var(--foreground);
+
+  --popover: oklch(0.26 0.01 260);
+  --popover-foreground: var(--foreground);
+
+  /* Slightly brighter primary for better legibility on dark */
+  --primary: oklch(0.88 0.03 260);
+  --primary-foreground: oklch(0.22 0.01 260);
+
+  --secondary: oklch(0.3 0.005 260);
+  --secondary-foreground: var(--foreground);
+
+  --muted: oklch(0.3 0.005 260);
+  --muted-foreground: oklch(0.78 0 0);
+
+  --accent: oklch(0.32 0.01 260);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.66 0.18 22);
+
+  /* Softer borders/inputs to avoid heavy contrast bands */
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 18%);
+  --ring: oklch(0.62 0 0);
+
+  --chart-1: oklch(0.62 0.2 265);
+  --chart-2: oklch(0.7 0.16 162);
+  --chart-3: oklch(0.75 0.18 70);
+  --chart-4: oklch(0.66 0.22 304);
+  --chart-5: oklch(0.68 0.22 16);
+}

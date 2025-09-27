@@ -3,6 +3,8 @@
 /* Updated: 2025-09-18T21:25:03.783Z */
 @import "tailwindcss";
 @source "../../../../packages/template-components/src";
+@import "../../../../packages/template-components/styles.css";
+@import "../../../../packages/template-components/dist/style.css";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
