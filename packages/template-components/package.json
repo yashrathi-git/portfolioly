@@ -11,6 +11,26 @@
       "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     },
+    "./types": {
+      "import": "./dist/types/index.mjs",
+      "require": "./dist/types/index.cjs",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./config": {
+      "import": "./dist/config/template-config.mjs",
+      "require": "./dist/config/template-config.cjs",
+      "types": "./dist/config/template-config.d.ts"
+    },
+    "./providers": {
+      "import": "./dist/providers/index.mjs",
+      "require": "./dist/providers/index.cjs",
+      "types": "./dist/providers/index.d.ts"
+    },
+    "./utils": {
+      "import": "./dist/utils/index.mjs",
+      "require": "./dist/utils/index.cjs",
+      "types": "./dist/utils/index.d.ts"
+    },
     "./style.css": "./dist/style.css",
     "./styles.css": "./styles.css"
   },

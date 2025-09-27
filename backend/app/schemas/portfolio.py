@@ -39,6 +39,7 @@ class Profile(BaseModel):
     type: Optional[ProfileType] = None
     url: Optional[str] = None
     label: Optional[str] = None
+    profile_photo_url: Optional[str] = None
     tags: Optional[List[str]] = Field(default_factory=list)
     more_context: Optional[str] = None
 

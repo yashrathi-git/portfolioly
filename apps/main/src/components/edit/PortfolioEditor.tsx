@@ -13,7 +13,7 @@ import { ProjectsForm } from "./ProjectsForm";
 import { EducationForm } from "./EducationForm";
 import { CertificationsForm } from "./CertificationsForm";
 import { TextBlobsForm } from "./TextBlobsForm";
-import PortfolioPreview from "./PortfolioPreview";
+import { PortfolioPreview } from "./PortfolioPreview";
 
 export interface PortfolioEditorProps {
   initial?: PortfolioData;

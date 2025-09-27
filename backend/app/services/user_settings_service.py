@@ -1,0 +1,260 @@
+"""
+User settings service for managing usernames and portfolio visibility.
+"""
+
+from typing import Optional, Dict, Any, List
+from datetime import datetime
+import logging
+import re
+
+from ..core.firebase import get_firebase_auth
+from ..schemas.user_settings import UserSettings, UserSettingsCreate, UserSettingsUpdate
+
+logger = logging.getLogger(__name__)
+
+
+class UserSettingsError(Exception):
+    """Custom exception for user settings operations."""
+
+    pass
+
+
+class UserSettingsService:
+    """Service for managing user settings in Firestore."""
+
+    def __init__(self):
+        self._db = None
+
+    @property
+    def db(self):
+        """Lazy initialization of Firestore client."""
+        if self._db is None:
+            self._initialize_firebase()
+        return self._db
+
+    def _initialize_firebase(self):
+        """Initialize Firebase Firestore client."""
+        try:
+            import firebase_admin
+            from firebase_admin import firestore
+
+            # Initialize Firebase if not already done
+            if not firebase_admin._apps:
+                from ..core.firebase import initialize_firebase
+
+                initialize_firebase()
+
+            self._db = firestore.client()
+            logger.info("Firebase Firestore client initialized for user settings")
+        except Exception as e:
+            logger.error(f"Failed to initialize Firebase for user settings: {e}")
+            raise UserSettingsError(f"Firebase initialization failed: {e}")
+
+    def get_user_settings(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get user settings by user ID."""
+        try:
+            doc_ref = self.db.collection("user_settings").document(user_id)
+            doc = doc_ref.get()
+
+            if doc.exists:
+                data = doc.to_dict()
+                logger.debug(f"Retrieved user settings for user {user_id}")
+                return data
+
+            logger.debug(f"No user settings found for user {user_id}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error retrieving user settings for user {user_id}: {e}")
+            raise UserSettingsError(f"Failed to retrieve user settings: {e}")
+
+    def get_user_settings_by_username(self, username: str) -> Optional[Dict[str, Any]]:
+        """Get user settings by username."""
+        try:
+            # Normalize username to lowercase for lookup
+            username_lower = username.lower()
+
+            query = (
+                self.db.collection("user_settings")
+                .where("username", "==", username_lower)
+                .limit(1)
+            )
+            docs = query.stream()
+
+            for doc in docs:
+                data = doc.to_dict()
+                logger.debug(f"Retrieved user settings for username {username}")
+                return data
+
+            logger.debug(f"No user settings found for username {username}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error retrieving user settings for username {username}: {e}")
+            raise UserSettingsError(
+                f"Failed to retrieve user settings by username: {e}"
+            )
+
+    def create_user_settings(
+        self, user_id: str, settings: UserSettingsCreate
+    ) -> UserSettings:
+        """Create new user settings."""
+        try:
+            now = datetime.utcnow()
+
+            user_settings = UserSettings(
+                user_id=user_id,
+                username=settings.username,
+                is_public=settings.is_public,
+                created_at=now,
+                updated_at=now,
+            )
+
+            # Check if username is already taken (if provided)
+            if user_settings.username:
+                existing = self.get_user_settings_by_username(user_settings.username)
+                if existing and existing.get("user_id") != user_id:
+                    raise UserSettingsError("Username is already taken")
+
+            # Store in Firestore
+            doc_ref = self.db.collection("user_settings").document(user_id)
+            doc_ref.set(user_settings.dict())
+
+            logger.info(f"Created user settings for user {user_id}")
+            return user_settings
+
+        except UserSettingsError:
+            raise
+        except Exception as e:
+            logger.error(f"Error creating user settings for user {user_id}: {e}")
+            raise UserSettingsError(f"Failed to create user settings: {e}")
+
+    def update_user_settings(
+        self, user_id: str, updates: UserSettingsUpdate
+    ) -> UserSettings:
+        """Update existing user settings."""
+        try:
+            # Get existing settings
+            existing_data = self.get_user_settings(user_id)
+            if not existing_data:
+                # Create new settings if none exist
+                create_data = UserSettingsCreate(
+                    username=updates.username, is_public=updates.is_public or False
+                )
+                return self.create_user_settings(user_id, create_data)
+
+            # Check if username is already taken (if being updated)
+            if updates.username and updates.username != existing_data.get("username"):
+                existing = self.get_user_settings_by_username(updates.username)
+                if existing and existing.get("user_id") != user_id:
+                    raise UserSettingsError("Username is already taken")
+
+            # Prepare update data
+            update_data = {"updated_at": datetime.utcnow()}
+
+            if updates.username is not None:
+                update_data["username"] = (
+                    updates.username.lower() if updates.username else None
+                )
+
+            if updates.is_public is not None:
+                update_data["is_public"] = updates.is_public
+
+            # Update in Firestore
+            doc_ref = self.db.collection("user_settings").document(user_id)
+            doc_ref.update(update_data)
+
+            # Return updated settings
+            updated_data = self.get_user_settings(user_id)
+            logger.info(f"Updated user settings for user {user_id}")
+
+            return UserSettings(**updated_data)
+
+        except UserSettingsError:
+            raise
+        except Exception as e:
+            logger.error(f"Error updating user settings for user {user_id}: {e}")
+            raise UserSettingsError(f"Failed to update user settings: {e}")
+
+    def set_username(self, user_id: str, username: str) -> None:
+        """Set or update user's username."""
+        updates = UserSettingsUpdate(username=username)
+        self.update_user_settings(user_id, updates)
+
+    def set_portfolio_visibility(self, user_id: str, is_public: bool) -> None:
+        """Set portfolio visibility."""
+        updates = UserSettingsUpdate(is_public=is_public)
+        self.update_user_settings(user_id, updates)
+
+    def remove_username(self, user_id: str) -> None:
+        """Remove username and set portfolio to private."""
+        updates = UserSettingsUpdate(username=None, is_public=False)
+        self.update_user_settings(user_id, updates)
+
+    def validate_username(self, username: str) -> Dict[str, Any]:
+        """Validate username format and availability."""
+        try:
+            # Basic format validation
+            if not username:
+                return {"valid": False, "error": "Username is required"}
+
+            if len(username) < 3:
+                return {
+                    "valid": False,
+                    "error": "Username must be at least 3 characters long",
+                }
+
+            if len(username) > 30:
+                return {
+                    "valid": False,
+                    "error": "Username must be no more than 30 characters long",
+                }
+
+            # Allow alphanumeric characters, hyphens, and underscores
+            if not re.match(r"^[a-zA-Z0-9_-]+$", username):
+                return {
+                    "valid": False,
+                    "error": "Username can only contain letters, numbers, hyphens, and underscores",
+                }
+
+            # Don't allow usernames that start or end with hyphens/underscores
+            if username.startswith(("-", "_")) or username.endswith(("-", "_")):
+                return {
+                    "valid": False,
+                    "error": "Username cannot start or end with hyphens or underscores",
+                }
+
+            # Reserved usernames
+            reserved = {
+                "admin",
+                "api",
+                "www",
+                "mail",
+                "ftp",
+                "localhost",
+                "root",
+                "support",
+                "help",
+                "about",
+                "contact",
+            }
+            if username.lower() in reserved:
+                return {"valid": False, "error": "This username is reserved"}
+
+            return {"valid": True}
+
+        except Exception as e:
+            logger.error(f"Error validating username {username}: {e}")
+            return {"valid": False, "error": "Username validation failed"}
+
+
+# Singleton instance
+_user_settings_service = None
+
+
+def get_user_settings_service() -> UserSettingsService:
+    """Get the singleton user settings service instance."""
+    global _user_settings_service
+    if _user_settings_service is None:
+        _user_settings_service = UserSettingsService()
+    return _user_settings_service

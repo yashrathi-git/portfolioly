@@ -1,15 +1,17 @@
 # @portfolioly/template-components Integration Guide
 
-This guide provides step-by-step instructions for integrating the Portfolioly template components into your application.
+This comprehensive guide provides step-by-step instructions for integrating the Portfolioly template components into your application.
 
 ## Table of Contents
 
 - [Installation](#installation)
-- [Basic Setup](#basic-setup)
-- [CSS Integration](#css-integration)
+- [Quick Start](#quick-start)
 - [Component Usage](#component-usage)
+- [Advanced Configuration](#advanced-configuration)
+- [Data Providers](#data-providers)
 - [TypeScript Configuration](#typescript-configuration)
 - [Styling and Theming](#styling-and-theming)
+- [Server-Side Rendering](#server-side-rendering)
 - [Troubleshooting](#troubleshooting)
 - [API Reference](#api-reference)
 
@@ -33,106 +35,181 @@ The package requires these peer dependencies:
 npm install react@>=18 react-dom@>=18 framer-motion@^12.23.12 lucide-react@^0.544.0
 ```
 
-## Basic Setup
+## Quick Start
 
-### 1. Import Components
+### Basic Chat Portfolio
 
 ```tsx
 import {
   ChatPortfolio,
-  TraditionalPortfolio,
+  examplePortfolioData,
 } from "@portfolioly/template-components";
-import type {
-  PortfolioData,
-  Profile,
-  Suggestion,
-} from "@portfolioly/template-components";
-```
-
-### 2. Import Styles
-
-**Option A: Import in your component (Recommended)**
-
-```tsx
 import "@portfolioly/template-components/style.css";
-```
 
-**Option B: Import in your global CSS**
-
-```css
-@import "@portfolioly/template-components/style.css";
-```
-
-## CSS Integration
-
-### Tailwind CSS Setup
-
-If you're using Tailwind CSS, add the template components source to your scanning:
-
-```css
-/* In your global CSS file */
-@import "tailwindcss";
-@source "path/to/node_modules/@portfolioly/template-components/src";
-@import "@portfolioly/template-components/style.css";
-```
-
-### Next.js Integration
-
-For Next.js applications, ensure CSS imports are supported (they are by default):
-
-```tsx
-// In your component or _app.tsx
-import "@portfolioly/template-components/style.css";
-```
-
-## Component Usage
-
-### Chat Portfolio
-
-```tsx
-import { ChatPortfolio } from "@portfolioly/template-components";
-import type {
-  Profile,
-  Suggestion,
-  PortfolioData,
-} from "@portfolioly/template-components";
-
-function MyPortfolio({ data }: { data: PortfolioData }) {
-  const profile: Profile = {
-    name: data.profile.name,
+function MyPortfolio() {
+  // Use the example data or provide your own
+  const profile = {
+    name: examplePortfolioData.profile.name,
     badge: "Chat Portfolio",
-    links: [
-      {
-        type: "github",
-        href:
-          data.profile.socials.find((s) => s.type === "github")?.href || "#",
-      },
-      {
-        type: "mail",
-        href: `mailto:${
-          data.profile.socials.find((s) => s.type === "mail")?.href
-        }`,
-      },
-      {
-        type: "link",
-        href:
-          data.profile.socials.find((s) => s.type === "website")?.href || "#",
-      },
-    ],
+    links: examplePortfolioData.profile.socials.map((social) => ({
+      type: social.type,
+      href: social.href,
+    })),
   };
 
-  const suggestions: Suggestion[] = [
+  const suggestions = [
     { id: "me", label: "About Me", icon: "user" },
     { id: "projects", label: "Projects", icon: "folderGit2" },
     { id: "skills", label: "Skills", icon: "wrench" },
     { id: "contact", label: "Contact", icon: "mail" },
   ];
 
+  const presets = {
+    "About Me": `I'm ${examplePortfolioData.profile.name}, ${examplePortfolioData.profile.headline}. I'm passionate about creating beautiful, functional user interfaces.`,
+    Projects:
+      "I've worked on several exciting projects including web applications, mobile apps, and design systems.",
+    Skills: `My technical skills include ${examplePortfolioData.skills?.join(
+      ", "
+    )}.`,
+    Contact: "Feel free to reach out via any of the links in my profile!",
+  };
+
+  return (
+    <ChatPortfolio
+      profile={profile}
+      suggestions={suggestions}
+      presets={presets}
+      portfolioData={examplePortfolioData}
+    />
+  );
+}
+```
+
+### Basic Traditional Portfolio
+
+```tsx
+import {
+  TraditionalPortfolio,
+  examplePortfolioData,
+} from "@portfolioly/template-components";
+import "@portfolioly/template-components/style.css";
+
+function MyTraditionalPortfolio() {
+  return <TraditionalPortfolio data={examplePortfolioData} />;
+}
+```
+
+## Component Usage
+
+### Available Components
+
+The package exports several components for different use cases:
+
+```tsx
+import {
+  // Main portfolio components
+  ChatPortfolio,
+  TraditionalPortfolio,
+  PortfolioDock,
+
+  // UI components
+  ThemeToggle,
+  UsernameSelector,
+  VisibilityToggle,
+  ErrorBoundary,
+
+  // Chat components (for custom implementations)
+  Composer,
+  EmptyState,
+  Header,
+  Thread,
+  Suggestions,
+
+  // Data and configuration
+  examplePortfolioData,
+} from "@portfolioly/template-components";
+```
+
+### Chat Portfolio with Custom Configuration
+
+```tsx
+import { ChatPortfolio } from "@portfolioly/template-components";
+import type {
+  PortfolioData,
+  Profile,
+  Suggestion,
+} from "@portfolioly/template-components";
+
+function CustomChatPortfolio({ data }: { data: PortfolioData }) {
+  const profile: Profile = {
+    name: data.profile.name,
+    badge: "Software Engineer",
+    links: data.profile.socials.map((social) => ({
+      type: social.type,
+      href: social.href,
+    })),
+  };
+
+  // Dynamic suggestions based on available data
+  const suggestions: Suggestion[] = [
+    { id: "me", label: "About Me", icon: "user" },
+    ...(data.projects.length > 0
+      ? [{ id: "projects", label: "Projects", icon: "folderGit2" }]
+      : []),
+    ...(data.experience && data.experience.length > 0
+      ? [{ id: "experience", label: "Experience", icon: "briefcase" }]
+      : []),
+    ...(data.education.length > 0
+      ? [{ id: "education", label: "Education", icon: "graduationCap" }]
+      : []),
+    ...(data.skills && data.skills.length > 0
+      ? [{ id: "skills", label: "Skills", icon: "wrench" }]
+      : []),
+    { id: "contact", label: "Contact", icon: "mail" },
+  ];
+
+  // Dynamic presets based on actual data
   const presets: Record<string, string> = {
-    "About Me": "I'm a passionate developer...",
-    Projects: "Here are some of my recent projects...",
-    Skills: "My technical skills include...",
-    Contact: "Feel free to reach out...",
+    "About Me": `I'm ${data.profile.name}, ${data.profile.headline}. ${
+      data.profile.location ? `Based in ${data.profile.location}.` : ""
+    } I'm passionate about creating innovative solutions and building great user experiences.`,
+
+    ...(data.projects.length > 0 && {
+      Projects: `I've worked on ${data.projects.length} project${
+        data.projects.length > 1 ? "s" : ""
+      } including ${data.projects[0].name}. ${
+        data.projects[0].highlights?.[0] || "Check out my work!"
+      }`,
+    }),
+
+    ...(data.experience &&
+      data.experience.length > 0 && {
+        Experience: `I'm currently working as ${data.experience[0].role} at ${
+          data.experience[0].companyName
+        }. ${
+          data.experience[0].points?.[0] ||
+          "I have valuable experience in my field."
+        }`,
+      }),
+
+    ...(data.education.length > 0 && {
+      Education: `I studied ${data.education[0].degree} at ${data.education[0].school}. My education provided a strong foundation for my career.`,
+    }),
+
+    ...(data.skills &&
+      data.skills.length > 0 && {
+        Skills: `My technical skills include ${data.skills
+          .slice(0, 6)
+          .join(", ")}${
+          data.skills.length > 6 ? ", and more" : ""
+        }. I'm always learning new technologies.`,
+      }),
+
+    Contact: `Feel free to reach out via ${data.profile.socials
+      .map((s) => s.type)
+      .join(
+        " or "
+      )}. I'm always open to discussing new opportunities and interesting projects!`,
   };
 
   return (
@@ -146,86 +223,217 @@ function MyPortfolio({ data }: { data: PortfolioData }) {
 }
 ```
 
-### Traditional Portfolio
+### Portfolio with Theme Toggle
 
 ```tsx
-import { TraditionalPortfolio } from "@portfolioly/template-components";
-import type { PortfolioData } from "@portfolioly/template-components";
+import { ChatPortfolio, ThemeToggle } from "@portfolioly/template-components";
 
-function MyTraditionalPortfolio({ data }: { data: PortfolioData }) {
-  return <TraditionalPortfolio data={data} />;
-}
-```
-
-### Portfolio Dock (Navigation)
-
-```tsx
-import { PortfolioDock } from "@portfolioly/template-components";
-
-function MyApp() {
+function ThemedPortfolio({ data }: { data: PortfolioData }) {
   return (
-    <div>
-      {/* Your app content */}
-      <PortfolioDock />
+    <div className="relative">
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
+      <ChatPortfolio
+        profile={profile}
+        suggestions={suggestions}
+        presets={presets}
+        portfolioData={data}
+      />
     </div>
   );
 }
 ```
 
+## Advanced Configuration
+
+### Template Configuration
+
+For advanced use cases, you can use the configuration system:
+
+```tsx
+import {
+  HydrationProvider,
+  ChatPortfolio,
+} from "@portfolioly/template-components";
+import type { TemplateConfig } from "@portfolioly/template-components/config";
+
+const config: TemplateConfig = {
+  dataSource: "api", // "api" | "json" | "hybrid"
+  apiEndpoints: {
+    authenticatedPortfolio: "/api/portfolio",
+    publicPortfolio: "/api/public/portfolio",
+    usernameCheck: "/api/public/username",
+  },
+  authToken: "your-jwt-token", // Optional for authenticated requests
+  enableCache: true,
+  cacheTimeout: 5 * 60 * 1000, // 5 minutes
+  enableDebugLogging: process.env.NODE_ENV === "development",
+};
+
+function ConfiguredPortfolio({ username }: { username: string }) {
+  return (
+    <HydrationProvider config={config} username={username}>
+      <ChatPortfolio
+        profile={profile}
+        suggestions={suggestions}
+        presets={presets}
+        portfolioData={null} // Will be loaded by HydrationProvider
+      />
+    </HydrationProvider>
+  );
+}
+```
+
+### Error Boundary Integration
+
+```tsx
+import { ErrorBoundary, ChatPortfolio } from "@portfolioly/template-components";
+
+function SafePortfolio({ data }: { data: PortfolioData }) {
+  return (
+    <ErrorBoundary>
+      <ChatPortfolio
+        profile={profile}
+        suggestions={suggestions}
+        presets={presets}
+        portfolioData={data}
+      />
+    </ErrorBoundary>
+  );
+}
+```
+
+## Data Providers
+
+The package includes several data providers for different use cases:
+
+### API Data Provider
+
+```tsx
+import { HydrationProvider } from "@portfolioly/template-components";
+import type { TemplateConfig } from "@portfolioly/template-components/config";
+
+const apiConfig: TemplateConfig = {
+  dataSource: "api",
+  apiEndpoints: {
+    publicPortfolio: "/api/public/portfolio",
+  },
+};
+
+function ApiPortfolio({ username }: { username: string }) {
+  return (
+    <HydrationProvider config={apiConfig} username={username}>
+      <ChatPortfolio {...props} />
+    </HydrationProvider>
+  );
+}
+```
+
+### JSON Data Provider
+
+```tsx
+const jsonConfig: TemplateConfig = {
+  dataSource: "json",
+  jsonFiles: {
+    portfolioData: "/data/portfolio.json",
+  },
+};
+```
+
+### Hybrid Data Provider
+
+```tsx
+const hybridConfig: TemplateConfig = {
+  dataSource: "hybrid", // API with JSON fallback
+  apiEndpoints: {
+    publicPortfolio: "/api/public/portfolio",
+  },
+  jsonFiles: {
+    portfolioData: "/data/portfolio.json",
+  },
+};
+```
+
 ## TypeScript Configuration
 
-### Data Types
-
-The package exports comprehensive TypeScript types:
+### Core Types
 
 ```tsx
 import type {
+  // Main data types
   PortfolioData,
+  BackendPortfolioData,
   PortfolioProfile,
   PortfolioProject,
-  EducationItem,
-  ExperienceItem,
+
+  // Individual item types
+  PersonalInfo,
+  WorkExperience,
+  Project,
+  Education,
+  Certification,
+
+  // Social and profile types
   SocialLink,
   SocialType,
   Profile,
+  ProfileType,
+
+  // Chat types
   Suggestion,
   Message,
-  PortfolioConfig,
+
+  // Configuration types
+  TemplateConfig,
+  DataSourceType,
+
+  // Utility types
+  DateInfo,
+  TextBlobs,
 } from "@portfolioly/template-components";
 ```
 
-### Example Data Structure
+### Data Structure Examples
+
+#### Frontend Portfolio Data (Legacy)
 
 ```tsx
 const portfolioData: PortfolioData = {
   profile: {
-    name: "John Doe",
-    headline: "Full Stack Developer",
+    name: "Alex Chen",
+    headline: "Frontend Engineer",
     location: "San Francisco, CA",
-    profile_url: "https://example.com/photo.jpg", // optional
     socials: [
-      { type: "github", href: "https://github.com/johndoe", label: "johndoe" },
+      {
+        type: "github",
+        href: "https://github.com/alexchen",
+        label: "alexchen",
+      },
       {
         type: "linkedin",
-        href: "https://linkedin.com/in/johndoe",
-        label: "johndoe",
+        href: "https://linkedin.com/in/alexchen",
+        label: "alexchen",
       },
       {
         type: "mail",
-        href: "mailto:john@example.com",
-        label: "john@example.com",
+        href: "mailto:alex@example.com",
+        label: "alex@example.com",
       },
     ],
   },
   projects: [
     {
-      name: "My Awesome Project",
-      role: "Lead Developer",
-      one_line_description: "A revolutionary web application",
-      highlights: ["Built with React", "Deployed on AWS"],
-      technologies: ["React", "TypeScript", "Node.js"],
-      github: "https://github.com/johndoe/project",
-      live_link: "https://project.example.com",
+      name: "Aura",
+      role: "Creator",
+      one_line_description: "A minimalist AI notes app with semantic search",
+      highlights: [
+        "Fast, offline-first editor with sync",
+        "Semantic search and tagging",
+      ],
+      technologies: ["Next.js", "TypeScript", "Tailwind"],
+      github: "https://github.com/alexchen/aura",
+      live_link: "https://aura.example.com",
     },
   ],
   education: [
@@ -239,70 +447,212 @@ const portfolioData: PortfolioData = {
   ],
   experience: [
     {
-      companyName: "Tech Corp",
-      role: "Senior Developer",
+      companyName: "Acme Inc.",
+      role: "Senior Frontend Engineer",
       location: "San Francisco, CA",
       start: "Jan 2022",
       end: "Present",
-      points: ["Led development of key features", "Mentored junior developers"],
+      points: [
+        "Led migration to Next.js App Router",
+        "Built design system components",
+      ],
     },
   ],
-  skills: ["React", "TypeScript", "Node.js"],
-  achievements: ["Winner - Hackathon 2023"],
-  certificates: ["AWS Certified Developer"],
+  skills: ["React", "Next.js", "TypeScript", "Tailwind"],
+  achievements: ["Winner – Hackathon XYZ 2024"],
+  certificates: ["AWS Certified Cloud Practitioner"],
+};
+```
+
+#### Backend Portfolio Data (Current)
+
+```tsx
+const backendData: BackendPortfolioData = {
+  personal_info: {
+    full_name: "Alex Chen",
+    headline: "Frontend Engineer",
+    summary: "Passionate about creating beautiful, functional UIs",
+    email: "alex@example.com",
+    location: "San Francisco, CA",
+    profiles: [
+      {
+        type: "github",
+        url: "https://github.com/alexchen",
+        label: "alexchen",
+      },
+      {
+        type: "linkedin",
+        url: "https://linkedin.com/in/alexchen",
+        label: "alexchen",
+      },
+    ],
+  },
+  work_experiences: [
+    {
+      organization: "Acme Inc.",
+      title: "Senior Frontend Engineer",
+      location: "San Francisco, CA",
+      start_date: { month: 1, year: 2022 },
+      is_current: true,
+      highlights: [
+        "Led migration to Next.js App Router",
+        "Built design system components",
+      ],
+      technologies: ["React", "Next.js", "TypeScript"],
+    },
+  ],
+  projects: [
+    {
+      name: "Aura",
+      role: "Creator",
+      highlights: [
+        "Fast, offline-first editor with sync",
+        "Semantic search and tagging",
+      ],
+      technologies: ["Next.js", "TypeScript", "Tailwind"],
+      github: "https://github.com/alexchen/aura",
+      live_link: "https://aura.example.com",
+    },
+  ],
+  education: [
+    {
+      institution: "University of Technology",
+      degree: "B.S. Computer Science",
+      start_date: { month: 9, year: 2018 },
+      end_date: { month: 5, year: 2022 },
+      location: "San Francisco, CA",
+    },
+  ],
+  certifications: [
+    {
+      name: "AWS Certified Cloud Practitioner",
+      link: "https://aws.amazon.com/certification/",
+    },
+  ],
+  text_blobs: {
+    achievements: "Winner – Hackathon XYZ 2024\nSpeaker – JSConf Mini on RSC",
+    additional_context: "Passionate about performance and accessibility",
+  },
 };
 ```
 
 ## Styling and Theming
 
-### Custom Theme
+### CSS Integration
 
-The components come with a built-in portfolio theme that provides:
-
-- **Light Mode**: Warmer neutrals, softer borders
-- **Dark Mode**: Softer dark palette with better legibility
-- **Scoped Styling**: Isolated from your app's theme using CSS modules
-
-### Scrollbar Utilities
-
-The package includes thin scrollbar utilities:
+**Option 1: Component-level import (Recommended)**
 
 ```tsx
-<div className="thin-scrollbar">{/* Content with custom scrollbars */}</div>
+import "@portfolioly/template-components/style.css";
 ```
 
-### CSS Custom Properties
-
-The portfolio theme uses these CSS custom properties:
+**Option 2: Global CSS import**
 
 ```css
-/* Light mode */
---background: oklch(0.99 0 0);
---foreground: oklch(0.18 0 0);
---card: oklch(0.985 0 0);
---primary: oklch(0.28 0.02 260);
-/* ... and more */
+/* In your global CSS file */
+@import "@portfolioly/template-components/style.css";
+```
 
-/* Dark mode */
+### Custom Styling
+
+The components use CSS modules for scoped styling. You can override styles using CSS custom properties:
+
+```css
+/* Custom theme overrides */
+:root {
+  --portfolio-primary: #your-color;
+  --portfolio-background: #your-bg-color;
+  --portfolio-foreground: #your-text-color;
+}
+
 .dark {
-  --background: oklch(0.22 0.01 260);
-  --foreground: oklch(0.96 0 0);
-  /* ... and more */
+  --portfolio-primary: #your-dark-color;
+  --portfolio-background: #your-dark-bg;
+  --portfolio-foreground: #your-dark-text;
 }
 ```
 
-## Configuration
+### Tailwind CSS Integration
 
-### Portfolio Configuration
+If using Tailwind CSS, the components work seamlessly:
 
 ```tsx
-import { defaultPortfolioConfig } from "@portfolioly/template-components";
-import type { PortfolioConfig } from "@portfolioly/template-components";
+// The components include their own Tailwind classes
+// No additional configuration needed
+import { ChatPortfolio } from "@portfolioly/template-components";
+```
 
-const config: PortfolioConfig = {
-  enableChatPortfolio: true,
-  enableTraditionalPortfolio: true,
+## Server-Side Rendering
+
+### Next.js App Router
+
+```tsx
+// app/portfolio/[username]/page.tsx
+import { getServerSidePortfolioProps } from "@portfolioly/template-components/providers";
+import { ChatPortfolio } from "@portfolioly/template-components";
+import type { TemplateConfig } from "@portfolioly/template-components/config";
+
+const config: TemplateConfig = {
+  dataSource: "api",
+  apiEndpoints: {
+    publicPortfolio: "/api/public/portfolio",
+  },
 };
+
+export default async function PortfolioPage({
+  params,
+}: {
+  params: { username: string };
+}) {
+  const { portfolioData, notFound } = await getServerSidePortfolioProps(
+    config,
+    params.username
+  );
+
+  if (notFound) {
+    return <div>Portfolio not found</div>;
+  }
+
+  return (
+    <ChatPortfolio
+      profile={profile}
+      suggestions={suggestions}
+      presets={presets}
+      portfolioData={portfolioData}
+    />
+  );
+}
+```
+
+### Static Generation
+
+```tsx
+// For static site generation
+import {
+  getStaticPortfolioPaths,
+  getStaticPortfolioProps,
+} from "@portfolioly/template-components/providers";
+
+export async function generateStaticParams() {
+  const paths = await getStaticPortfolioPaths(config);
+  return paths.map((username) => ({ username }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { username: string };
+}) {
+  const { portfolioData } = await getStaticPortfolioProps(
+    config,
+    params.username
+  );
+
+  return {
+    title: `${portfolioData?.profile.name} - Portfolio`,
+    description: portfolioData?.profile.headline,
+  };
+}
 ```
 
 ## Troubleshooting
@@ -311,42 +661,59 @@ const config: PortfolioConfig = {
 
 #### 1. Styles Not Loading
 
-**Problem**: Portfolio components don't have the correct styling.
+**Problem**: Components appear unstyled.
 
-**Solution**: Ensure you're importing the CSS:
+**Solutions**:
 
-```tsx
-import "@portfolioly/template-components/style.css";
-```
+- Ensure CSS import: `import "@portfolioly/template-components/style.css"`
+- Check build configuration for CSS handling
+- Verify no conflicting CSS resets
 
 #### 2. TypeScript Errors
 
-**Problem**: TypeScript can't find type declarations.
+**Problem**: Type errors when using components.
 
-**Solution**: Ensure the package is properly installed and types are imported:
+**Solutions**:
 
 ```tsx
+// Ensure proper type imports
 import type { PortfolioData } from "@portfolioly/template-components";
+
+// Use type assertions if needed
+const data = portfolioData as PortfolioData;
 ```
 
-#### 3. CSS Module Issues
+#### 3. Hydration Mismatches (SSR)
 
-**Problem**: CSS modules not working in your build system.
+**Problem**: Server/client rendering differences.
 
-**Solution**: The package handles CSS modules internally. Just import the compiled CSS:
+**Solutions**:
 
 ```tsx
-import "@portfolioly/template-components/style.css";
+// Use dynamic imports for client-only components
+import dynamic from "next/dynamic";
+
+const ChatPortfolio = dynamic(
+  () =>
+    import("@portfolioly/template-components").then((mod) => mod.ChatPortfolio),
+  { ssr: false }
+);
 ```
 
-#### 4. Peer Dependency Warnings
+#### 4. Performance Issues
 
-**Problem**: Missing peer dependencies.
+**Problem**: Slow rendering with large datasets.
 
-**Solution**: Install all required peer dependencies:
+**Solutions**:
 
-```bash
-npm install react@>=18 react-dom@>=18 framer-motion@^12.23.12 lucide-react@^0.544.0
+```tsx
+// Use React.memo for expensive components
+import { memo } from "react";
+
+const MemoizedChatPortfolio = memo(ChatPortfolio);
+
+// Implement virtualization for large lists
+// Consider data pagination
 ```
 
 ### Build Configuration
@@ -355,25 +722,49 @@ npm install react@>=18 react-dom@>=18 framer-motion@^12.23.12 lucide-react@^0.54
 
 ```ts
 // vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
 export default defineConfig({
-  // CSS modules are handled automatically
+  plugins: [react()],
   css: {
     modules: {
       localsConvention: "camelCase",
     },
+  },
+  optimizeDeps: {
+    include: ["@portfolioly/template-components"],
   },
 });
 ```
 
 #### Next.js
 
-```ts
-// next.config.ts
+```js
+// next.config.js
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  // CSS imports are supported by default
+  transpilePackages: ["@portfolioly/template-components"],
   experimental: {
-    // Enable if using CSS modules in your own code
-    cssModules: true,
+    optimizePackageImports: ["@portfolioly/template-components"],
+  },
+};
+
+module.exports = nextConfig;
+```
+
+#### Webpack
+
+```js
+// webpack.config.js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: ["style-loader", "css-loader"],
+      },
+    ],
   },
 };
 ```
@@ -388,9 +779,9 @@ Interactive chat-style portfolio interface.
 
 **Props:**
 
-- `profile: Profile` - User profile information
-- `suggestions: Suggestion[]` - Chat suggestions
-- `presets: Record<string, string>` - Preset responses
+- `profile: Profile` - User profile for chat header
+- `suggestions: Suggestion[]` - Chat suggestion buttons
+- `presets: Record<string, string>` - Preset responses for suggestions
 - `portfolioData: PortfolioData` - Complete portfolio data
 
 #### `<TraditionalPortfolio>`
@@ -403,52 +794,133 @@ Traditional portfolio layout.
 
 #### `<PortfolioDock>`
 
-Navigation dock for switching between portfolio views.
+Navigation dock component.
 
-**Props:** None (uses configuration)
+**Props:** None (uses internal configuration)
 
-### Types
+#### `<ThemeToggle>`
 
-#### `PortfolioData`
+Dark/light mode toggle button.
 
-Main data structure containing all portfolio information.
+**Props:** None
 
-#### `Profile`
+#### `<ErrorBoundary>`
 
-Chat profile configuration for the chat interface.
+Error boundary wrapper for components.
 
-#### `Suggestion`
+**Props:**
 
-Chat suggestion with icon and label.
+- `children: ReactNode` - Components to wrap
+- `fallback?: ReactNode` - Custom error UI
+
+### Providers
+
+#### `<HydrationProvider>`
+
+Data provider for server-side rendering and client hydration.
+
+**Props:**
+
+- `config: TemplateConfig` - Configuration object
+- `username?: string` - Username for data fetching
+- `initialData?: PortfolioData` - Initial data for SSR
+- `children: ReactNode` - Child components
 
 ### Utilities
 
 #### `cn(...inputs: ClassValue[])`
 
-Utility function for combining class names (re-exported from clsx + tailwind-merge).
+Utility for combining CSS classes.
+
+```tsx
+import { cn } from "@portfolioly/template-components";
+
+const className = cn("base-class", condition && "conditional-class");
+```
+
+#### Data Mapping Utilities
+
+```tsx
+import {
+  mapBackendToFrontend,
+  mapFrontendToBackend,
+} from "@portfolioly/template-components/utils";
+
+// Convert backend data to frontend format
+const frontendData = mapBackendToFrontend(backendData);
+
+// Convert frontend data to backend format
+const backendData = mapFrontendToBackend(frontendData);
+```
+
+### Configuration Types
+
+#### `TemplateConfig`
+
+```tsx
+interface TemplateConfig {
+  dataSource: "api" | "json" | "hybrid";
+  apiEndpoints?: {
+    authenticatedPortfolio?: string;
+    publicPortfolio?: string;
+    usernameCheck?: string;
+    setUsername?: string;
+    setVisibility?: string;
+  };
+  jsonFiles?: {
+    portfolioData?: string;
+  };
+  authToken?: string;
+  enableCache?: boolean;
+  cacheTimeout?: number;
+  enableDebugLogging?: boolean;
+  enableDummyData?: boolean;
+}
+```
 
 ## Best Practices
 
-1. **Always import the CSS** to ensure proper styling
-2. **Use TypeScript types** for better development experience
-3. **Provide complete data** for the best user experience
-4. **Test in both light and dark modes** to ensure proper theming
-5. **Keep suggestions concise** for better chat UX
-6. **Provide meaningful presets** for chat responses
+### Performance
+
+1. **Use React.memo** for expensive components
+2. **Implement proper loading states** during data fetching
+3. **Consider virtualization** for large datasets
+4. **Optimize images** in portfolio data
+
+### Accessibility
+
+1. **Provide alt text** for images
+2. **Use semantic HTML** in custom components
+3. **Test with screen readers**
+4. **Ensure keyboard navigation** works properly
+
+### SEO
+
+1. **Use proper meta tags** for portfolio pages
+2. **Implement structured data** for better search results
+3. **Optimize for Core Web Vitals**
+4. **Use server-side rendering** when possible
+
+### Development
+
+1. **Use TypeScript** for better development experience
+2. **Implement error boundaries** for graceful error handling
+3. **Add loading and error states** for better UX
+4. **Test components** in isolation
+
+## Version Compatibility
+
+- **React**: >=18.0.0
+- **TypeScript**: ^5.0.0
+- **Node.js**: >=16.0.0
+- **Next.js**: >=13.0.0 (if using Next.js)
+- **Vite**: >=4.0.0 (if using Vite)
 
 ## Support
 
 For issues and questions:
 
 1. Check this integration guide
-2. Review the troubleshooting section
+2. Review the [troubleshooting section](#troubleshooting)
 3. Check the component source code for implementation details
-4. Ensure all peer dependencies are installed and up to date
-
-## Version Compatibility
-
-- **React**: >=18
-- **TypeScript**: ^5
-- **Node.js**: >=16
-- **Next.js**: >=13 (if using Next.js)
-- **Vite**: >=4 (if using Vite)
+4. Ensure all peer dependencies are installed and compatible
