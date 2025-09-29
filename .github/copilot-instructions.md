@@ -157,6 +157,96 @@ NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
+## Rate Limiting & Resource Management
+
+### In-Memory Rate Limiter (Sliding Window)
+**Critical**: Uses in-memory storage with automatic cleanup to prevent memory bloat
+- Implementation: `backend/app/services/rate_limiter.py` (`InMemoryRateLimiter`)
+- Sliding window algorithm tracks timestamps per user/endpoint
+- Auto-expires old requests outside time window
+- **Storage structure**: `{user_id: {endpoint: deque[timestamps]}}`
+
+**Per-Hour Limits** (configurable in `backend/app/core/config.py`):
+- PDF uploads: 10/hour per user
+- GitHub API requests: 10/hour per user
+- Window: 3600 seconds (1 hour)
+
+**Protected Routes** (via dependencies in `backend/app/dependencies/rate_limiting.py`):
+```python
+# PDF upload rate limiting
+POST /api/ingest/pdf - check_pdf_upload_rate_limit dependency
+
+# GitHub API rate limiting  
+GET /api/github/repos - check_github_api_rate_limit dependency
+```
+
+### AI Processing Rate Limiter (Firebase Persistent)
+**Monthly limit**: 10 AI processing requests per user
+- Implementation: `backend/app/services/ai_rate_limiter.py` (`AIRateLimiter`)
+- Persistent storage in Firestore collection `ai_rate_limits`
+- Auto-resets on first day of each month
+- Applied in `POST /api/submit` before AI workflow execution
+
+**Error handling**:
+```python
+try:
+    rate_limit_info = ai_rate_limiter.check_rate_limit(user.uid)
+    # ... process AI request
+    ai_rate_limiter.increment_usage(user.uid)
+except AIRateLimitError as e:
+    raise HTTPException(429, detail={"error_code": "AI_RATE_LIMIT_EXCEEDED"})
+```
+
+### Prompt Caching (Filesystem)
+AI prompts cached to disk for debugging/auditing:
+- Location: `backend/app/services/prompt_cache/`
+- Auto-cleanup: keeps only last 10 cache files
+- Format: `ai_prompt_YYYYMMDD_HHMMSS.txt`
+- **Purpose**: Debug token counting issues, audit AI inputs (not for performance)
+
+## Authentication & Route Protection
+
+### Protected Route Patterns
+All routes use FastAPI dependencies for consistent auth enforcement:
+
+**Email Verified Required** (`require_verified_email`):
+- `GET/PUT/DELETE /portfolio` - Portfolio CRUD
+- `GET/PUT/DELETE /settings/*` - User settings
+- `POST /api/ingest/pdf` - PDF upload
+- `GET /api/github/repos` - GitHub repo listing
+- `POST /api/submit` - AI processing submission
+
+**Any Authenticated User** (`require_authenticated_user`):
+- `GET /auth/me` - Current user info
+- `POST /auth/verify-email-status` - Check verification status
+
+**Public (No Auth)**:
+- `GET /public/portfolio/{username}` - Public portfolios
+- `GET /public/username/{username}/available` - Username availability
+- `GET /health` - Health check
+
+### Error Response Patterns
+Standardized error codes in responses:
+- `AUTH_ERROR` - Invalid/missing token
+- `MISSING_TOKEN` - No Authorization header
+- `INVALID_TOKEN` - Token verification failed
+- `EMAIL_NOT_VERIFIED` - Email verification required (403)
+- `RATE_LIMIT_EXCEEDED` - Rate limit hit (429)
+- `AI_RATE_LIMIT_EXCEEDED` - Monthly AI limit hit (429)
+
+Example structured error:
+```json
+{
+  "detail": {
+    "message": "Rate limit exceeded. Maximum 10 PDF uploads per hour.",
+    "error_code": "RATE_LIMIT_EXCEEDED",
+    "retry_after": 2847,
+    "current_count": 10,
+    "limit": 10
+  }
+}
+```
+
 ## Key Integration Points
 
 ### Username & Public Portfolios
@@ -172,12 +262,28 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 4. Frontend fetches via `getUserPortfolio()` in `apps/main/src/lib/api/portfolio.ts`
 5. Mapper converts to template schema before rendering
 
-## Common Pitfalls
+## Common Pitfalls & Best Practices
 
+### Data & Types
 - ❌ Don't use template component types directly in main app - always map data
-- ❌ Don't bypass authentication middleware on sensitive backend routes
-- ❌ Don't forget to rebuild template-components after changes (`yarn build`)
 - ❌ Don't use arbitrary font sizes - reference `typography` system in template-components
 - ✅ Always import schemas from `app.schemas.*` in backend (centralized location)
 - ✅ Use `workspace:*` protocol for monorepo package references
+
+### Authentication & Security
+- ❌ Don't bypass authentication middleware on sensitive backend routes
+- ❌ Don't use `require_authenticated_user` for routes handling sensitive data - use `require_verified_email`
+- ✅ Check existing route protection patterns before adding new endpoints
+- ✅ Use structured error codes for consistent frontend error handling
+
+### Rate Limiting & Memory
+- ❌ Don't store unbounded data in in-memory rate limiter - cleanup is automatic but be aware
+- ❌ Don't forget rate limiting dependencies on upload/processing endpoints
+- ✅ AI rate limits are persistent (Firebase), upload rate limits are in-memory (resets on restart)
+- ✅ Prompt cache auto-cleans to 10 files max - no manual intervention needed
+
+### Development Workflow
+- ❌ Don't forget to rebuild template-components after changes (`yarn build`)
+- ❌ Don't trust markdown docs as source of truth - verify patterns in actual code
 - ✅ Run backend tests after modifying AI prompts or schemas to ensure compatibility
+- ✅ Check rate limiter config in `.env` when testing upload flows
