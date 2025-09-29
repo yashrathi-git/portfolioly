@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { getPostAuthRedirectPath } from "@/lib/auth/routeGuards";
+
 import {
   Card,
   CardContent,

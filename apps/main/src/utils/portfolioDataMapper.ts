@@ -87,12 +87,12 @@ function mapWorkExperiences(
   workExperiences: MainPortfolioData["work_experiences"] = []
 ): ExperienceItem[] {
   return workExperiences.map((exp) => ({
-    companyName: exp.organization || "",
-    role: exp.title || "",
-    location: exp.location || "",
-    start: formatDateInfo(exp.start_date),
-    end: exp.is_current ? "Present" : formatDateInfo(exp.end_date),
-    points: exp.highlights || [],
+    companyName: exp.organization,
+    role: exp.title,
+    location: exp.location,
+    start: formatDateInfo(exp.start_date) || undefined,
+    end: exp.is_current ? "Present" : formatDateInfo(exp.end_date) || undefined,
+    points: exp.highlights?.filter((highlight) => Boolean(highlight?.trim())),
   }));
 }
 
@@ -103,13 +103,19 @@ function mapProjects(
   projects: MainPortfolioData["projects"] = []
 ): PortfolioProject[] {
   return projects.map((project) => ({
-    name: project.name || "",
-    role: project.role || "",
-    one_line_description: project.highlights?.[0] || "",
-    highlights: project.highlights || [],
-    technologies: project.technologies || [],
-    github: project.github || "",
-    live_link: project.live_link || "",
+    name: project.name,
+    role: project.role,
+    one_line_description: project.highlights?.find((highlight) =>
+      Boolean(highlight?.trim())
+    ),
+    highlights: project.highlights?.filter((highlight) =>
+      Boolean(highlight?.trim())
+    ),
+    technologies: project.technologies?.filter((technology) =>
+      Boolean(technology?.trim())
+    ),
+    github: project.github,
+    live_link: project.live_link,
   }));
 }
 
@@ -119,15 +125,21 @@ function mapProjects(
 function mapEducation(
   education: MainPortfolioData["education"] = []
 ): EducationItem[] {
-  return education.map((edu) => ({
-    school: edu.institution || "",
-    degree: `${edu.degree || ""}${
-      edu.branch ? ` in ${edu.branch}` : ""
-    }`.trim(),
-    start: formatDateInfo(edu.start_date),
-    end: edu.is_current ? "Present" : formatDateInfo(edu.end_date),
-    location: edu.location || "",
-  }));
+  return education.map((edu) => {
+    const degreeParts = [edu.degree, edu.branch]
+      .map((part) => (part && part.trim()) || undefined)
+      .filter(Boolean) as string[];
+
+    return {
+      school: edu.institution,
+      degree: degreeParts.join(degreeParts.length > 1 ? " in " : ""),
+      start: formatDateInfo(edu.start_date) || undefined,
+      end: edu.is_current
+        ? "Present"
+        : formatDateInfo(edu.end_date) || undefined,
+      location: edu.location,
+    };
+  });
 }
 
 /**
@@ -159,11 +171,15 @@ export function mapPortfolioDataToTemplate(
 
   return {
     profile: {
-      name: personalInfo.full_name || "",
-      headline: personalInfo.headline || "",
-      location: personalInfo.location || "",
-      // Use profile photo URL if available in profiles
-      profile_photo_url: personalInfo.profiles?.find((p) => p.url)?.url,
+      name: personalInfo.full_name,
+      headline: personalInfo.headline,
+      location: personalInfo.location,
+      email: personalInfo.email,
+      summary: personalInfo.summary,
+      // Prefer explicit profile photo URLs if provided
+      avatarUrl: personalInfo.profiles?.find(
+        (profile) => profile.profile_photo_url
+      )?.profile_photo_url,
       socials: mapProfilesToSocials(personalInfo.profiles),
     },
     projects: mapProjects(data.projects),
@@ -171,10 +187,10 @@ export function mapPortfolioDataToTemplate(
     experience: mapWorkExperiences(data.work_experiences),
     skills: extractSkills(data),
     achievements: data.text_blobs?.achievements
-      ? [data.text_blobs.achievements]
+      ? [data.text_blobs.achievements].filter((item) => Boolean(item?.trim()))
       : [],
     certificates: (data.certifications || [])
       .map((cert) => cert.name || "")
-      .filter(Boolean),
+      .filter((name) => Boolean(name.trim())),
   };
 }

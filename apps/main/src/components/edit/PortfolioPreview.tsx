@@ -36,166 +36,207 @@ export function PortfolioPreview({
     const personalInfo = data.personal_info;
     const socials = personalInfo?.profiles || [];
 
+    if (!personalInfo) {
+      return undefined;
+    }
+
+    const headerLinks: { type: "github" | "mail" | "link"; href: string }[] =
+      [];
+
+    const githubProfile = socials.find((p) => p.type === "github" && p.url);
+    if (githubProfile?.url) {
+      headerLinks.push({ type: "github", href: githubProfile.url });
+    }
+
+    if (personalInfo.email) {
+      headerLinks.push({ type: "mail", href: `mailto:${personalInfo.email}` });
+    }
+
+    const websiteProfile = socials.find(
+      (p) => (p.type === "website" || p.type === "portfolio") && p.url
+    );
+    if (websiteProfile?.url) {
+      headerLinks.push({ type: "link", href: websiteProfile.url });
+    }
+
+    if (!headerLinks.length && !personalInfo.full_name) {
+      return undefined;
+    }
+
     return {
-      name: personalInfo?.full_name || "Portfolio Owner",
-      badge: "Chat Portfolio",
-      links: [
-        // Add GitHub link if available
-        ...(socials.find((p) => p.type === "github")
-          ? [
-              {
-                type: "github" as const,
-                href: socials.find((p) => p.type === "github")?.url || "#",
-              },
-            ]
-          : []),
-        // Add email link if available
-        ...(personalInfo?.email
-          ? [{ type: "mail" as const, href: `mailto:${personalInfo.email}` }]
-          : []),
-        // Add website/portfolio link if available
-        ...(socials.find((p) => p.type === "website" || p.type === "portfolio")
-          ? [
-              {
-                type: "link" as const,
-                href:
-                  socials.find(
-                    (p) => p.type === "website" || p.type === "portfolio"
-                  )?.url || "#",
-              },
-            ]
-          : []),
-      ],
+      name: personalInfo.full_name,
+      badge: headerLinks.length ? "Chat Portfolio" : undefined,
+      links: headerLinks,
     };
   }, [data]);
 
   // Dynamic suggestions based on available data
   const suggestions = useMemo(() => {
-    const baseSuggestions = [{ id: "me", label: "About Me", icon: "user" }];
+    const availableSuggestions: { id: string; label: string; icon: string }[] =
+      [];
 
-    // Add projects suggestion if user has projects
+    if (
+      data.personal_info?.summary ||
+      data.personal_info?.headline ||
+      data.personal_info?.full_name
+    ) {
+      availableSuggestions.push({ id: "me", label: "About Me", icon: "user" });
+    }
+
     if (data.projects && data.projects.length > 0) {
-      baseSuggestions.push({
+      availableSuggestions.push({
         id: "projects",
         label: "Projects",
         icon: "folderGit2",
       });
     }
 
-    // Add skills suggestion if user has work experience or projects with technologies
     const hasSkills =
       data.work_experiences?.some((exp) => exp.technologies?.length) ||
       data.projects?.some((proj) => proj.technologies?.length);
     if (hasSkills) {
-      baseSuggestions.push({ id: "skills", label: "Skills", icon: "wrench" });
+      availableSuggestions.push({
+        id: "skills",
+        label: "Skills",
+        icon: "wrench",
+      });
     }
 
-    // Add experience suggestion if user has work experience
     if (data.work_experiences && data.work_experiences.length > 0) {
-      baseSuggestions.push({
+      availableSuggestions.push({
         id: "experience",
         label: "Experience",
         icon: "briefcase",
       });
     }
 
-    // Add education suggestion if user has education
     if (data.education && data.education.length > 0) {
-      baseSuggestions.push({
+      availableSuggestions.push({
         id: "education",
         label: "Education",
         icon: "graduationCap",
       });
     }
 
-    // Always add contact suggestion
-    baseSuggestions.push({ id: "contact", label: "Contact", icon: "mail" });
+    const hasContact = Boolean(
+      data.personal_info?.email ||
+        data.personal_info?.profiles?.some(
+          (p) =>
+            ["linkedin", "github", "website", "portfolio"].includes(
+              p.type ?? ""
+            ) && p.url
+        )
+    );
 
-    return baseSuggestions;
+    if (hasContact) {
+      availableSuggestions.push({
+        id: "contact",
+        label: "Contact",
+        icon: "mail",
+      });
+    }
+
+    return availableSuggestions;
   }, [data]);
 
   // Dynamic presets based on actual user data
   const presets = useMemo(() => {
     const personalInfo = data.personal_info;
-    const name = personalInfo?.full_name || "Portfolio Owner";
+    const name = personalInfo?.full_name;
+    const presetResponses: Record<string, string> = {};
 
-    const presetResponses: Record<string, string> = {
-      "About Me":
+    if (personalInfo?.summary || personalInfo?.headline || name) {
+      presetResponses["About Me"] =
         personalInfo?.summary ||
-        `I'm ${name}, ${personalInfo?.headline || "a professional"} based in ${
-          personalInfo?.location || "my location"
-        }. ${
-          personalInfo?.summary ||
-          "I'm passionate about my work and always looking for new challenges."
-        }`,
-    };
+        [
+          name ? `I'm ${name}` : null,
+          personalInfo?.headline,
+          personalInfo?.location,
+        ]
+          .filter(Boolean)
+          .join(" · ") ||
+        "Thanks for your interest!";
+    }
 
-    // Add projects preset if user has projects
     if (data.projects && data.projects.length > 0) {
       const projectCount = data.projects.length;
       const topProject = data.projects[0];
-      presetResponses["Projects"] = `I've worked on ${projectCount} project${
-        projectCount > 1 ? "s" : ""
-      } including ${topProject.name || "various projects"}. ${
-        topProject.highlights?.[0] || "Check out my work!"
-      } You can explore more details about each project.`;
+      presetResponses["Projects"] =
+        `I've worked on ${projectCount} project${
+          projectCount > 1 ? "s" : ""
+        }.` + (topProject.name ? ` Recent highlight: ${topProject.name}.` : "");
     }
 
-    // Add skills preset if user has technologies
     const allTechnologies = new Set<string>();
     data.work_experiences?.forEach((exp) => {
-      exp.technologies?.forEach((tech) => allTechnologies.add(tech));
+      exp.technologies?.forEach((tech) => tech && allTechnologies.add(tech));
     });
     data.projects?.forEach((proj) => {
-      proj.technologies?.forEach((tech) => allTechnologies.add(tech));
+      proj.technologies?.forEach((tech) => tech && allTechnologies.add(tech));
     });
 
     if (allTechnologies.size > 0) {
       const techList = Array.from(allTechnologies).slice(0, 6).join(", ");
-      presetResponses["Skills"] = `My technical skills include ${techList}${
-        allTechnologies.size > 6 ? ", and more" : ""
-      }. I'm always learning new technologies and staying up-to-date with industry trends.`;
+      presetResponses["Skills"] =
+        `My current toolkit includes ${techList}` +
+        (allTechnologies.size > 6 ? " and more." : ".");
     }
 
-    // Add experience preset if user has work experience
     if (data.work_experiences && data.work_experiences.length > 0) {
       const currentJob = data.work_experiences.find((exp) => exp.is_current);
       const latestJob = currentJob || data.work_experiences[0];
+      const org = latestJob.organization || "my company";
+      const title = latestJob.title || "a professional";
       presetResponses["Experience"] = `I'm ${
-        currentJob ? "currently working" : "experienced"
-      } as ${latestJob.title || "a professional"} at ${
-        latestJob.organization || "my company"
-      }. ${
-        latestJob.highlights?.[0] || "I have valuable experience in my field."
-      } Feel free to ask about my career journey!`;
+        currentJob ? "currently" : "recently"
+      } ${title} at ${org}.`;
     }
 
-    // Add education preset if user has education
     if (data.education && data.education.length > 0) {
       const latestEdu = data.education[0];
-      presetResponses["Education"] = `I studied ${latestEdu.degree || "at"} ${
-        latestEdu.branch ? `in ${latestEdu.branch}` : ""
-      } at ${latestEdu.institution || "university"}. ${
-        latestEdu.grade ? `I graduated with ${latestEdu.grade}.` : ""
-      } My education provided a strong foundation for my career.`;
+      presetResponses["Education"] =
+        `I studied ${latestEdu.degree || ""}`.trim() +
+        (latestEdu.institution ? ` at ${latestEdu.institution}.` : "");
     }
 
-    // Always add contact preset
-    const contactMethods = [];
-    if (personalInfo?.email) contactMethods.push("email");
-    if (personalInfo?.profiles?.some((p) => p.type === "linkedin"))
-      contactMethods.push("LinkedIn");
-    if (personalInfo?.profiles?.some((p) => p.type === "github"))
-      contactMethods.push("GitHub");
-
-    presetResponses["Contact"] = `Feel free to reach out via ${
-      contactMethods.length > 0
-        ? contactMethods.join(" or ")
-        : "the contact information provided"
-    }. I'm always open to discussing new opportunities, collaborations, and interesting projects!`;
+    if (
+      data.personal_info?.email ||
+      data.personal_info?.profiles?.some(
+        (p) =>
+          ["linkedin", "github", "website", "portfolio"].includes(
+            p.type ?? ""
+          ) && p.url
+      )
+    ) {
+      presetResponses["Contact"] =
+        "Feel free to reach out via the contact details listed.";
+    }
 
     return presetResponses;
   }, [data]);
+
+  const hasContent = Boolean(
+    profile ||
+      suggestions.length > 0 ||
+      Object.keys(presets).length > 0 ||
+      (templateData.profile &&
+        (templateData.profile.name ||
+          templateData.profile.headline ||
+          templateData.profile.location))
+  );
+
+  if (!hasContent) {
+    return (
+      <div className="w-full min-h-[400px] grid place-items-center">
+        <div className="max-w-md text-center space-y-4 text-muted-foreground">
+          <p>
+            We don’t have enough information yet. I’ll queue this request for
+            the AI assistant to generate a tailored response.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ChatPortfolio

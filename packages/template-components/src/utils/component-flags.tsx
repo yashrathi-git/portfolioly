@@ -2,12 +2,13 @@
  * Component flagging system for external data dependencies
  */
 
-import { PortfolioData, examplePortfolioData } from "../types/portfolio";
+import React from "react";
+import { PortfolioData } from "../types/portfolio";
 
 export interface ComponentDataRequirements {
   requiresExternalData: boolean;
   dataSource: "api" | "json" | "props";
-  fallbackData?: PortfolioData;
+  fallbackData?: PortfolioData | null;
   description: string;
 }
 
@@ -23,7 +24,7 @@ export interface FlaggedComponentProps {
 export function requiresExternalData(
   requirements: Omit<ComponentDataRequirements, "requiresExternalData">
 ) {
-  return function <T extends React.ComponentType<any>>(Component: T): T {
+  return function (Component: React.ComponentType<any>) {
     const WrappedComponent = (props: any) => {
       const { portfolioData, isLoading, error } = props;
 
@@ -40,24 +41,20 @@ export function requiresExternalData(
         }
       }
 
-      // Use fallback data if no data is provided
       const effectiveData =
-        portfolioData || requirements.fallbackData || examplePortfolioData;
+        portfolioData ?? requirements.fallbackData ?? null;
 
       return <Component {...props} portfolioData={effectiveData} />;
     };
 
-    WrappedComponent.displayName = `RequiresExternalData(${
-      Component.displayName || Component.name
-    })`;
+    WrappedComponent.displayName = `RequiresExternalData(${Component.displayName || Component.name})`;
 
-    // Attach metadata for introspection
     (WrappedComponent as any).__dataRequirements = {
       requiresExternalData: true,
       ...requirements,
     };
 
-    return WrappedComponent as T;
+    return WrappedComponent;
   };
 }
 
@@ -128,12 +125,12 @@ export function logFlaggedComponents(moduleExports: Record<string, any>): void {
  */
 export function withDummyData<P extends FlaggedComponentProps>(
   Component: React.ComponentType<P>,
-  dummyData: PortfolioData = examplePortfolioData
+  dummyData?: PortfolioData | null
 ) {
   return function DummyDataWrapper(props: P) {
     const effectiveProps = {
       ...props,
-      portfolioData: props.portfolioData || dummyData,
+      portfolioData: props.portfolioData ?? dummyData ?? null,
       isLoading: props.isLoading || false,
       error: props.error,
     };

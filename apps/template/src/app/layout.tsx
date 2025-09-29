@@ -1,3 +1,4 @@
+"use client";
 import type { Metadata } from "next";
 import "./globals.css";
 import "@portfolioly/template-components/src/styles.css";

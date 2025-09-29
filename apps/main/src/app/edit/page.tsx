@@ -1,9 +1,17 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import withAuth from "@/lib/auth/withAuth";
-import { PortfolioEditor } from "@/components/edit/PortfolioEditor";
+// Dynamic import to disable SSR for PortfolioEditor
+const PortfolioEditor = dynamic(
+  () =>
+    import("@/components/edit/PortfolioEditor").then((mod) => ({
+      default: mod.PortfolioEditor,
+    })),
+  { ssr: false }
+);
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -89,7 +97,9 @@ function EditPage() {
   // Retry loading portfolio
   const handleRetry = () => {
     setError(null);
-    window.location.reload();
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
   };
 
   if (loading) {

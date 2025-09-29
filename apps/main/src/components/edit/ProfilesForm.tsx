@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { PersonalInfo, Profile, ProfileType } from "@/types/portfolio";
+import type { PersonalInfo, Profile } from "@/types/portfolio";
+import { ProfileType } from "@/types/portfolio";
 
 export interface ProfilesFormProps {
   value: PersonalInfo;
@@ -20,21 +21,29 @@ export interface ProfilesFormProps {
 }
 
 const profileTypes: { label: string; value: ProfileType }[] = [
-  { label: "LinkedIn", value: "linkedin" },
-  { label: "GitHub", value: "github" },
-  { label: "Twitter / X", value: "twitter" },
-  { label: "Personal Website", value: "website" },
-  { label: "Portfolio", value: "portfolio" },
-  { label: "YouTube", value: "youtube" },
-  { label: "Google Scholar", value: "scholar" },
-  { label: "Other", value: "other" },
+  { label: "LinkedIn", value: ProfileType.LINKEDIN },
+  { label: "GitHub", value: ProfileType.GITHUB },
+  { label: "Twitter / X", value: ProfileType.TWITTER },
+  { label: "Personal Website", value: ProfileType.WEBSITE },
+  { label: "Portfolio", value: ProfileType.PORTFOLIO },
+  { label: "YouTube", value: ProfileType.YOUTUBE },
+  { label: "Google Scholar", value: ProfileType.SCHOLAR },
+  { label: "Other", value: ProfileType.OTHER },
 ];
 
 export function ProfilesForm({ value, onChange }: ProfilesFormProps) {
-  const profiles = value?.profiles ?? [];
+  const profiles = useMemo(() => {
+    const current = value?.profiles ?? [];
+    return [...current].sort((a, b) => {
+      const hasUrlA = Boolean(a.url);
+      const hasUrlB = Boolean(b.url);
+      if (hasUrlA === hasUrlB) return 0;
+      return hasUrlA ? -1 : 1;
+    });
+  }, [value?.profiles]);
 
   const addProfile = () => {
-    const next: Profile = { type: "linkedin", url: "", label: "" };
+    const next: Profile = { type: ProfileType.LINKEDIN, url: "", label: "" };
     onChange({ ...(value || {}), profiles: [...profiles, next] });
   };
 

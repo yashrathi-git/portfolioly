@@ -16,7 +16,21 @@ export type SkillsWidgetProps = {
   categories: SkillCategory[];
 };
 
-export const SkillsWidget = ({ heading = "Skills", categories }: SkillsWidgetProps) => {
+export const SkillsWidget = ({
+  heading = "Skills",
+  categories,
+}: SkillsWidgetProps) => {
+  const visibleCategories = categories
+    .map((category) => ({
+      title: category.title,
+      items: category.items.filter((item) => Boolean(item.name?.trim())),
+    }))
+    .filter((category) => category.items.length > 0);
+
+  if (visibleCategories.length === 0) {
+    return null;
+  }
+
   return (
     <div className="relative overflow-hidden rounded-2xl border bg-card text-card-foreground">
       {/* Glow */}
@@ -24,28 +38,40 @@ export const SkillsWidget = ({ heading = "Skills", categories }: SkillsWidgetPro
       <div className="p-5 sm:p-6">
         <h3 className="text-lg sm:text-xl font-semibold mb-4">{heading}</h3>
         <div className="grid sm:grid-cols-2 gap-5">
-          {categories.map((cat) => (
-            <div key={cat.title} className="rounded-xl bg-[var(--secondary)] p-4">
+          {visibleCategories.map((cat) => (
+            <div
+              key={cat.title}
+              className="rounded-xl bg-[var(--secondary)] p-4"
+            >
               <div className="text-sm font-medium mb-3">{cat.title}</div>
               <div className="space-y-2.5">
-                {cat.items.map((item) => (
-                  <div key={item.name} className="flex flex-col gap-1">
+                {cat.items.map((item, index) => (
+                  <div
+                    key={`${item.name}-${index}`}
+                    className="flex flex-col gap-1"
+                  >
                     <div className="flex items-center justify-between text-sm">
                       <span>{item.name}</span>
                       {typeof item.level === "number" && (
-                        <span className="text-[11px] text-[color:var(--muted-foreground)]">{item.level}%</span>
+                        <span className="text-[11px] text-[color:var(--muted-foreground)]">
+                          {item.level}%
+                        </span>
                       )}
                     </div>
                     {typeof item.level === "number" ? (
                       <div className="h-1.5 rounded-full bg-[var(--input)] overflow-hidden">
                         <div
                           className="h-full rounded-full bg-[oklch(0.646_0.222_41.116)]"
-                          style={{ width: `${Math.max(0, Math.min(100, item.level))}%` }}
+                          style={{
+                            width: `${Math.max(0, Math.min(100, item.level))}%`,
+                          }}
                         />
                       </div>
                     ) : (
                       <div className="flex flex-wrap gap-1.5">
-                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--input)]">{item.name}</span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--input)]">
+                          {item.name}
+                        </span>
                       </div>
                     )}
                   </div>

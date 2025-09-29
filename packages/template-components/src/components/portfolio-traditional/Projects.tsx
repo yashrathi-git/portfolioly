@@ -1,61 +1,77 @@
 import type { PortfolioProject } from "../../types/portfolio";
-import { Github, ExternalLink, Star, Tag } from "lucide-react";
+import { Github, ExternalLink } from "lucide-react";
 
 export type ProjectsProps = {
-  items: PortfolioProject[];
+  items?: PortfolioProject[];
 };
 
-export const Projects = ({ items }: ProjectsProps) => {
+export const Projects = ({ items = [] }: ProjectsProps) => {
+  const visibleItems = items.filter((item: PortfolioProject) =>
+    Boolean(
+      item.name ||
+        item.role ||
+        item.one_line_description ||
+        item.highlights?.length ||
+        item.technologies?.length ||
+        item.github ||
+        item.live_link
+    )
+  );
+
+  if (visibleItems.length === 0) {
+    return null;
+  }
+
   return (
     <div>
       <h2 className="text-xl font-semibold tracking-tight">Projects</h2>
       <div className="mt-5 grid gap-5 sm:grid-cols-2">
-        {items.map((p) => (
+        {visibleItems.map((p: PortfolioProject, index: number) => (
           <article
-            key={p.name}
+            key={p.name || `${p.github || p.live_link || "project"}-${index}`}
             className="group rounded-xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-base font-semibold leading-tight">
-                  {p.name}
-                </h3>
+                {p.name ? (
+                  <h3 className="text-base font-semibold leading-tight">
+                    {p.name}
+                  </h3>
+                ) : null}
                 {p.role && (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {p.role}
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Star className="h-4 w-4 fill-yellow-400/80 text-yellow-500" />
-                <span>Featured</span>
-              </div>
             </div>
 
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              {p.one_line_description}
-            </p>
+            {p.one_line_description && (
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                {p.one_line_description}
+              </p>
+            )}
 
-            {p.technologies && p.technologies.length > 0 && (
+            {p.technologies?.length ? (
               <div className="mt-4 flex flex-wrap gap-2">
-                {p.technologies.map((t) => (
+                {p.technologies.map((t: string) => (
                   <span
                     key={t}
                     className="inline-flex items-center gap-1 rounded-full border border-border/80 bg-secondary px-2.5 py-1 text-[11px] font-medium text-secondary-foreground"
                   >
-                    <Tag className="h-3.5 w-3.5" /> {t}
+                    {t}
                   </span>
                 ))}
               </div>
-            )}
+            ) : null}
 
-            {p.highlights && p.highlights.length > 0 && (
+            {p.highlights?.length ? (
               <ul className="mt-4 list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
-                {p.highlights.map((h, i) => (
-                  <li key={i}>{h}</li>
+                {p.highlights.map((h: string, i: number) => (
+                  <li key={`${h}-${i}`}>{h}</li>
                 ))}
               </ul>
-            )}
+            ) : null}
 
             <div className="mt-5 flex items-center gap-3">
               {p.github && (

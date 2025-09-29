@@ -3,7 +3,7 @@
  */
 
 import React, { Component, ReactNode } from "react";
-import { PortfolioData, examplePortfolioData } from "../types/portfolio";
+import { PortfolioData } from "../types/portfolio";
 
 export interface ErrorBoundaryState {
   hasError: boolean;
@@ -70,7 +70,7 @@ export class PortfolioErrorBoundary extends Component<
         <ErrorFallback
           errorType={this.state.errorType}
           errorMessage={this.state.errorMessage}
-          fallbackData={this.props.fallbackData || examplePortfolioData}
+          fallbackData={this.props.fallbackData}
           onRetry={() => this.setState({ hasError: false })}
         />
       );
@@ -83,7 +83,7 @@ export class PortfolioErrorBoundary extends Component<
 interface ErrorFallbackProps {
   errorType: ErrorBoundaryState["errorType"];
   errorMessage?: string;
-  fallbackData: PortfolioData;
+  fallbackData?: PortfolioData;
   onRetry: () => void;
 }
 

@@ -41,9 +41,17 @@ export const Suggestions = ({
   showMoreLabel = "Show more",
   className,
 }: SuggestionsProps) => {
+  if (!items || items.length === 0) {
+    return null;
+  }
   if (variant === "initial") {
     return (
-      <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3", className)}>
+      <div
+        className={cn(
+          "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3",
+          className
+        )}
+      >
         {items.slice(0, 5).map((s) => {
           const Icon = ICONS[s.icon] ?? Circle;
           return (
@@ -74,7 +82,9 @@ export const Suggestions = ({
   const visible = items.slice(0, maxVisible);
   const hasMore = items.length > maxVisible;
   return (
-    <div className={cn("flex flex-wrap items-center gap-2 sm:gap-3", className)}>
+    <div
+      className={cn("flex flex-wrap items-center gap-2 sm:gap-3", className)}
+    >
       {visible.map((s) => {
         const Icon = ICONS[s.icon] ?? Circle;
         return (

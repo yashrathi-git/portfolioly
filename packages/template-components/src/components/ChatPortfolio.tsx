@@ -8,7 +8,7 @@ import { Thread } from "./chat/Thread";
 import { Composer } from "./chat/Composer";
 import { Suggestions } from "./chat/Suggestions";
 import type { Message, Profile, Suggestion } from "./chat/types";
-import type { PortfolioData, examplePortfolioData } from "../types/portfolio";
+import type { PortfolioData } from "../types/portfolio";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
 import {
@@ -47,15 +47,25 @@ const ChatPortfolioComponent = ({
 
   const hasStarted = messages.length > 0;
 
-  // Use provided data or fallback to example data
-  const effectivePortfolioData = portfolioData || examplePortfolioData;
-  const effectiveProfile = profile || {
-    name: effectivePortfolioData.profile.name,
-    title: effectivePortfolioData.profile.headline,
-    avatarUrl:
-      effectivePortfolioData.profile.profile_photo_url ||
-      effectivePortfolioData.profile.avatarUrl,
-  };
+  const effectivePortfolioData = portfolioData;
+
+  const effectiveProfile = profile
+    ? {
+        ...profile,
+        name: profile.name ?? effectivePortfolioData?.profile?.name,
+        avatarUrl:
+          profile.avatarUrl ??
+          effectivePortfolioData?.profile?.profile_photo_url ??
+          effectivePortfolioData?.profile?.avatarUrl,
+      }
+    : effectivePortfolioData?.profile
+    ? {
+        name: effectivePortfolioData.profile.name,
+        avatarUrl:
+          effectivePortfolioData.profile.profile_photo_url ||
+          effectivePortfolioData.profile.avatarUrl,
+      }
+    : undefined;
 
   // Show loading state
   if (isLoading && !portfolioData) {
@@ -94,150 +104,133 @@ const ChatPortfolioComponent = ({
     );
   }
 
-  // Data for widgets (now using effective data)
-  const aboutData = {
-    name: effectiveProfile.name,
-    title: effectiveProfile.title || effectivePortfolioData.profile.headline,
-    summary:
-      "I design and build elegant interfaces with React/Next.js, focusing on performance, accessibility, and delightful motion.",
-    location: "San Francisco, CA · Remote-friendly",
-    largeImage: true,
-    paragraphs: [
-      "I'm a product-focused engineer who sweats the details — from micro-interactions and tactile motion to crisp typography and thoughtful spacing.",
-      "My process blends design intuition with engineering rigor: fast prototypes, accessibility-first reviews, and performance budgets to ship delightful, durable work.",
-    ],
-    strengths: [
-      "Building design systems that scale across products",
-      "Crafting smooth, meaningful motion with performance in mind",
-      "Accessibility (WCAG) baked into the workflow",
-      "Clear communication with design and product",
-    ],
-  };
+  const aboutData = effectivePortfolioData?.profile
+    ? {
+        name: effectivePortfolioData.profile.name,
+        title: effectivePortfolioData.profile.headline || "",
+        summary:
+          effectivePortfolioData.profile.summary ||
+          effectivePortfolioData.profile.headline ||
+          "",
+        location: effectivePortfolioData.profile.location,
+      }
+    : null;
 
-  const projectsData = {
-    heading: "Selected Projects",
-    projects: (effectivePortfolioData.projects || []).map(
-      (p: any, i: number) => ({
-        // schema-based fields, plus dummy stars for now
-        name: p.name,
-        role: p.role,
-        one_line_description: p.one_line_description,
-        highlights: p.highlights,
-        technologies: p.technologies,
-        github: p.github,
-        live_link: p.live_link,
-        stars: 128 + i * 7, // dummy stars until API integration
-      })
-    ),
-  } as const;
+  const projectsData = effectivePortfolioData?.projects?.length
+    ? {
+        heading: "Projects",
+        projects: effectivePortfolioData.projects.map((p) => ({
+          name: p.name,
+          role: p.role,
+          one_line_description: p.one_line_description,
+          highlights: p.highlights,
+          technologies: p.technologies,
+          github: p.github,
+          live_link: p.live_link,
+        })),
+      }
+    : null;
 
-  const skillsData = {
-    heading: "Skills",
-    categories: [
-      {
-        title: "Core",
-        items: [
-          { name: "React", level: 90 },
-          { name: "Next.js (App Router)", level: 88 },
-          { name: "TypeScript", level: 85 },
-          { name: "Tailwind v4", level: 86 },
+  const skillsData = effectivePortfolioData?.skills?.length
+    ? {
+        heading: "Skills",
+        categories: [
+          {
+            title: "Skills",
+            items: effectivePortfolioData.skills.map((skill) => ({
+              name: skill,
+              chip: true,
+            })),
+          },
         ],
-      },
-      {
-        title: "UX & Motion",
-        items: [
-          { name: "Accessibility (WCAG)", level: 80 },
-          { name: "Framer Motion", level: 82 },
-          { name: "Design Systems", level: 84 },
-        ],
-      },
-      {
-        title: "Tooling",
-        items: [
-          { name: "Vite", chip: true },
-          { name: "Vitest", chip: true },
-          { name: "Playwright", chip: true },
-          { name: "Turborepo", chip: true },
-        ],
-      },
-      {
-        title: "Cloud & Data",
-        items: [
-          { name: "Edge/RSC", chip: true },
-          { name: "REST/GraphQL", chip: true },
-          { name: "Charts", chip: true },
-        ],
-      },
-    ],
-  };
+      }
+    : null;
 
-  const contactData = {
-    heading: "Contact",
-    items: [
-      {
-        id: "email",
-        kind: "email",
-        label: "alex@example.com",
-        href: "mailto:alex@example.com",
-        sub: "Email",
-      },
-      {
-        id: "github",
+  const contactItems: {
+    id: string;
+    kind: "email" | "github" | "website" | "linkedin";
+    label: string;
+    href: string;
+    sub?: string;
+  }[] = [];
+
+  if (effectivePortfolioData?.profile?.email) {
+    contactItems.push({
+      id: "email",
+      kind: "email",
+      label: effectivePortfolioData.profile.email,
+      href: `mailto:${effectivePortfolioData.profile.email}`,
+      sub: "Email",
+    });
+  }
+
+  effectivePortfolioData?.profile?.socials?.forEach((link, index) => {
+    const id = `${link.type}-${index}`;
+
+    if (link.type === "github") {
+      contactItems.push({
+        id,
         kind: "github",
-        label: "github.com/alexchen",
-        href: "#",
+        label: link.label || link.href,
+        href: link.href,
         sub: "GitHub",
-      },
-      {
-        id: "site",
-        kind: "website",
-        label: "alexchen.dev",
-        href: "#",
-        sub: "Website",
-      },
-      {
-        id: "linkedin",
+      });
+      return;
+    }
+
+    if (link.type === "linkedin") {
+      contactItems.push({
+        id,
         kind: "linkedin",
-        label: "linkedin.com/in/alexchen",
-        href: "#",
+        label: link.label || link.href,
+        href: link.href,
         sub: "LinkedIn",
-      },
-    ],
-  } as const;
+      });
+      return;
+    }
 
-  const experienceData = {
-    heading: "Work Experience",
-    items: [
-      {
-        companyName: "Acme Inc.",
-        role: "Senior Frontend Engineer",
-        location: "San Francisco, CA (Hybrid)",
-        start: "Jan 2022",
-        end: "Present",
-        points: [
-          "Led migration to Next.js App Router and RSC, improving TTI by 38%",
-          "Built design system components with Shadcn/UI + Tailwind v4",
-          "Partnered with Design to craft micro-interactions using Framer Motion",
-        ],
-      },
-      {
-        companyName: "Nimbus Labs",
-        role: "Frontend Engineer",
-        location: "Remote",
-        start: "Jul 2019",
-        end: "Dec 2021",
-        points: [
-          "Shipped analytics dashboard with realtime charts and theming",
-          "Improved accessibility scores to AA across core flows",
-        ],
-      },
-    ],
-  };
+    contactItems.push({
+      id,
+      kind: "website",
+      label: link.label || link.href,
+      href: link.href,
+      sub: link.type,
+    });
+  });
 
-  const educationData = {
-    heading: "Education",
-    items: effectivePortfolioData.education || [],
-  } as const;
+  const contactData = contactItems.length
+    ? {
+        heading: "Contact",
+        items: contactItems,
+      }
+    : null;
+
+  const experienceData = effectivePortfolioData?.experience?.length
+    ? {
+        heading: "Work Experience",
+        items: effectivePortfolioData.experience.map((experience) => ({
+          companyName: experience.companyName,
+          role: experience.role,
+          location: experience.location,
+          start: experience.start,
+          end: experience.end,
+          points: experience.points,
+        })),
+      }
+    : null;
+
+  const educationData = effectivePortfolioData?.education?.length
+    ? {
+        heading: "Education",
+        items: effectivePortfolioData.education.map((education) => ({
+          school: education.school,
+          degree: education.degree,
+          start: education.start,
+          end: education.end,
+          location: education.location,
+        })),
+      }
+    : null;
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -254,10 +247,12 @@ const ChatPortfolioComponent = ({
         t
       )
     ) {
-      return { name: "experience" as const, props: experienceData };
+      return experienceData
+        ? { name: "experience" as const, props: experienceData }
+        : null;
     }
     if (/(^|\b)(me|about|yourself|who are you)(\b|$)/.test(t)) {
-      return { name: "about" as const, props: aboutData };
+      return aboutData ? { name: "about" as const, props: aboutData } : null;
     }
     if (
       t.includes("project") ||
@@ -265,10 +260,12 @@ const ChatPortfolioComponent = ({
       t.includes("portfolio") ||
       t.includes("latest")
     ) {
-      return { name: "projects" as const, props: projectsData };
+      return projectsData
+        ? { name: "projects" as const, props: projectsData }
+        : null;
     }
     if (t.includes("skill") || t.includes("stack") || t.includes("tech")) {
-      return { name: "skills" as const, props: skillsData };
+      return skillsData ? { name: "skills" as const, props: skillsData } : null;
     }
     if (
       t.includes("education") ||
@@ -277,24 +274,30 @@ const ChatPortfolioComponent = ({
       t.includes("college") ||
       t.includes("degree")
     ) {
-      return { name: "education" as const, props: educationData };
+      return educationData
+        ? { name: "education" as const, props: educationData }
+        : null;
     }
     if (t.includes("contact") || t.includes("email") || t.includes("reach")) {
-      return { name: "contact" as const, props: contactData };
+      return contactData
+        ? { name: "contact" as const, props: contactData }
+        : null;
     }
     // Match suggestion labels exact
     const hit = suggestions.find((s) => s.label.toLowerCase() === t);
     if (hit) {
-      if (hit.id === "me" || hit.id === "about")
+      if ((hit.id === "me" || hit.id === "about") && aboutData)
         return { name: "about" as const, props: aboutData };
-      if (hit.id === "projects" || hit.id === "latest")
+      if ((hit.id === "projects" || hit.id === "latest") && projectsData)
         return { name: "projects" as const, props: projectsData };
-      if (hit.id === "skills" || hit.id === "stack")
+      if ((hit.id === "skills" || hit.id === "stack") && skillsData)
         return { name: "skills" as const, props: skillsData };
-      if (hit.id === "contact")
+      if (hit.id === "contact" && contactData)
         return { name: "contact" as const, props: contactData };
-      if (hit.id === "education")
+      if (hit.id === "education" && educationData)
         return { name: "education" as const, props: educationData };
+      if (hit.id === "experience" && experienceData)
+        return { name: "experience" as const, props: experienceData };
     }
     return null;
   };
@@ -316,7 +319,7 @@ const ChatPortfolioComponent = ({
     const widget = chooseWidget(value);
     const assistantContent =
       presets[value] ||
-      "Thanks for your message! This portfolio uses rich UI replies. Try asking about projects, skills, or contact.";
+      "Looks like I need to gather more details. I'll check with our AI assistant and get back to you.";
 
     setTimeout(() => {
       const reply: Message = widget
@@ -340,7 +343,7 @@ const ChatPortfolioComponent = ({
   const onPickSuggestion = (s: Suggestion) => sendUserMessage(s.label);
 
   return (
-    <PortfolioErrorBoundary fallbackData={examplePortfolioData}>
+    <PortfolioErrorBoundary>
       <div
         className={`${styles.portfolioTheme} min-h-[100svh] w-full relative overflow-hidden bg-[var(--background)] text-[var(--foreground)] flex flex-col px-3 sm:px-0`}
       >
@@ -353,15 +356,25 @@ const ChatPortfolioComponent = ({
         </div>
 
         {/* Full-width header (not boxed) */}
-        <ChatHeader profile={effectiveProfile} showIdentity={hasStarted} />
+        <ChatHeader
+          profile={effectiveProfile}
+          showIdentity={hasStarted}
+        />
 
         {/* Main content */}
         <div className="flex-1 min-h-0 flex flex-col text-[15px] sm:text-base">
           <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 relative flex-1">
             {!hasStarted ? (
               <EmptyState
-                title={`Hi, I'm ${effectiveProfile.name} — let's chat.`}
-                subtitle="Ask about projects, skills, or anything you're curious about. Try a quick prompt below."
+                title={
+                  effectivePortfolioData?.profile?.headline ||
+                  effectivePortfolioData?.profile?.summary ||
+                  ""
+                }
+                subtitle={
+                  effectiveProfile?.title ||
+                  "Ask about projects, skills, or anything you're curious about."
+                }
                 suggestions={suggestions}
                 inputValue={input}
                 onInputChange={setInput}
@@ -458,7 +471,6 @@ const ChatPortfolioComponent = ({
 // Apply the external data requirement flag
 export const ChatPortfolio = requiresExternalData({
   dataSource: "api",
-  fallbackData: examplePortfolioData,
   description:
     "Interactive chat-based portfolio requiring portfolio data for dynamic responses and widget content",
 })(ChatPortfolioComponent);

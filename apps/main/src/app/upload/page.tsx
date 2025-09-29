@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import UploadWizard from "@/components/upload/UploadWizard";
@@ -19,15 +18,7 @@ import UploadWizard from "@/components/upload/UploadWizard";
  * - Completion redirect to dashboard
  */
 export default function UploadPage() {
-  const router = useRouter();
   const { loading } = useAuth();
-
-  // Handle completion redirect
-  const handleComplete = () => {
-    // Show a success message or animation before redirecting
-    console.log("Upload onboarding completed successfully!");
-    router.push("/dashboard");
-  };
 
   // Show loading state while auth is being determined
   if (loading) {
@@ -55,7 +46,7 @@ export default function UploadPage() {
 
             {/* Upload Wizard */}
             <div className="p-2 sm:p-0">
-              <UploadWizard onComplete={handleComplete} />
+              <UploadWizard />
             </div>
           </div>
         </div>

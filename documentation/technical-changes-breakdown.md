@@ -713,7 +713,7 @@
 - **Wrapper**: Added PortfolioErrorBoundary wrapper
 - **Loading State**: Added loading UI with spinner
 - **Error State**: Added error UI with retry button
-- **Data Fallback**: Uses examplePortfolioData when no data provided
+- **Data Fallback**: Removed static fallbacks; components now require real portfolio data
 
 **Technical Implementation:**
 
@@ -742,7 +742,7 @@
 **Component Structure Changes:**
 
 - **Same Pattern**: Loading state, error state, error boundary wrapper
-- **Data Fallback**: Uses examplePortfolioData for missing data
+- **Data Fallback**: Removed static sample data in favor of conditional rendering
 - **Component Flagging**: Applied requiresExternalData() decorator
 
 **Technical Implementation:**
@@ -779,7 +779,7 @@
 
 - **Kept**: Original `PortfolioData`, `PortfolioProject`, etc.
 - **Added**: Type aliases and interfaces
-- **Enhanced**: `examplePortfolioData` with more comprehensive data
+- **Enhanced**: Dynamic rendering that respects optional backend fields
 
 #### **MODIFIED FILE: `packages/template-components/package.json`**
 

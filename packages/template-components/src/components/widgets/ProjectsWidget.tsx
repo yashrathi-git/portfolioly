@@ -1,9 +1,9 @@
 "use client";
 
-import { Github, ExternalLink, Star } from "lucide-react";
+import { Github, ExternalLink } from "lucide-react";
 import type { PortfolioProject as SchemaProject } from "../../types/portfolio";
 
-export type ProjectsWidgetProject = SchemaProject & { stars?: number };
+export type ProjectsWidgetProject = SchemaProject;
 
 export type ProjectsWidgetProps = {
   heading?: string;
@@ -11,9 +11,25 @@ export type ProjectsWidgetProps = {
 };
 
 export const ProjectsWidget = ({
-  heading = "Featured Projects",
+  heading = "Projects",
   projects,
 }: ProjectsWidgetProps) => {
+  const visibleProjects = projects.filter((project) =>
+    Boolean(
+      project.name ||
+        project.role ||
+        project.one_line_description ||
+        project.highlights?.length ||
+        project.technologies?.length ||
+        project.github ||
+        project.live_link
+    )
+  );
+
+  if (visibleProjects.length === 0) {
+    return null;
+  }
+
   return (
     <div className="relative overflow-hidden rounded-2xl border bg-card text-card-foreground">
       {/* Glow */}
@@ -21,7 +37,7 @@ export const ProjectsWidget = ({
       <div className="p-5 sm:p-6">
         <h3 className="text-lg sm:text-xl font-semibold mb-4">{heading}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {projects.map((p, idx) => (
+          {visibleProjects.map((p, idx) => (
             <div
               key={(p.github || p.live_link || p.name || "") + idx}
               className="group relative overflow-hidden rounded-xl border bg-[var(--secondary)]/70 hover:bg-[var(--secondary)] transition-colors"
@@ -29,20 +45,17 @@ export const ProjectsWidget = ({
               <div className="p-4 sm:p-5 flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h4 className="text-base font-semibold leading-tight">
-                      {p.name || "Untitled Project"}
-                    </h4>
+                    {p.name ? (
+                      <h4 className="text-base font-semibold leading-tight">
+                        {p.name}
+                      </h4>
+                    ) : null}
                     {p.role && (
                       <p className="text-xs text-[color:var(--muted-foreground)] mt-1">
                         {p.role}
                       </p>
                     )}
                   </div>
-                  {typeof p.stars === "number" && (
-                    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-[var(--accent)] text-[color:var(--accent-foreground)]">
-                      <Star className="size-3 fill-current" /> {p.stars}
-                    </span>
-                  )}
                 </div>
 
                 {p.one_line_description && (
@@ -51,15 +64,15 @@ export const ProjectsWidget = ({
                   </p>
                 )}
 
-                {p.highlights && p.highlights.length > 0 && (
+                {p.highlights?.length ? (
                   <ul className="mt-1 list-disc list-inside text-[13px] text-[color:var(--muted-foreground)] space-y-1">
                     {p.highlights.slice(0, 3).map((h, i) => (
                       <li key={i}>{h}</li>
                     ))}
                   </ul>
-                )}
+                ) : null}
 
-                {p.technologies && p.technologies.length > 0 && (
+                {p.technologies?.length ? (
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {p.technologies.map((t) => (
                       <span
@@ -70,7 +83,7 @@ export const ProjectsWidget = ({
                       </span>
                     ))}
                   </div>
-                )}
+                ) : null}
 
                 <div className="mt-2 flex items-center gap-2">
                   {p.github && (

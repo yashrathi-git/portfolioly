@@ -3,10 +3,10 @@
  * This integrates with the template components' data providers
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { PortfolioData } from "@/types/portfolio";
-import { getPortfolioData } from "@/lib/api/portfolio";
+import { getUserPortfolio } from "@/lib/api/portfolio";
 
 export interface UseAuthenticatedPortfolioResult {
   data: PortfolioData | null;
@@ -21,7 +21,7 @@ export function useAuthenticatedPortfolio(): UseAuthenticatedPortfolioResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user) {
       setError("User not authenticated");
       return;
@@ -31,7 +31,7 @@ export function useAuthenticatedPortfolio(): UseAuthenticatedPortfolioResult {
     setError(null);
 
     try {
-      const portfolioData = await getPortfolioData();
+      const portfolioData = await getUserPortfolio();
       setData(portfolioData);
     } catch (err) {
       const errorMessage =
@@ -41,7 +41,7 @@ export function useAuthenticatedPortfolio(): UseAuthenticatedPortfolioResult {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -50,7 +50,7 @@ export function useAuthenticatedPortfolio(): UseAuthenticatedPortfolioResult {
       setData(null);
       setError(null);
     }
-  }, [user]);
+  }, [user, fetchData]);
 
   return {
     data,

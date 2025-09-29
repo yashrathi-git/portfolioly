@@ -42,16 +42,16 @@ npm install react@>=18 react-dom@>=18 framer-motion@^12.23.12 lucide-react@^0.54
 ```tsx
 import {
   ChatPortfolio,
-  examplePortfolioData,
+  TemplateProvider,
+  PortfolioProvider,
 } from "@portfolioly/template-components";
 import "@portfolioly/template-components/style.css";
 
-function MyPortfolio() {
-  // Use the example data or provide your own
+function MyPortfolio({ data }) {
   const profile = {
-    name: examplePortfolioData.profile.name,
-    badge: "Chat Portfolio",
-    links: examplePortfolioData.profile.socials.map((social) => ({
+    name: data.profile?.name,
+    badge: data.profile?.name ? "Chat Portfolio" : undefined,
+    links: data.profile?.socials?.map((social) => ({
       type: social.type,
       href: social.href,
     })),
@@ -65,22 +65,21 @@ function MyPortfolio() {
   ];
 
   const presets = {
-    "About Me": `I'm ${examplePortfolioData.profile.name}, ${examplePortfolioData.profile.headline}. I'm passionate about creating beautiful, functional user interfaces.`,
-    Projects:
-      "I've worked on several exciting projects including web applications, mobile apps, and design systems.",
-    Skills: `My technical skills include ${examplePortfolioData.skills?.join(
-      ", "
-    )}.`,
-    Contact: "Feel free to reach out via any of the links in my profile!",
+    "About Me": profile.name
+      ? `I'm ${profile.name}.`
+      : "Tell me what you'd like to know!",
   };
 
   return (
-    <ChatPortfolio
-      profile={profile}
-      suggestions={suggestions}
-      presets={presets}
-      portfolioData={examplePortfolioData}
-    />
+    <TemplateProvider>
+      <PortfolioProvider portfolioData={data}>
+        <ChatPortfolio
+          profile={profile}
+          suggestions={suggestions}
+          presets={presets}
+        />
+      </PortfolioProvider>
+    </TemplateProvider>
   );
 }
 ```
@@ -90,12 +89,19 @@ function MyPortfolio() {
 ```tsx
 import {
   TraditionalPortfolio,
-  examplePortfolioData,
+  TemplateProvider,
+  PortfolioProvider,
 } from "@portfolioly/template-components";
 import "@portfolioly/template-components/style.css";
 
-function MyTraditionalPortfolio() {
-  return <TraditionalPortfolio data={examplePortfolioData} />;
+function MyTraditionalPortfolio({ data }) {
+  return (
+    <TemplateProvider>
+      <PortfolioProvider portfolioData={data}>
+        <TraditionalPortfolio />
+      </PortfolioProvider>
+    </TemplateProvider>
+  );
 }
 ```
 
@@ -126,7 +132,8 @@ import {
   Suggestions,
 
   // Data and configuration
-  examplePortfolioData,
+  TemplateProvider,
+  PortfolioProvider,
 } from "@portfolioly/template-components";
 ```
 

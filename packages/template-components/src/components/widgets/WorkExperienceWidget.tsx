@@ -16,7 +16,25 @@ export type WorkExperienceWidgetProps = {
   items?: WorkExperienceItem[];
 };
 
-export const WorkExperienceWidget = ({ heading = "Work Experience", items = [] }: WorkExperienceWidgetProps) => {
+export const WorkExperienceWidget = ({
+  heading = "Work Experience",
+  items = [],
+}: WorkExperienceWidgetProps) => {
+  const visibleItems = items.filter((item) => {
+    return Boolean(
+      item.companyName ||
+        item.location ||
+        item.role ||
+        item.start ||
+        item.end ||
+        (item.points && item.points.length > 0)
+    );
+  });
+
+  if (visibleItems.length === 0) {
+    return null;
+  }
+
   return (
     <div className="relative overflow-hidden rounded-2xl border bg-card text-card-foreground">
       {/* Glow */}
@@ -27,14 +45,16 @@ export const WorkExperienceWidget = ({ heading = "Work Experience", items = [] }
           <div className="size-9 rounded-lg bg-[var(--secondary)] text-[color:var(--secondary-foreground)] grid place-items-center">
             <Briefcase className="size-4.5" />
           </div>
-          <h3 className="text-lg sm:text-xl font-semibold leading-tight">{heading}</h3>
+          <h3 className="text-lg sm:text-xl font-semibold leading-tight">
+            {heading}
+          </h3>
         </div>
 
         <div className="relative">
           {/* remove global full-height line */}
 
           <div className="space-y-6">
-            {(items.length > 0 ? items : [{}]).map((item, idx, arr) => (
+            {visibleItems.map((item, idx, arr) => (
               <div key={idx} className="relative">
                 <div className="flex gap-4 sm:gap-5">
                   {/* timeline gutter */}
@@ -58,7 +78,9 @@ export const WorkExperienceWidget = ({ heading = "Work Experience", items = [] }
                           </div>
                         )}
                         {item.role && (
-                          <div className="text-sm text-[color:var(--muted-foreground)] truncate">{item.role}</div>
+                          <div className="text-sm text-[color:var(--muted-foreground)] truncate">
+                            {item.role}
+                          </div>
                         )}
                       </div>
 
@@ -86,9 +108,14 @@ export const WorkExperienceWidget = ({ heading = "Work Experience", items = [] }
                     {item.points && item.points.length > 0 && (
                       <ul className="mt-3.5 space-y-2.5">
                         {item.points.map((pt, i) => (
-                          <li key={i} className="flex gap-2 text-[15px] leading-relaxed">
+                          <li
+                            key={i}
+                            className="flex gap-2 text-[15px] leading-relaxed"
+                          >
                             <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[oklch(0.74_0.15_310)]" />
-                            <span className="text-[color:var(--foreground)]/90">{pt}</span>
+                            <span className="text-[color:var(--foreground)]/90">
+                              {pt}
+                            </span>
                           </li>
                         ))}
                       </ul>

@@ -1,4 +1,4 @@
-import type { PortfolioData, examplePortfolioData } from "../types/portfolio";
+import type { PortfolioData } from "../types/portfolio";
 import { Hero } from "./portfolio-traditional/Hero";
 import { Projects } from "./portfolio-traditional/Projects";
 import { Experience } from "./portfolio-traditional/Experience";
@@ -29,8 +29,7 @@ const TraditionalPortfolioComponent = ({
       "Traditional portfolio layout requiring complete portfolio data including profile, projects, experience, education, and skills",
   });
 
-  // Use provided data or fallback to example data
-  const effectiveData = data || examplePortfolioData;
+  const effectiveData = data;
 
   // Show loading state
   if (isLoading && !data) {
@@ -69,8 +68,25 @@ const TraditionalPortfolioComponent = ({
     );
   }
 
+  if (!effectiveData || !effectiveData.profile) {
+    return (
+      <div
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center text-foreground`}
+      >
+        <div className="text-center max-w-md">
+          <div className="text-2xl mb-4">🤖</div>
+          <h2 className="text-xl font-semibold mb-2">Portfolio coming soon</h2>
+          <p className="text-muted-foreground">
+            We couldn’t find enough information to show the traditional layout.
+            I’ll ask our AI assistant to help fill in the details.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <PortfolioErrorBoundary fallbackData={examplePortfolioData}>
+    <PortfolioErrorBoundary>
       <div
         className={`${styles.portfolioTheme} min-h-[100svh] w-full text-foreground`}
       >
@@ -147,7 +163,6 @@ const TraditionalPortfolioComponent = ({
 // Apply the external data requirement flag
 export const TraditionalPortfolio = requiresExternalData({
   dataSource: "api",
-  fallbackData: examplePortfolioData,
   description:
     "Traditional portfolio layout requiring complete portfolio data including profile, projects, experience, education, and skills",
 })(TraditionalPortfolioComponent);

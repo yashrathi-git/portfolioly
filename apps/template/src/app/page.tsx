@@ -1,7 +1,9 @@
 import {
+  TemplateProvider,
+  PortfolioProvider,
+  TraditionalPortfolio,
   ChatPortfolio,
-  examplePortfolioData,
-} from "@portfolioly/template-components/src/client";
+} from "@portfolioly/template-components";
 import type { Profile, Suggestion } from "@portfolioly/template-components";
 
 export default function Home() {
@@ -63,11 +65,40 @@ export default function Home() {
   };
 
   return (
-    <ChatPortfolio
-      profile={profile}
-      suggestions={suggestions}
-      presets={presets}
-      portfolioData={examplePortfolioData}
-    />
+    <TemplateProvider>
+      <main className="min-h-screen bg-background text-foreground">
+        <div className="py-12">
+          <div className="container mx-auto max-w-5xl space-y-16">
+            <section className="space-y-4">
+              <h2 className="text-3xl font-semibold tracking-tight">
+                Traditional Portfolio
+              </h2>
+              <p className="text-muted-foreground">
+                Fully responsive layout built for real-world profiles.
+              </p>
+              <div className="rounded-xl border bg-card shadow-sm">
+                <PortfolioProvider portfolioData={null}>
+                  <TraditionalPortfolio />
+                </PortfolioProvider>
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-3xl font-semibold tracking-tight">
+                Chat Portfolio
+              </h2>
+              <p className="text-muted-foreground">
+                Conversational portfolio experience with knowledge widgets.
+              </p>
+              <div className="rounded-xl border bg-card shadow-sm">
+                <PortfolioProvider portfolioData={null}>
+                  <ChatPortfolio />
+                </PortfolioProvider>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </TemplateProvider>
   );
 }

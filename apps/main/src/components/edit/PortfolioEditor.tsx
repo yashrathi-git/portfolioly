@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { PortfolioData } from "@/types/portfolio";
-import { examplePortfolioData } from "@/types/portfolio";
 import { PersonalInfoForm } from "./PersonalInfoForm";
 import { ProfilesForm } from "./ProfilesForm";
 import { WorkExperienceForm } from "./WorkExperienceForm";
@@ -21,9 +20,7 @@ export interface PortfolioEditorProps {
 }
 
 export function PortfolioEditor({ initial, onChange }: PortfolioEditorProps) {
-  const [data, setData] = useState<PortfolioData>(
-    () => initial || examplePortfolioData
-  );
+  const [data, setData] = useState<PortfolioData>(() => initial || {});
   const [tab, setTab] = useState<string>("edit");
 
   const update = (next: Partial<PortfolioData>) => {
@@ -38,7 +35,14 @@ export function PortfolioEditor({ initial, onChange }: PortfolioEditorProps) {
     return Boolean(pi.full_name && pi.full_name.trim());
   }, [data]);
 
-  const reset = () => setData(initial || examplePortfolioData);
+  const reset = () => {
+    if (initial) {
+      setData(initial);
+      return;
+    }
+
+    setData({});
+  };
 
   return (
     <div className="w-full">

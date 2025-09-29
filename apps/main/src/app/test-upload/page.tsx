@@ -55,7 +55,6 @@ export default function TestUploadPage() {
 
             <div className="p-2 sm:p-0">
               <UploadWizard
-                onComplete={() => router.push("/dashboard")}
                 disableClientValidation={disableValidation}
                 acceptOverride={acceptOverrideEnabled ? "*/*" : undefined}
               />

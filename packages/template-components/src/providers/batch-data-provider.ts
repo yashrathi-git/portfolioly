@@ -83,14 +83,6 @@ export class BatchDataProvider extends HybridDataProvider {
       result.error =
         error instanceof Error ? error.message : "Unknown error occurred";
 
-      // Try to determine if we can provide any fallback data
-      if (this.config.enableDummyData) {
-        this.log("Providing dummy data as fallback");
-        const { examplePortfolioData } = await import("../types/portfolio");
-        result.portfolioData = examplePortfolioData;
-        result.loadedFrom = "cache"; // Indicate this is fallback data
-      }
-
       return result;
     }
   }
@@ -190,7 +182,7 @@ export class BatchDataProvider extends HybridDataProvider {
 
     try {
       const endpoint = "/api/settings/profile";
-      const url = `${this.baseUrl}${endpoint}`;
+      const url = `${this.getBaseUrl()}${endpoint}`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -254,5 +246,9 @@ export class BatchDataProvider extends HybridDataProvider {
     if (this.config.authToken) {
       this.preloadData({ includeUserSettings: true });
     }
+  }
+
+  private getBaseUrl() {
+    return (this as unknown as { baseUrl?: string }).baseUrl || "";
   }
 }

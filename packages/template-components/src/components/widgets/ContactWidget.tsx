@@ -28,7 +28,16 @@ const iconFor = (kind: ContactItem["kind"]) => {
   }
 };
 
-export const ContactWidget = ({ heading = "Contact", items }: ContactWidgetProps) => {
+export const ContactWidget = ({
+  heading = "Contact",
+  items,
+}: ContactWidgetProps) => {
+  const visibleItems = items.filter((item) => Boolean(item.href && item.label));
+
+  if (visibleItems.length === 0) {
+    return null;
+  }
+
   return (
     <div className="relative overflow-hidden rounded-2xl border bg-card text-card-foreground">
       {/* Glow */}
@@ -36,11 +45,11 @@ export const ContactWidget = ({ heading = "Contact", items }: ContactWidgetProps
       <div className="p-5 sm:p-6">
         <h3 className="text-lg sm:text-xl font-semibold mb-4">{heading}</h3>
         <div className="grid sm:grid-cols-2 gap-3">
-          {items.map((it) => {
+          {visibleItems.map((it) => {
             const Icon = iconFor(it.kind);
             return (
               <a
-                key={it.id}
+                key={`${it.id}-${it.href}`}
                 href={it.href}
                 target="_blank"
                 rel="noreferrer noopener"
@@ -52,7 +61,9 @@ export const ContactWidget = ({ heading = "Contact", items }: ContactWidgetProps
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">{it.label}</div>
                   {it.sub && (
-                    <div className="text-[12px] text-[color:var(--muted-foreground)] truncate">{it.sub}</div>
+                    <div className="text-[12px] text-[color:var(--muted-foreground)] truncate">
+                      {it.sub}
+                    </div>
                   )}
                 </div>
               </a>
