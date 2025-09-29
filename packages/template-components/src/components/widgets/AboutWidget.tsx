@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { typography } from "../../lib/typography";
+import { cn } from "../../lib/cn";
 
 export type AboutWidgetProps = {
   avatarUrl?: string;
@@ -78,24 +80,24 @@ export const AboutWidget = ({
 
           <div>
             {fallbackName ? (
-              <h3 className="text-xl sm:text-2xl font-semibold leading-tight">
+              <h3 className={cn("font-semibold leading-tight", typography.heading.primary)}>
                 {fallbackName}
               </h3>
             ) : null}
             {title ? (
-              <p className="text-sm text-[color:var(--muted-foreground)]">
+              <p className={cn("text-[color:var(--muted-foreground)]", typography.label.base)}>
                 {title}
               </p>
             ) : null}
             {location && (
-              <p className="mt-0.5 text-xs sm:text-[13px] text-[color:var(--muted-foreground)]/90">
+              <p className={cn("mt-0.5 text-[color:var(--muted-foreground)]/90", typography.label.small)}>
                 {location}
               </p>
             )}
           </div>
 
           {combinedText ? (
-            <p className="sm:col-span-2 mt-2 sm:mt-0 text-[17px] sm:text-[18px] leading-relaxed whitespace-pre-wrap">
+            <p className={cn("sm:col-span-2 mt-2 sm:mt-0 leading-relaxed whitespace-pre-wrap", typography.content.responsive)}>
               {combinedText}
             </p>
           ) : null}

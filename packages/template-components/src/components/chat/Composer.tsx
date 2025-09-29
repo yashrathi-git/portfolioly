@@ -3,6 +3,7 @@
 import { ArrowUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "../../lib/cn";
+import { typography } from "../../lib/typography";
 
 type ComposerProps = {
   value: string;
@@ -38,7 +39,10 @@ export const Composer = ({
           placeholder={placeholder}
           rows={1}
           autoFocus={autoFocus}
-          className="w-full resize-none rounded-full border border-[color:var(--input)]/80 bg-[var(--card)]/80 backdrop-blur px-5 py-4 pr-14 text-base md:text-[17px] outline-none focus:ring-2 focus:ring-[color:var(--ring)]/60 shadow-sm"
+          className={cn(
+            "w-full resize-none rounded-full border border-[color:var(--input)]/80 bg-[var(--card)]/80 backdrop-blur px-5 py-4 pr-14 outline-none focus:ring-2 focus:ring-[color:var(--ring)]/60 shadow-sm",
+            typography.input.responsive
+          )}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();

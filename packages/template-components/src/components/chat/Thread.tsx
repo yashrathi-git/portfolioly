@@ -8,6 +8,8 @@ import { SkillsWidget } from "../widgets/SkillsWidget";
 import { ContactWidget } from "../widgets/ContactWidget";
 import { WorkExperienceWidget } from "../widgets/WorkExperienceWidget";
 import { EducationWidget } from "../widgets/EducationWidget";
+import { typography } from "../../lib/typography";
+import { cn } from "../../lib/cn";
 
 type ThreadProps = {
   messages: Message[];
@@ -28,7 +30,7 @@ export const Thread = ({ messages, isThinking }: ThreadProps) => {
           )}
 
           {m.role === "assistant" && m.widget ? (
-            <div className="flex-1 max-w-full md:max-w-[85%] text-[17px] md:text-[19px] leading-relaxed [&_*]:text-inherit [&_*]:leading-[inherit]">
+            <div className={cn("flex-1 max-w-full md:max-w-[85%] leading-relaxed [&_*]:text-inherit [&_*]:leading-[inherit]", typography.content.responsive)}>
               {m.widget.name === "about" && <AboutWidget {...(m.widget.props as any)} />}
               {m.widget.name === "projects" && <ProjectsWidget {...(m.widget.props as any)} />}
               {m.widget.name === "skills" && <SkillsWidget {...(m.widget.props as any)} />}
@@ -38,11 +40,13 @@ export const Thread = ({ messages, isThinking }: ThreadProps) => {
             </div>
           ) : (
             <div
-              className={`max-w-full md:max-w-[85%] rounded-2xl px-5 py-3.5 md:py-4 text-[17px] md:text-[19px] leading-relaxed shadow-sm ${
+              className={cn(
+                "max-w-full md:max-w-[85%] rounded-2xl px-5 py-3.5 md:py-4 leading-relaxed shadow-sm",
+                typography.content.responsive,
                 m.role === "assistant"
                   ? "bg-[var(--secondary)] text-[color:var(--secondary-foreground)] rounded-tl-none"
                   : "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] rounded-tr-none"
-              }`}
+              )}
             >
               {m.content.split("\n").map((line, i) => (
                 <p key={i} className="whitespace-pre-wrap">
@@ -59,7 +63,7 @@ export const Thread = ({ messages, isThinking }: ThreadProps) => {
           <div className="mt-1 size-9 shrink-0 rounded-full bg-[var(--secondary)] flex items-center justify-center">
             <Sparkles className="size-4.5 text-[color:var(--secondary-foreground)]" />
           </div>
-          <div className="rounded-2xl rounded-tl-none px-5 py-3.5 md:py-4 text-[17px] md:text-[19px] bg-[var(--secondary)] text-[color:var(--secondary-foreground)] shadow-sm">
+          <div className={cn("rounded-2xl rounded-tl-none px-5 py-3.5 md:py-4 bg-[var(--secondary)] text-[color:var(--secondary-foreground)] shadow-sm", typography.content.responsive)}>
             <div className="flex items-center gap-1">
               <span className="size-1.5 rounded-full bg-[color:var(--muted-foreground)] animate-bounce [animation-delay:-0.2s]"></span>
               <span className="size-1.5 rounded-full bg-[color:var(--muted-foreground)] animate-bounce"></span>

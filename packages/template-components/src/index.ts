@@ -34,5 +34,6 @@ export * from "./utils/data-mapper";
 export * from "./utils/component-flags";
 export * from "./utils/debug";
 export { cn } from "./lib/cn";
+export { typography } from "./lib/typography";
 
 import "./styles.css";

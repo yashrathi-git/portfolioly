@@ -1,6 +1,8 @@
 "use client";
 
 import { Briefcase, MapPin, CalendarDays } from "lucide-react";
+import { typography } from "../../lib/typography";
+import { cn } from "../../lib/cn";
 
 export type WorkExperienceItem = {
   companyName?: string;
@@ -45,7 +47,7 @@ export const WorkExperienceWidget = ({
           <div className="size-9 rounded-lg bg-[var(--secondary)] text-[color:var(--secondary-foreground)] grid place-items-center">
             <Briefcase className="size-4.5" />
           </div>
-          <h3 className="text-lg sm:text-xl font-semibold leading-tight">
+          <h3 className={cn("font-semibold leading-tight", typography.heading.secondary)}>
             {heading}
           </h3>
         </div>
@@ -73,18 +75,18 @@ export const WorkExperienceWidget = ({
                     <div className="flex flex-wrap items-start gap-2.5 justify-between">
                       <div className="min-w-0">
                         {item.companyName && (
-                          <div className="text-base sm:text-[17px] font-semibold leading-tight truncate">
+                          <div className={cn("font-semibold leading-tight truncate", typography.heading.tertiary)}>
                             {item.companyName}
                           </div>
                         )}
                         {item.role && (
-                          <div className="text-sm text-[color:var(--muted-foreground)] truncate">
+                          <div className={cn("text-[color:var(--muted-foreground)] truncate", typography.label.base)}>
                             {item.role}
                           </div>
                         )}
                       </div>
 
-                      <div className="flex flex-col items-end text-right gap-1.5 text-xs sm:text-[13px] text-[color:var(--muted-foreground)]">
+                      <div className={cn("flex flex-col items-end text-right gap-1.5 text-[color:var(--muted-foreground)]", typography.label.small)}>
                         {(item.start || item.end) && (
                           <div className="inline-flex items-center gap-1">
                             <CalendarDays className="size-3.5" />
@@ -110,7 +112,7 @@ export const WorkExperienceWidget = ({
                         {item.points.map((pt, i) => (
                           <li
                             key={i}
-                            className="flex gap-2 text-[15px] leading-relaxed"
+                            className={cn("flex gap-2 leading-relaxed", typography.content.base)}
                           >
                             <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[oklch(0.74_0.15_310)]" />
                             <span className="text-[color:var(--foreground)]/90">

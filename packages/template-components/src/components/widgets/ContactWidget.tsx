@@ -1,6 +1,8 @@
 "use client";
 
 import { Mail, Link as LinkIcon, Github, Linkedin } from "lucide-react";
+import { typography } from "../../lib/typography";
+import { cn } from "../../lib/cn";
 
 export type ContactItem = {
   id: string;
@@ -43,7 +45,7 @@ export const ContactWidget = ({
       {/* Glow */}
       <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full blur-3xl opacity-30 dark:opacity-20 bg-[oklch(0.769_0.188_70.08)]" />
       <div className="p-5 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold mb-4">{heading}</h3>
+        <h3 className={cn("font-semibold mb-4", typography.heading.secondary)}>{heading}</h3>
         <div className="grid sm:grid-cols-2 gap-3">
           {visibleItems.map((it) => {
             const Icon = iconFor(it.kind);
@@ -59,9 +61,9 @@ export const ContactWidget = ({
                   <Icon className="size-4.5" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{it.label}</div>
+                  <div className={cn("font-medium truncate", typography.label.base)}>{it.label}</div>
                   {it.sub && (
-                    <div className="text-[12px] text-[color:var(--muted-foreground)] truncate">
+                    <div className={cn("text-[color:var(--muted-foreground)] truncate", typography.label.small)}>
                       {it.sub}
                     </div>
                   )}
