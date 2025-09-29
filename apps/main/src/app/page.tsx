@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ArrowRight } from "lucide-react";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -22,19 +23,7 @@ export default function HomePage() {
   // No redirects from home; UI handles state
 
   if (loading) {
-    return (
-      <div className="min-h-full grid place-items-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Loading</CardTitle>
-            <CardDescription>Please wait…</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-24 animate-pulse rounded-md bg-muted" />
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <LoadingScreen message="Please wait..." />;
   }
 
   return (

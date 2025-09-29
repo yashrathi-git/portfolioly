@@ -2,14 +2,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -49,19 +42,7 @@ export default function ProtectedRoute({
   }, [user, loading, router, requireVerification]);
 
   if (loading) {
-    return (
-      <div className="min-h-full grid place-items-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Loading</CardTitle>
-            <CardDescription>Please wait…</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-24 animate-pulse rounded-md bg-muted" />
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <LoadingScreen message="Please wait..." />;
   }
 
   if (!user || (requireVerification && !user.emailVerified)) {

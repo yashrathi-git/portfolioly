@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import SignUpForm from "@/components/auth/SignUpForm";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getPostAuthRedirectPath } from "@/lib/auth/routeGuards";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import Link from "next/link";
 
 export default function SignUpPage() {
@@ -26,17 +27,7 @@ export default function SignUpPage() {
   }, [user, loading, router]);
 
   if (loading) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Loading</CardTitle>
-          <CardDescription>Please wait…</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-24 animate-pulse rounded-md bg-muted" />
-        </CardContent>
-      </Card>
-    );
+    return <LoadingScreen message="Please wait..." />;
   }
 
   if (user) {
