@@ -7,10 +7,10 @@ import {
   Sparkles,
   UserCircle2,
 } from "lucide-react";
-import type { Profile } from "./types";
+import type { ChatProfile } from "./types";
 
 type HeaderProps = {
-  profile: Profile;
+  profile: ChatProfile;
   showIdentity?: boolean;
 };
 

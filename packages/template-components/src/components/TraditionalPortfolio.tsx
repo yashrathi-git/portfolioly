@@ -24,6 +24,7 @@ const TraditionalPortfolioComponent = ({
 }: TraditionalPortfolioProps) => {
   // Track component data usage in development
   useComponentDataTracking("TraditionalPortfolio", data, {
+    requiresExternalData: true,
     dataSource: "api",
     description:
       "Traditional portfolio layout requiring complete portfolio data including profile, projects, experience, education, and skills",

@@ -14,11 +14,9 @@ export class HybridDataProvider extends BaseDataProvider {
   private authenticatedClient: AuthenticatedApiClient;
   private publicClient: PublicApiClient;
   private jsonLoader: JsonFileLoader;
-  private baseUrl: string;
 
   constructor(config: TemplateConfig, protected baseUrl: string = "") {
     super(config);
-    this.baseUrl = baseUrl;
     this.authenticatedClient = new AuthenticatedApiClient(config, baseUrl);
     this.publicClient = new PublicApiClient(config, baseUrl);
     this.jsonLoader = new JsonFileLoader(config);

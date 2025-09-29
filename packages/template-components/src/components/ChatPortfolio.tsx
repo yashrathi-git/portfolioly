@@ -7,7 +7,7 @@ import { EmptyState } from "./chat/EmptyState";
 import { Thread } from "./chat/Thread";
 import { Composer } from "./chat/Composer";
 import { Suggestions } from "./chat/Suggestions";
-import type { Message, Profile, Suggestion } from "./chat/types";
+import type { Message, ChatProfile, Suggestion } from "./chat/types";
 import type { PortfolioData } from "../types/portfolio";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
@@ -17,7 +17,7 @@ import {
 } from "../utils/component-flags";
 
 export type ChatPortfolioProps = {
-  profile?: Profile;
+  profile?: ChatProfile;
   suggestions?: Suggestion[]; // full list
   presets?: Record<string, string>; // label -> assistant reply
   portfolioData?: PortfolioData | null;
@@ -35,6 +35,7 @@ const ChatPortfolioComponent = ({
 }: ChatPortfolioProps) => {
   // Track component data usage in development
   useComponentDataTracking("ChatPortfolio", portfolioData, {
+    requiresExternalData: true,
     dataSource: "api",
     description:
       "Interactive chat-based portfolio requiring portfolio data for dynamic responses and widget content",
@@ -49,7 +50,7 @@ const ChatPortfolioComponent = ({
 
   const effectivePortfolioData = portfolioData;
 
-  const effectiveProfile = profile
+  const effectiveProfile: ChatProfile | undefined = profile
     ? {
         ...profile,
         name: profile.name ?? effectivePortfolioData?.profile?.name,
@@ -357,7 +358,7 @@ const ChatPortfolioComponent = ({
 
         {/* Full-width header (not boxed) */}
         <ChatHeader
-          profile={effectiveProfile}
+          profile={effectiveProfile || { name: "Portfolio" }}
           showIdentity={hasStarted}
         />
 
@@ -372,7 +373,6 @@ const ChatPortfolioComponent = ({
                   ""
                 }
                 subtitle={
-                  effectiveProfile?.title ||
                   "Ask about projects, skills, or anything you're curious about."
                 }
                 suggestions={suggestions}

@@ -13,7 +13,7 @@ export const Hero = ({ profile }: HeroProps) => {
   const hasName = Boolean(profile.name);
   const hasHeadline = Boolean(profile.headline);
   const hasLocation = Boolean(profile.location);
-  const avatarSrc = profile.profile_url || profile.avatarUrl;
+  const avatarSrc = profile.profile_photo_url || profile.avatarUrl;
   const hasSocials =
     Array.isArray(profile.socials) && profile.socials.length > 0;
 
@@ -58,7 +58,7 @@ export const Hero = ({ profile }: HeroProps) => {
         {/* Socials */}
         {hasSocials ? (
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            {profile.socials.map((s) => (
+            {profile.socials?.map((s) => (
               <a
                 key={`${s.type}-${s.href}`}
                 href={s.href}

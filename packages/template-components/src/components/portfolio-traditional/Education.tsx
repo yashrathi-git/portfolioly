@@ -1,6 +1,7 @@
 import type { EducationItem } from "../../types/portfolio";
 
 export type EducationProps = {
+  heading?: string;
   items: EducationItem[];
 };
 

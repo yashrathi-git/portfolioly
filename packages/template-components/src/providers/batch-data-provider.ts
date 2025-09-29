@@ -247,8 +247,4 @@ export class BatchDataProvider extends HybridDataProvider {
       this.preloadData({ includeUserSettings: true });
     }
   }
-
-  private getBaseUrl() {
-    return (this as unknown as { baseUrl?: string }).baseUrl || "";
-  }
 }

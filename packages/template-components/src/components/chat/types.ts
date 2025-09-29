@@ -22,7 +22,7 @@ export type Suggestion = {
   color?: string; // tailwind okLCH or hex via arbitrary value
 };
 
-export type Profile = {
+export type ChatProfile = {
   name?: string;
   badge?: string;
   avatarUrl?: string;
