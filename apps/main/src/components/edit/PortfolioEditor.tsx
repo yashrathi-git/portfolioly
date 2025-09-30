@@ -12,6 +12,7 @@ import { ProjectsForm } from "./ProjectsForm";
 import { EducationForm } from "./EducationForm";
 import { CertificationsForm } from "./CertificationsForm";
 import { TextBlobsForm } from "./TextBlobsForm";
+import { LayoutSettingsForm } from "./LayoutSettingsForm";
 import { PortfolioPreview } from "./PortfolioPreview";
 
 export interface PortfolioEditorProps {
@@ -106,6 +107,16 @@ export function PortfolioEditor({ initial, onChange }: PortfolioEditorProps) {
             <TextBlobsForm
               value={data.text_blobs || {}}
               onChange={(v) => update({ text_blobs: v })}
+            />
+
+            <LayoutSettingsForm
+              value={
+                data.layout_settings || {
+                  layout_mode: "both",
+                  default_layout: "chat",
+                }
+              }
+              onChange={(v) => update({ layout_settings: v })}
             />
 
             <Card>

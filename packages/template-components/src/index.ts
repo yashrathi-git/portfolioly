@@ -1,6 +1,10 @@
 // Re-export components and utilities
 export * from "./components/ChatPortfolio";
 export * from "./components/TraditionalPortfolio";
+export * from "./components/Portfolio";
+export * from "./components/PortfolioLayoutContainer";
+export * from "./components/LayoutSwitcher";
+export * from "./components/LayoutSettingsPanel";
 export * from "./components/PortfolioDock";
 export * from "./components/ThemeToggle";
 export * from "./components/UsernameSelector";

@@ -154,6 +154,10 @@ export function mapBackendToFrontend(
       certificates: (backendData.certifications || [])
         .map((cert) => cert.name || "")
         .filter(Boolean),
+      layout_settings: backendData.layout_settings || {
+        layout_mode: "both",
+        default_layout: "chat",
+      },
     };
   } catch (error) {
     console.error("Error mapping backend data to frontend:", error);
@@ -178,6 +182,7 @@ export function validateApiResponse(data: any): data is BackendPortfolioData {
     "certifications",
     "text_blobs",
     "metadata",
+    "layout_settings",
   ];
 
   // If it has any of the expected fields, consider it valid

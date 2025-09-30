@@ -85,6 +85,13 @@ export interface TextBlobs {
   additional_context?: string;
 }
 
+export interface LayoutSettings {
+  /** Available layout modes: chat-only, traditional-only, both */
+  layout_mode?: string;
+  /** Default layout when both are available: chat, traditional */
+  default_layout?: string;
+}
+
 export interface PortfolioMetadata {
   /** Source type (e.g., resume_pdf, linkedin_pdf, github_only) */
   source_type?: string;
@@ -101,4 +108,5 @@ export interface PortfolioData {
   certifications?: Certification[];
   text_blobs?: TextBlobs;
   metadata?: PortfolioMetadata;
+  layout_settings?: LayoutSettings;
 }

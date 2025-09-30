@@ -109,6 +109,19 @@ class TextBlobs(BaseModel):
     additional_context: Optional[str] = None
 
 
+class LayoutSettings(BaseModel):
+    """Layout preference settings for portfolio display."""
+
+    layout_mode: Optional[str] = Field(
+        default="both",
+        description="Available layout modes: chat-only, traditional-only, both",
+    )
+    default_layout: Optional[str] = Field(
+        default="chat",
+        description="Default layout when both are available: chat, traditional",
+    )
+
+
 class PortfolioMetadata(BaseModel):
     """Metadata about the portfolio data extraction."""
 
@@ -138,6 +151,7 @@ class PortfolioData(BaseModel):
     certifications: Optional[List[Certification]] = Field(default_factory=list)
     text_blobs: Optional[TextBlobs] = Field(default_factory=TextBlobs)
     metadata: Optional[PortfolioMetadata] = Field(default_factory=PortfolioMetadata)
+    layout_settings: Optional[LayoutSettings] = Field(default_factory=LayoutSettings)
 
     model_config = ConfigDict(
         json_encoders={datetime: lambda v: v.isoformat() + "Z"},
@@ -197,6 +211,10 @@ class PortfolioData(BaseModel):
                     "source_type": "resume_pdf",
                     "extracted_at": "2024-01-15T10:30:00Z",
                     "notes": "Extracted from resume PDF with high confidence",
+                },
+                "layout_settings": {
+                    "layout_mode": "both",
+                    "default_layout": "chat",
                 },
             }
         },

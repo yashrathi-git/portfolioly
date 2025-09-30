@@ -95,6 +95,11 @@ export type TextBlobs = {
   additional_context?: string;
 };
 
+export type LayoutSettings = {
+  layout_mode?: string; // "chat-only" | "traditional-only" | "both"
+  default_layout?: string; // "chat" | "traditional"
+};
+
 export type PortfolioMetadata = {
   source_type?: string;
   extracted_at?: string;
@@ -110,6 +115,7 @@ export type BackendPortfolioData = {
   certifications?: Certification[];
   text_blobs?: TextBlobs;
   metadata?: PortfolioMetadata;
+  layout_settings?: LayoutSettings;
 };
 
 // Legacy frontend types for backward compatibility
@@ -159,4 +165,5 @@ export type PortfolioData = {
   skills?: string[];
   achievements?: string[];
   certificates?: string[];
+  layout_settings?: LayoutSettings;
 };

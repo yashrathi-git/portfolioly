@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { ChatPortfolio } from "@portfolioly/template-components";
+import { Portfolio } from "@portfolioly/template-components";
 import type { PortfolioData as TemplatePortfolioData } from "@portfolioly/template-components";
 import type { PortfolioData as MainPortfolioData } from "@/types/portfolio";
 import { mapPortfolioDataToTemplate } from "@/utils/portfolioDataMapper";
@@ -239,11 +239,12 @@ export function PortfolioPreview({
   }
 
   return (
-    <ChatPortfolio
+    <Portfolio
+      portfolioData={templateData}
+      isOwner={true}
       profile={profile}
       suggestions={suggestions}
       presets={presets}
-      portfolioData={templateData}
     />
   );
 }
