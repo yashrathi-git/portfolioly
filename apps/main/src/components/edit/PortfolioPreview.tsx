@@ -239,13 +239,27 @@ export function PortfolioPreview({
   }
 
   return (
-    <Portfolio
-      portfolioData={templateData}
-      isOwner={true}
-      profile={profile}
-      suggestions={suggestions}
-      presets={presets}
-    />
+    <div className="w-full">
+      {/* Preview Container with proper boundaries and wider width */}
+      <div className="relative w-full max-w-none min-h-[700px] border border-border rounded-lg overflow-hidden bg-background shadow-sm">
+        {/* Preview Label */}
+        <div className="absolute top-2 right-2 z-[60] px-2 py-1 bg-muted/90 backdrop-blur text-xs text-muted-foreground rounded border border-border/50">
+          Live Preview
+        </div>
+
+        {/* Portfolio Content - Full width preview */}
+        <div className="w-full h-full">
+          <Portfolio
+            portfolioData={templateData}
+            isOwner={true}
+            isPreview={true}
+            profile={profile}
+            suggestions={suggestions}
+            presets={presets}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -20,6 +20,7 @@ export interface PortfolioLayoutContainerProps {
   isLoading?: boolean;
   error?: string;
   isOwner?: boolean;
+  isPreview?: boolean; // For preview mode with contained switcher
   // Chat-specific props
   profile?: ChatProfile;
   suggestions?: Suggestion[];
@@ -37,6 +38,7 @@ export const PortfolioLayoutContainer = ({
   isLoading = false,
   error,
   isOwner = false,
+  isPreview = false,
   profile,
   suggestions = [],
   presets = {},
@@ -145,7 +147,11 @@ export const PortfolioLayoutContainer = ({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
+            className={
+              isPreview
+                ? "absolute top-4 left-1/2 -translate-x-1/2 z-50"
+                : "fixed top-4 left-1/2 -translate-x-1/2 z-50"
+            }
           >
             <LayoutSwitcher
               currentLayout={currentLayout}

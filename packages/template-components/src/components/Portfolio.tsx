@@ -13,6 +13,7 @@ export interface PortfolioProps {
   isLoading?: boolean;
   error?: string;
   isOwner?: boolean;
+  isPreview?: boolean; // For preview mode with contained switcher
   // Chat-specific props
   profile?: ChatProfile;
   suggestions?: Suggestion[];
@@ -31,6 +32,7 @@ export const Portfolio = ({
   isLoading = false,
   error,
   isOwner = false,
+  isPreview = false,
   profile,
   suggestions = [],
   presets = {},
@@ -145,6 +147,7 @@ export const Portfolio = ({
       isLoading={isLoading}
       error={error}
       isOwner={isOwner}
+      isPreview={isPreview}
       profile={effectiveProfile}
       suggestions={defaultSuggestions}
       presets={presets}
