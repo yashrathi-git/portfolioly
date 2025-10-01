@@ -5,12 +5,14 @@ export type SkillsProps = {
 export const Skills = ({ items }: SkillsProps) => {
   return (
     <div>
-      <h2 className="text-xl font-semibold tracking-tight">Skills</h2>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-8">
+        Skills
+      </h2>
+      <div className="flex flex-wrap gap-2">
         {items.map((s) => (
           <span
             key={s}
-            className="inline-flex items-center gap-1 rounded-full border border-border/80 bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"
+            className="inline-flex items-center rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-foreground/20"
           >
             {s}
           </span>

@@ -7,7 +7,9 @@ export type EducationProps = {
 
 export const Education = ({ heading = "Education", items }: EducationProps) => {
   const visibleItems = (items || []).filter((item: EducationItem) =>
-    Boolean(item.school || item.degree || item.start || item.end || item.location)
+    Boolean(
+      item.school || item.degree || item.start || item.end || item.location
+    )
   );
 
   if (visibleItems.length === 0) {
@@ -15,47 +17,76 @@ export const Education = ({ heading = "Education", items }: EducationProps) => {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border bg-card text-card-foreground">
-      {/* Glow */}
-      <div className="pointer-events-none absolute -top-24 -left-20 h-64 w-64 rounded-full blur-3xl opacity-30 dark:opacity-20 bg-[oklch(0.646_0.222_41.116)]" />
-      <div className="p-5 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold mb-4">{heading}</h3>
-        <ol className="relative border-s pl-5 space-y-4">
-          {visibleItems.map((ed: EducationItem, idx: number) => {
-            return (
-              <li key={(ed.school || "") + idx} className="ms-3">
-                <div className="absolute -start-[5px] mt-1 size-2 rounded-full bg-[var(--primary)]" />
-                <div className="rounded-xl border bg-[var(--secondary)]/70 p-4">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <div>
-                      {ed.school ? (
-                        <div className="text-base font-semibold leading-tight">
-                          {ed.school}
-                        </div>
-                      ) : null}
-                      {ed.degree && (
-                        <div className="text-[13px] text-[color:var(--muted-foreground)]">
-                          {ed.degree}
-                        </div>
-                      )}
-                    </div>
-                    {(ed.start || ed.end) && (
-                      <div className="text-[12px] px-2 py-0.5 rounded-full bg-[var(--input)]/70 text-foreground/80">
-                        {ed.start || "—"} — {ed.end || "—"}
-                      </div>
+    <div>
+      <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-8">
+        {heading}
+      </h2>
+      <div className="relative">
+        {/* Vertical timeline line - simplified */}
+        <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-border" />
+
+        <div className="space-y-6 pl-8 sm:pl-10">
+          {visibleItems.map((ed: EducationItem, idx: number) => (
+            <div key={(ed.school || "") + idx} className="relative">
+              {/* Timeline dot - simplified, no animation */}
+              <div className="absolute -left-8 sm:-left-10 top-1.5 flex items-center justify-center">
+                <div className="h-3 w-3 rounded-full border-2 border-background bg-foreground shadow-sm" />
+              </div>
+
+              {/* Content card - cleaner design */}
+              <div className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-foreground/20">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex-1">
+                    {ed.school && (
+                      <h3 className="text-base font-semibold leading-snug mb-1">
+                        {ed.school}
+                      </h3>
+                    )}
+                    {ed.degree && (
+                      <p className="text-sm font-medium text-foreground/70 mb-1">
+                        {ed.degree}
+                      </p>
+                    )}
+                    {ed.location && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <svg
+                          className="h-3 w-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        {ed.location}
+                      </p>
                     )}
                   </div>
-
-                  {ed.location && (
-                    <div className="mt-2 text-[13px] text-[color:var(--muted-foreground)]">
-                      {ed.location}
+                  {(ed.start || ed.end) && (
+                    <div className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-muted text-muted-foreground whitespace-nowrap">
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      {[ed.start, ed.end].filter(Boolean).join(" — ")}
                     </div>
                   )}
                 </div>
-              </li>
-            );
-          })}
-        </ol>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

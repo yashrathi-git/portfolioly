@@ -89,54 +89,46 @@ const TraditionalPortfolioComponent = ({
   return (
     <PortfolioErrorBoundary>
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full relative overflow-hidden bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full bg-[var(--background)] text-[var(--foreground)]`}
       >
-        {/* Ambient gradient orbs - matching chat mode aesthetic */}
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-40 -left-32 h-80 w-80 rounded-full blur-3xl opacity-40 dark:opacity-20 bg-[oklch(0.84_0.07_250)]" />
-          <div className="absolute -bottom-40 -right-32 h-80 w-80 rounded-full blur-3xl opacity-30 dark:opacity-20 bg-[oklch(0.74_0.15_310)]" />
-          {/* subtle grid overlay */}
-          <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,rgba(0,0,0,0.35)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.35)_1px,transparent_1px)] [background-size:24px_24px] dark:opacity-[0.08]" />
-        </div>
-
         <Hero profile={effectiveData.profile} />
 
-        <main className="relative mx-auto max-w-5xl px-6 pb-20">
+        <main className="mx-auto max-w-5xl px-6 py-10 pb-16 space-y-10">
           {effectiveData.skills && effectiveData.skills.length > 0 && (
-            <section className="mt-10">
+            <section>
               <Skills items={effectiveData.skills} />
             </section>
           )}
 
           {effectiveData.projects && effectiveData.projects.length > 0 && (
-            <section className="mt-12">
+            <section>
               <Projects items={effectiveData.projects} />
             </section>
           )}
 
           {effectiveData.experience && effectiveData.experience.length > 0 && (
-            <section className="mt-12">
+            <section>
               <Experience items={effectiveData.experience} />
             </section>
           )}
 
           {effectiveData.education && effectiveData.education.length > 0 && (
-            <section className="mt-12">
+            <section>
               <Education items={effectiveData.education} />
             </section>
           )}
 
           {effectiveData.achievements &&
             effectiveData.achievements.length > 0 && (
-              <section className="mt-12">
-                <h2 className="text-xl font-semibold tracking-tight text-[color:var(--foreground)]">
+              <section>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-8">
                   Achievements
                 </h2>
-                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                <ul className="grid gap-3 sm:grid-cols-2">
                   {effectiveData.achievements.map((a) => (
                     <li
                       key={a}
-                      className="rounded-lg border border-[color:var(--border)]/70 bg-[var(--card)] px-4 py-3 text-sm shadow-sm text-[color:var(--card-foreground)]"
+                      className="rounded-lg border border-border bg-card px-4 py-3 text-sm"
                     >
                       {a}
                     </li>
@@ -147,15 +139,15 @@ const TraditionalPortfolioComponent = ({
 
           {effectiveData.certificates &&
             effectiveData.certificates.length > 0 && (
-              <section className="mt-12">
-                <h2 className="text-xl font-semibold tracking-tight text-[color:var(--foreground)]">
+              <section>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-8">
                   Certificates
                 </h2>
-                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                <ul className="grid gap-3 sm:grid-cols-2">
                   {effectiveData.certificates.map((c) => (
                     <li
                       key={c}
-                      className="rounded-lg border border-[color:var(--border)]/70 bg-[var(--card)] px-4 py-3 text-sm shadow-sm text-[color:var(--card-foreground)]"
+                      className="rounded-lg border border-border bg-card px-4 py-3 text-sm"
                     >
                       {c}
                     </li>

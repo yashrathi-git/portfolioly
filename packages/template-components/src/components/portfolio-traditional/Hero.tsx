@@ -18,64 +18,80 @@ export const Hero = ({ profile }: HeroProps) => {
     Array.isArray(profile.socials) && profile.socials.length > 0;
 
   return (
-    <section className="relative overflow-hidden">
-      {/* Ambient background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute -top-32 -left-24 h-72 w-72 rounded-full blur-3xl opacity-30 bg-[oklch(0.84_0.07_250)]" />
-        <div className="absolute -bottom-32 -right-24 h-72 w-72 rounded-full blur-3xl opacity-20 bg-[oklch(0.74_0.15_310)]" />
-        <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(to_right,rgba(0,0,0,0.35)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.35)_1px,transparent_1px)] [background-size:24px_24px]" />
-      </div>
-
-      <div className="mx-auto max-w-5xl px-6 pt-12 pb-8 sm:pt-16 sm:pb-10">
-        <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            {hasName ? (
-              <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">
-                {profile.name}
-              </h1>
-            ) : null}
-            {hasHeadline ? (
-              <p className="mt-2 text-muted-foreground text-base sm:text-lg max-w-prose">
-                {profile.headline}
-              </p>
-            ) : null}
-            {hasLocation && (
-              <p className="mt-1 text-sm text-muted-foreground/80">
-                {profile.location}
-              </p>
-            )}
-          </div>
-
-          {avatarSrc ? (
+    <section className="relative overflow-hidden border-b border-border">
+      <div className="mx-auto max-w-4xl px-6 py-16 sm:py-20">
+        {/* Avatar - Centered */}
+        {avatarSrc && (
+          <div className="flex justify-center mb-6">
             <img
               src={avatarSrc}
               alt={hasName ? profile.name : "Profile avatar"}
-              className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl object-cover ring-1 ring-border shadow-sm"
+              className="h-28 w-28 sm:h-32 sm:w-32 rounded-full object-cover ring-2 ring-border shadow-md"
             />
-          ) : null}
+          </div>
+        )}
+
+        {/* Main content - Centered */}
+        <div className="text-center space-y-3">
+          {hasName && (
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
+              {profile.name}
+            </h1>
+          )}
+
+          {hasHeadline && (
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              {profile.headline}
+            </p>
+          )}
+
+          {hasLocation && (
+            <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              {profile.location}
+            </p>
+          )}
         </div>
 
-        {/* Socials */}
-        {hasSocials ? (
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+        {/* Socials - Centered */}
+        {hasSocials && (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
             {profile.socials?.map((s) => (
               <a
                 key={`${s.type}-${s.href}`}
                 href={s.href}
-                className="group inline-flex items-center gap-2 rounded-full border border-border/80 bg-card px-4 py-2 text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium transition-colors hover:border-foreground/20"
                 target="_blank"
                 rel="noreferrer"
               >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors group-hover:bg-card">
-                  <SocialIcon type={s.type} className="h-3.5 w-3.5" />
+                <span className="flex h-4 w-4 items-center justify-center text-muted-foreground">
+                  <SocialIcon type={s.type} className="h-4 w-4" />
                 </span>
-                <span className="font-medium">
+                <span>
                   {s.label || s.type.charAt(0).toUpperCase() + s.type.slice(1)}
                 </span>
               </a>
             ))}
           </div>
-        ) : null}
+        )}
       </div>
     </section>
   );
