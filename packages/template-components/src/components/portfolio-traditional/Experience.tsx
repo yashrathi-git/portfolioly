@@ -27,47 +27,82 @@ export const Experience = ({ items = [] }: ExperienceProps) => {
         Experience
       </h2>
       <div className="relative">
-        {/* Vertical timeline line - simplified */}
-        <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-border" />
+        {/* Vertical timeline line with gradient */}
+        <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gradient-to-b from-slate-300 via-slate-200 to-transparent dark:from-slate-600 dark:via-slate-700" />
 
-        <div className="space-y-6 pl-8 sm:pl-10">
+        <div className="space-y-8 pl-12">
           {visibleItems.map((e: ExperienceItem, idx: number) => (
             <div
               key={`${e.companyName || "experience"}-${idx}`}
-              className="relative"
+              className="relative group"
             >
-              {/* Timeline dot - simplified, no animation */}
-              <div className="absolute -left-8 sm:-left-10 top-1.5 flex items-center justify-center">
-                <div className="h-3 w-3 rounded-full border-2 border-background bg-foreground shadow-sm" />
+              {/* Timeline dot with work icon */}
+              <div className="absolute -left-12 top-2 flex items-center justify-center">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 shadow-sm group-hover:border-slate-400 dark:group-hover:border-slate-500 transition-colors">
+                  <svg
+                    className="w-4 h-4 text-slate-600 dark:text-slate-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
+                  </svg>
+                </div>
               </div>
 
-              {/* Content card - cleaner design */}
-              <div className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-foreground/20">
-                <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-                  <div className="flex-1">
+              {/* Content card with improved styling */}
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md group-hover:translate-x-1">
+                <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
                     {(e.role || e.companyName) && (
-                      <h3 className="text-base font-semibold leading-snug mb-1">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 leading-tight mb-2">
                         {e.role && e.companyName
-                          ? `${e.role}`
-                          : e.role || e.companyName}
+                          ? `${e.companyName}`
+                          : e.companyName || e.role}
                       </h3>
                     )}
                     {e.companyName && e.role && (
-                      <p className="text-sm font-medium text-foreground/70">
-                        {e.companyName}
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2 flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-slate-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                        {e.role}
                       </p>
                     )}
                     {e.location && (
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                         <svg
-                          className="h-3 w-3"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
+                          className="w-4 h-4 text-slate-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
                         >
                           <path
-                            fillRule="evenodd"
-                            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                            clipRule="evenodd"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                           />
                         </svg>
                         {e.location}
@@ -75,9 +110,9 @@ export const Experience = ({ items = [] }: ExperienceProps) => {
                     )}
                   </div>
                   {(e.start || e.end) && (
-                    <div className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-muted text-muted-foreground whitespace-nowrap">
+                    <div className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 whitespace-nowrap">
                       <svg
-                        className="h-3 w-3"
+                        className="w-4 h-4 text-slate-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -95,7 +130,7 @@ export const Experience = ({ items = [] }: ExperienceProps) => {
                 </div>
 
                 {e.points?.length ? (
-                  <div className="mt-3">
+                  <div className="mt-4 prose prose-sm dark:prose-invert max-w-none">
                     <MarkdownContent content={e.points} />
                   </div>
                 ) : null}
