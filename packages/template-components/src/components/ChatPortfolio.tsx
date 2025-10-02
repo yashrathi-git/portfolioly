@@ -7,7 +7,14 @@ import { EmptyState } from "./chat/EmptyState";
 import { Thread } from "./chat/Thread";
 import { Composer } from "./chat/Composer";
 import { Suggestions } from "./chat/Suggestions";
-import type { Message, ChatProfile, Suggestion } from "./chat/types";
+import type {
+  Message,
+  ChatProfile,
+  Suggestion,
+  ChatRequest,
+  ChatResponse,
+  ToolCall,
+} from "./chat/types";
 import type { PortfolioData } from "../types/portfolio";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
@@ -23,6 +30,9 @@ export type ChatPortfolioProps = {
   portfolioData?: PortfolioData | null;
   isLoading?: boolean;
   error?: string;
+  username?: string; // Portfolio username for API calls
+  apiBaseUrl?: string; // Base URL for API calls (defaults to NEXT_PUBLIC_API_BASE_URL or empty)
+  authToken?: string; // Authentication token for authenticated API calls
 };
 
 const ChatPortfolioComponent = ({
@@ -32,6 +42,13 @@ const ChatPortfolioComponent = ({
   portfolioData,
   isLoading = false,
   error,
+  username,
+  apiBaseUrl = typeof window !== "undefined"
+    ? (window as any).NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      ""
+    : "",
+  authToken,
 }: ChatPortfolioProps) => {
   // Track component data usage in development
   useComponentDataTracking("ChatPortfolio", portfolioData, {
@@ -44,6 +61,10 @@ const ChatPortfolioComponent = ({
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [inlineMax, setInlineMax] = useState(5);
+  const [conversationId, setConversationId] = useState<string | undefined>(
+    undefined
+  );
+  const [apiError, setApiError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const hasStarted = messages.length > 0;
@@ -303,36 +324,266 @@ const ChatPortfolioComponent = ({
     return null;
   };
 
-  const sendUserMessage = (text: string) => {
+  const sendUserMessage = async (text: string, isRetry: boolean = false) => {
     const value = text.trim();
     if (!value) return;
 
-    const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: value,
-    };
-    setMessages((m) => [...m, userMsg]);
+    // Only add user message if not a retry
+    if (!isRetry) {
+      const userMsg: Message = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: value,
+      };
+      setMessages((m) => [...m, userMsg]);
+    }
 
-    // Simulate assistant thinking then reply with either widget or text
     setIsThinking(true);
+    setApiError(null);
 
-    const widget = chooseWidget(value);
-    const assistantContent =
-      presets[value] ||
-      "Looks like I need to gather more details. I'll check with our AI assistant and get back to you.";
+    // If username AND apiBaseUrl are provided, use API; otherwise fall back to keyword matching
+    // Note: For authenticated preview without username, we still need username for the endpoint
+    if (username && apiBaseUrl) {
+      try {
+        await callChatAPI(value);
+      } catch (error) {
+        console.error("Chat API error:", error);
+        setIsThinking(false);
 
-    setTimeout(() => {
-      const reply: Message = widget
-        ? { id: crypto.randomUUID(), role: "assistant", content: "", widget }
-        : {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: assistantContent,
-          };
-      setMessages((m) => [...m, reply]);
+        // Determine error type and show appropriate message with retry option
+        const isNetworkError =
+          error instanceof TypeError ||
+          (error as any).message?.includes("fetch");
+        const isRateLimit = apiError?.includes("rate limit");
+
+        let errorContent =
+          apiError || "I'm having trouble connecting right now.";
+
+        // Add retry button for network errors (not for rate limits or access denied)
+        if (isNetworkError && !isRateLimit) {
+          errorContent += "\n\n[Click to retry]";
+        }
+
+        const errorMsg: Message = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: errorContent,
+        };
+        setMessages((m) => [...m, errorMsg]);
+      }
+    } else {
+      // Fallback to keyword matching for backward compatibility
+      const widget = chooseWidget(value);
+      const assistantContent =
+        presets[value] ||
+        "Looks like I need to gather more details. I'll check with our AI assistant and get back to you.";
+
+      setTimeout(() => {
+        const reply: Message = widget
+          ? { id: crypto.randomUUID(), role: "assistant", content: "", widget }
+          : {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: assistantContent,
+            };
+        setMessages((m) => [...m, reply]);
+        setIsThinking(false);
+      }, 600);
+    }
+  };
+
+  const handleRetry = (originalMessage: string) => {
+    // Remove the last error message
+    setMessages((m) => m.slice(0, -1));
+    // Retry the original message
+    sendUserMessage(originalMessage, true);
+  };
+
+  const callChatAPI = async (message: string) => {
+    try {
+      const chatRequest: ChatRequest = {
+        message,
+        conversation_id: conversationId,
+      };
+
+      const url = `${apiBaseUrl}/api/chat/${encodeURIComponent(username!)}`;
+
+      let response: Response;
+      try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+
+        // Add authorization header if authToken is provided
+        if (authToken) {
+          headers["Authorization"] = `Bearer ${authToken}`;
+        }
+
+        response = await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(chatRequest),
+        });
+      } catch (fetchError) {
+        // Network error (no internet, CORS, etc.)
+        setApiError(
+          "Unable to connect to the chat service. Please check your internet connection."
+        );
+        throw fetchError;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        if (response.status === 429) {
+          const retryAfter = response.headers.get("Retry-After");
+          const retryMessage = retryAfter
+            ? `Please try again in ${retryAfter} seconds.`
+            : "Please try again in a few minutes.";
+          setApiError(`You've reached the rate limit. ${retryMessage}`);
+          throw new Error("Rate limit exceeded");
+        } else if (response.status === 404) {
+          setApiError(
+            "Portfolio not found. Please check the username and try again."
+          );
+          throw new Error("Portfolio not found");
+        } else if (response.status === 403) {
+          setApiError(
+            "This portfolio's chat is private and requires authentication."
+          );
+          throw new Error("Access denied");
+        } else if (response.status === 400) {
+          const message =
+            errorData?.detail?.message ||
+            errorData?.message ||
+            "Invalid request";
+          setApiError(`${message}. Please try rephrasing your message.`);
+          throw new Error("Bad request");
+        } else if (response.status >= 500) {
+          setApiError(
+            "The chat service is temporarily unavailable. Please try again in a moment."
+          );
+          throw new Error("Server error");
+        } else {
+          setApiError("Something went wrong. Please try again.");
+          throw new Error(`API error: ${response.status}`);
+        }
+      }
+
+      // Handle SSE streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("No response body");
+      }
+
+      let contentBuffer = "";
+      let toolCallsBuffer: ToolCall[] = [];
+      let currentMessageId = crypto.randomUUID();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            try {
+              const parsed = JSON.parse(data);
+
+              if (parsed.type === "content") {
+                // Append content chunk
+                contentBuffer += parsed.data;
+
+                // Update or create message with accumulated content
+                setMessages((m) => {
+                  const existingIndex = m.findIndex(
+                    (msg) => msg.id === currentMessageId
+                  );
+                  if (existingIndex >= 0) {
+                    const updated = [...m];
+                    updated[existingIndex] = {
+                      ...updated[existingIndex],
+                      content: contentBuffer,
+                    };
+                    return updated;
+                  } else {
+                    return [
+                      ...m,
+                      {
+                        id: currentMessageId,
+                        role: "assistant" as const,
+                        content: contentBuffer,
+                        toolCalls: undefined,
+                      },
+                    ];
+                  }
+                });
+              } else if (parsed.type === "tool_call") {
+                // Collect tool call
+                const toolCall: ToolCall = {
+                  type: parsed.data.type,
+                  widget: parsed.data.widget,
+                  indices: parsed.data.indices,
+                  explanation: parsed.data.explanation,
+                };
+                toolCallsBuffer.push(toolCall);
+              } else if (parsed.type === "done") {
+                // Finalize message with tool calls
+                if (toolCallsBuffer.length > 0) {
+                  setMessages((m) => {
+                    const existingIndex = m.findIndex(
+                      (msg) => msg.id === currentMessageId
+                    );
+                    if (existingIndex >= 0) {
+                      const updated = [...m];
+                      updated[existingIndex] = {
+                        ...updated[existingIndex],
+                        toolCalls: toolCallsBuffer,
+                      };
+                      return updated;
+                    }
+                    return m;
+                  });
+                }
+
+                // Update conversation ID
+                if (parsed.data.conversation_id) {
+                  setConversationId(parsed.data.conversation_id);
+                }
+
+                setIsThinking(false);
+              } else if (parsed.type === "error") {
+                const errorMessage =
+                  typeof parsed.data === "string"
+                    ? parsed.data
+                    : "An error occurred while processing your message.";
+                setApiError(errorMessage);
+                setIsThinking(false);
+                throw new Error(errorMessage);
+              }
+            } catch (e) {
+              // Only log parsing errors, don't throw
+              if (
+                !(e instanceof Error && e.message.includes("error occurred"))
+              ) {
+                console.error("Error parsing SSE data:", e);
+              } else {
+                throw e;
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Chat API call failed:", error);
       setIsThinking(false);
-    }, 600);
+      throw error;
+    }
   };
 
   const onSubmit = () => {
@@ -387,7 +638,11 @@ const ChatPortfolioComponent = ({
                 className="absolute inset-0 overflow-y-auto pb-40 thin-scrollbar"
               >
                 <div className="mx-auto w-full max-w-3xl">
-                  <Thread messages={messages} isThinking={isThinking} />
+                  <Thread
+                    messages={messages}
+                    isThinking={isThinking}
+                    portfolioData={effectivePortfolioData}
+                  />
                 </div>
                 <div className="h-4" />
               </div>

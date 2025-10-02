@@ -18,6 +18,9 @@ export interface PortfolioProps {
   profile?: ChatProfile;
   suggestions?: Suggestion[];
   presets?: Record<string, string>;
+  username?: string; // Portfolio username for API calls
+  apiBaseUrl?: string; // Base URL for API calls
+  authToken?: string; // Authentication token for authenticated API calls
 }
 
 /**
@@ -36,6 +39,9 @@ export const Portfolio = ({
   profile,
   suggestions = [],
   presets = {},
+  username,
+  apiBaseUrl,
+  authToken,
 }: PortfolioProps) => {
   // Extract layout settings from portfolio data
   const layoutSettings: LayoutSettings = useMemo(() => {
@@ -151,6 +157,9 @@ export const Portfolio = ({
       profile={effectiveProfile}
       suggestions={defaultSuggestions}
       presets={presets}
+      username={username}
+      apiBaseUrl={apiBaseUrl}
+      authToken={authToken}
     />
   );
 };

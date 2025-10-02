@@ -1,35 +1,54 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Portfolio } from "@portfolioly/template-components";
 import type { PortfolioData as TemplatePortfolioData } from "@portfolioly/template-components";
 import type { PortfolioData as MainPortfolioData } from "@/types/portfolio";
 import { mapPortfolioDataToTemplate } from "@/utils/portfolioDataMapper";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 // Import the compiled CSS styles to ensure they're loaded
 import "@portfolioly/template-components/style.css";
 
 export interface PortfolioPreviewProps {
   data: MainPortfolioData;
+  username?: string; // Portfolio username for API calls
   useAuthenticatedData?: boolean; // Future: use authenticated API data
 }
 
 export function PortfolioPreview({
   data,
+  username,
   useAuthenticatedData = false,
 }: PortfolioPreviewProps) {
+  const { user } = useAuth();
+  const [authToken, setAuthToken] = useState<string | undefined>(undefined);
+
   // Transform main app's portfolio data to template component format
   const templateData: TemplatePortfolioData = useMemo(() => {
     return mapPortfolioDataToTemplate(data);
   }, [data]);
 
-  // Future: When useAuthenticatedData is true, we could wrap this with HydrationProvider
-  // and use the authenticated API to fetch real-time data instead of the passed data
-  // For now, we use the data passed from the editor for preview purposes
-  if (useAuthenticatedData) {
-    // TODO: Implement authenticated data fetching with HydrationProvider
-    // This would be useful for a live preview that shows real-time data from the API
-  }
+  // Get auth token for authenticated API calls
+  useEffect(() => {
+    const getToken = async () => {
+      if (user) {
+        try {
+          const token = await user.getIdToken();
+          setAuthToken(token);
+        } catch (error) {
+          console.error("Failed to get auth token:", error);
+          setAuthToken(undefined);
+        }
+      } else {
+        setAuthToken(undefined);
+      }
+    };
+    getToken();
+  }, [user]);
+
+  // Get API base URL from environment
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
   // Generate dynamic profile for chat header based on actual data
   const profile = useMemo(() => {
@@ -237,6 +256,7 @@ export function PortfolioPreview({
       </div>
     );
   }
+  console.log(username);
 
   return (
     <div className="w-full">
@@ -247,6 +267,15 @@ export function PortfolioPreview({
           Live Preview
         </div>
 
+        {/* Info banner if username not set */}
+        {!username && (
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[60] max-w-md px-4 py-2 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 text-sm rounded-lg border border-blue-200 dark:border-blue-800 shadow-sm">
+            <p className="text-center">
+              💡 Set a username to enable live AI chat in preview
+            </p>
+          </div>
+        )}
+
         {/* Portfolio Content - Full width preview */}
         <div className="w-full h-full">
           <Portfolio
@@ -256,6 +285,9 @@ export function PortfolioPreview({
             profile={profile}
             suggestions={suggestions}
             presets={presets}
+            username={username}
+            apiBaseUrl={apiBaseUrl}
+            authToken={authToken}
           />
         </div>
       </div>

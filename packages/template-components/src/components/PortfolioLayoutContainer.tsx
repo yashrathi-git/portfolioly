@@ -25,6 +25,9 @@ export interface PortfolioLayoutContainerProps {
   profile?: ChatProfile;
   suggestions?: Suggestion[];
   presets?: Record<string, string>;
+  username?: string; // Portfolio username for API calls
+  apiBaseUrl?: string; // Base URL for API calls
+  authToken?: string; // Authentication token for authenticated API calls
 }
 
 const SESSION_STORAGE_KEY = "portfolio-layout-preference";
@@ -42,6 +45,9 @@ export const PortfolioLayoutContainer = ({
   profile,
   suggestions = [],
   presets = {},
+  username,
+  apiBaseUrl,
+  authToken,
 }: PortfolioLayoutContainerProps) => {
   // Determine available layouts based on settings
   const getAvailableLayouts = (): LayoutMode[] => {
@@ -179,6 +185,9 @@ export const PortfolioLayoutContainer = ({
                 presets={presets}
                 isLoading={isLoading}
                 error={error}
+                username={username}
+                apiBaseUrl={apiBaseUrl}
+                authToken={authToken}
               />
             ) : (
               <TraditionalPortfolio

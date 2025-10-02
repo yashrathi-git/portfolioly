@@ -2,10 +2,29 @@
 User settings schema models for username and portfolio visibility management.
 """
 
-from typing import Optional
+from typing import Optional, Literal
 from datetime import datetime
 from pydantic import BaseModel, Field, validator
 import re
+
+
+class PortfolioChatSettings(BaseModel):
+    """Chat-specific settings for portfolio owners."""
+
+    enabled: bool = Field(True, description="Whether chat is enabled at all")
+    access_mode: Literal["public", "private"] = Field(
+        "public", description="Public or private access"
+    )
+    monthly_message_count: int = Field(
+        0, description="Total messages received this month"
+    )
+    monthly_message_limit: int = Field(100, description="Monthly limit for pricing")
+    month_reset_date: datetime = Field(
+        default_factory=datetime.utcnow, description="Date when monthly counter resets"
+    )
+    last_message_at: Optional[datetime] = Field(
+        None, description="Timestamp of last message received"
+    )
 
 
 class UserSettings(BaseModel):
@@ -23,6 +42,9 @@ class UserSettings(BaseModel):
     )
     updated_at: Optional[datetime] = Field(
         default_factory=datetime.utcnow, description="When settings were last updated"
+    )
+    chat_settings: Optional[PortfolioChatSettings] = Field(
+        default_factory=PortfolioChatSettings, description="Chat-specific settings"
     )
 
     @validator("username")
