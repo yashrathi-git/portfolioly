@@ -182,6 +182,77 @@ class TestPortfolioService:
         with pytest.raises(FirebaseError, match="Failed to retrieve portfolio data"):
             portfolio_service.get_portfolio_data("user123")
 
+    def test_get_portfolio_by_username_success(self, portfolio_service, mock_firestore):
+        """Test successful portfolio data retrieval by username."""
+        # Mock user_settings query
+        mock_user_doc = Mock()
+        mock_user_doc.to_dict.return_value = {
+            "user_id": "user123",
+            "username": "johndoe",
+            "is_public": True,
+        }
+
+        mock_query = Mock()
+        mock_query.stream.return_value = iter([mock_user_doc])
+
+        mock_user_settings_collection = Mock()
+        mock_user_settings_collection.where.return_value.limit.return_value = mock_query
+
+        # Mock portfolio document
+        mock_portfolio_doc = Mock()
+        mock_portfolio_doc.exists = True
+        mock_portfolio_doc.to_dict.return_value = {
+            "personal_info": {"full_name": "John Doe"},
+            "projects": [],
+            "work_experiences": [],
+            "education": [],
+            "certifications": [],
+            "text_blobs": {},
+            "metadata": {"source_type": "resume_pdf"},
+            "updated_at": datetime.utcnow(),
+        }
+
+        mock_portfolio_doc_ref = Mock()
+        mock_portfolio_doc_ref.get.return_value = mock_portfolio_doc
+
+        # Setup collection mock to return different collections
+        def collection_side_effect(name):
+            if name == "user_settings":
+                return mock_user_settings_collection
+            elif name == "portfolios":
+                mock_portfolios = Mock()
+                mock_portfolios.document.return_value = mock_portfolio_doc_ref
+                return mock_portfolios
+
+        mock_firestore.collection.side_effect = collection_side_effect
+
+        # Test retrieval by username
+        result = portfolio_service.get_portfolio_by_username("johndoe")
+
+        # Assertions
+        assert result is not None
+        assert isinstance(result, PortfolioData)
+        assert result.personal_info.full_name == "John Doe"
+
+    def test_get_portfolio_by_username_not_found(
+        self, portfolio_service, mock_firestore
+    ):
+        """Test portfolio retrieval by username when username doesn't exist."""
+        # Mock empty query result
+        mock_query = Mock()
+        mock_query.stream.return_value = iter([])
+
+        mock_user_settings_collection = Mock()
+        mock_user_settings_collection.where.return_value.limit.return_value = mock_query
+
+        mock_firestore.collection.return_value = mock_user_settings_collection
+
+        # Test retrieval
+        result = portfolio_service.get_portfolio_by_username("nonexistent")
+
+        # Assertions
+        assert result is None
+
     def test_map_github_only_data(self, portfolio_service, sample_github_repos):
         """Test mapping GitHub repositories to portfolio data."""
         # Test mapping

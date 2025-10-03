@@ -10,6 +10,7 @@ export interface TemplateConfig {
     usernameCheck?: string; // GET /public/username/{username}/available
     setUsername?: string; // PUT /settings/username
     setVisibility?: string; // PUT /settings/visibility
+    chat?: string; // POST /public/chat/{username}
   };
 
   // Data Source Configuration
@@ -39,6 +40,7 @@ export const defaultTemplateConfig: TemplateConfig = {
     usernameCheck: "/api/public/username",
     setUsername: "/api/settings/username",
     setVisibility: "/api/settings/visibility",
+    chat: "/api/public/chat",
   },
   dataSource: "api",
   enableCache: true,

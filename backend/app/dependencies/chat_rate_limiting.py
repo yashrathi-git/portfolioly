@@ -15,15 +15,19 @@ from ..constants.chat_config import ChatConfig
 
 async def check_chat_ip_rate_limit(
     request: Request,
+    username: str,
+    token: str,
 ) -> str:
     """
     FastAPI dependency to check IP-based rate limit for chat requests.
 
-    This enforces a per-IP rate limit across all portfolios to prevent abuse
-    from unauthenticated users.
+    This enforces a per-IP rate limit keyed by (IP, username, token) to prevent abuse
+    from unauthenticated users. Different tokens get separate rate limit buckets.
 
     Args:
         request: FastAPI request object
+        username: Portfolio username being accessed
+        token: Public token being used for authentication
 
     Returns:
         IP address of the requester
@@ -36,11 +40,16 @@ async def check_chat_ip_rate_limit(
     # Get IP address from request
     ip_address = request.client.host if request.client else "unknown"
 
-    # Use IP address as the user_id for rate limiting
+    # Use first 8 characters of token for rate limit key
+    token_hash = token[:8] if len(token) >= 8 else token
+
+    # Create composite key: IP + username + token_hash
+    # This ensures different tokens get separate rate limit buckets
+    composite_key = f"{ip_address}_{username}_{token_hash}"
     endpoint = "chat_ip"
 
     is_allowed, current_count, reset_time = await rate_limiter.check_rate_limit(
-        user_id=ip_address,
+        user_id=composite_key,
         endpoint=endpoint,
         limit=ChatConfig.IP_REQUESTS_PER_HOUR,
         window_seconds=ChatConfig.RATE_LIMIT_WINDOW_SECONDS,
@@ -62,7 +71,7 @@ async def check_chat_ip_rate_limit(
 
     # Increment counter after successful check
     await rate_limiter.increment_counter(
-        user_id=ip_address,
+        user_id=composite_key,
         endpoint=endpoint,
         window_seconds=ChatConfig.RATE_LIMIT_WINDOW_SECONDS,
     )

@@ -33,6 +33,7 @@ export type ChatPortfolioProps = {
   username?: string; // Portfolio username for API calls
   apiBaseUrl?: string; // Base URL for API calls (defaults to NEXT_PUBLIC_API_BASE_URL or empty)
   authToken?: string; // Authentication token for authenticated API calls
+  publicToken?: string; // Public token for token-based authentication
 };
 
 const ChatPortfolioComponent = ({
@@ -49,6 +50,7 @@ const ChatPortfolioComponent = ({
       ""
     : "",
   authToken,
+  publicToken,
 }: ChatPortfolioProps) => {
   // Track component data usage in development
   useComponentDataTracking("ChatPortfolio", portfolioData, {
@@ -400,24 +402,26 @@ const ChatPortfolioComponent = ({
   };
 
   const callChatAPI = async (message: string) => {
+    // Check if publicToken is provided when using API
+    if (!publicToken) {
+      setApiError("Chat is unavailable. Please refresh the page to continue.");
+      throw new Error("Public token is required for chat");
+    }
+
     try {
       const chatRequest: ChatRequest = {
         message,
         conversation_id: conversationId,
       };
 
-      const url = `${apiBaseUrl}/api/chat/${encodeURIComponent(username!)}`;
+      const url = `${apiBaseUrl}/public/chat/${encodeURIComponent(username!)}`;
 
       let response: Response;
       try {
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${publicToken}`,
         };
-
-        // Add authorization header if authToken is provided
-        if (authToken) {
-          headers["Authorization"] = `Bearer ${authToken}`;
-        }
 
         response = await fetch(url, {
           method: "POST",

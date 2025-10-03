@@ -28,6 +28,7 @@ export interface PortfolioLayoutContainerProps {
   username?: string; // Portfolio username for API calls
   apiBaseUrl?: string; // Base URL for API calls
   authToken?: string; // Authentication token for authenticated API calls
+  publicToken?: string; // Public token for token-based authentication
 }
 
 const SESSION_STORAGE_KEY = "portfolio-layout-preference";
@@ -48,6 +49,7 @@ export const PortfolioLayoutContainer = ({
   username,
   apiBaseUrl,
   authToken,
+  publicToken,
 }: PortfolioLayoutContainerProps) => {
   // Determine available layouts based on settings
   const getAvailableLayouts = (): LayoutMode[] => {
@@ -188,6 +190,7 @@ export const PortfolioLayoutContainer = ({
                 username={username}
                 apiBaseUrl={apiBaseUrl}
                 authToken={authToken}
+                publicToken={publicToken}
               />
             ) : (
               <TraditionalPortfolio

@@ -6,49 +6,113 @@ import type { PortfolioData as TemplatePortfolioData } from "@portfolioly/templa
 import type { PortfolioData as MainPortfolioData } from "@/types/portfolio";
 import { mapPortfolioDataToTemplate } from "@/utils/portfolioDataMapper";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { env } from "@/lib/env";
 
 // Import the compiled CSS styles to ensure they're loaded
 import "@portfolioly/template-components/style.css";
 
 export interface PortfolioPreviewProps {
   data: MainPortfolioData;
-  username?: string; // Portfolio username for API calls
-  useAuthenticatedData?: boolean; // Future: use authenticated API data
 }
 
-export function PortfolioPreview({
-  data,
-  username,
-  useAuthenticatedData = false,
-}: PortfolioPreviewProps) {
+interface EnsureUsernameResponse {
+  username: string;
+}
+
+interface EnsureTokenResponse {
+  token: string;
+}
+
+export function PortfolioPreview({ data }: PortfolioPreviewProps) {
   const { user } = useAuth();
+  const [username, setUsername] = useState<string | undefined>(undefined);
+  const [publicToken, setPublicToken] = useState<string | undefined>(undefined);
   const [authToken, setAuthToken] = useState<string | undefined>(undefined);
+  const [fetchingToken, setFetchingToken] = useState(false);
+  const [tokenError, setTokenError] = useState<string | undefined>(undefined);
 
   // Transform main app's portfolio data to template component format
   const templateData: TemplatePortfolioData = useMemo(() => {
     return mapPortfolioDataToTemplate(data);
   }, [data]);
 
-  // Get auth token for authenticated API calls
+  // Fetch username and public token for the authenticated user
   useEffect(() => {
-    const getToken = async () => {
-      if (user) {
-        try {
-          const token = await user.getIdToken();
-          setAuthToken(token);
-        } catch (error) {
-          console.error("Failed to get auth token:", error);
-          setAuthToken(undefined);
-        }
-      } else {
-        setAuthToken(undefined);
+    async function fetchUsernameAndToken() {
+      if (!user) {
+        setUsername(undefined);
+        setPublicToken(undefined);
+        setTokenError(undefined);
+        return;
       }
-    };
-    getToken();
-  }, [user]);
 
-  // Get API base URL from environment
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      try {
+        setFetchingToken(true);
+        setTokenError(undefined);
+
+        // Get Firebase auth token
+        const firebaseToken = await user.getIdToken();
+        setAuthToken(firebaseToken);
+
+        // Step 1: Ensure username exists for the user
+        const usernameResponse = await fetch(
+          `${env.API_BASE_URL}/public/ensure-username`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${firebaseToken}`,
+            },
+            body: JSON.stringify({ user_id: user.uid }),
+          }
+        );
+
+        if (!usernameResponse.ok) {
+          throw new Error(`Failed to get username: ${usernameResponse.status}`);
+        }
+
+        const usernameData: EnsureUsernameResponse =
+          await usernameResponse.json();
+        setUsername(usernameData.username);
+
+        // Step 2: Fetch public token for the username
+        const tokenResponse = await fetch(
+          `${env.API_BASE_URL}/public/ensure-token`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username: usernameData.username }),
+          }
+        );
+
+        if (tokenResponse.status === 404) {
+          setTokenError("Portfolio not found");
+          setPublicToken(undefined);
+          return;
+        }
+
+        if (!tokenResponse.ok) {
+          throw new Error(`Failed to fetch token: ${tokenResponse.status}`);
+        }
+
+        const tokenData: EnsureTokenResponse = await tokenResponse.json();
+        setPublicToken(tokenData.token);
+      } catch (err) {
+        console.error("Error fetching username and token:", err);
+        setTokenError(
+          err instanceof Error ? err.message : "Failed to load chat token"
+        );
+        setUsername(undefined);
+        setPublicToken(undefined);
+      } finally {
+        setFetchingToken(false);
+      }
+    }
+
+    fetchUsernameAndToken();
+  }, [user]);
 
   // Generate dynamic profile for chat header based on actual data
   const profile = useMemo(() => {
@@ -249,14 +313,13 @@ export function PortfolioPreview({
       <div className="w-full min-h-[400px] grid place-items-center">
         <div className="max-w-md text-center space-y-4 text-muted-foreground">
           <p>
-            We don’t have enough information yet. I’ll queue this request for
-            the AI assistant to generate a tailored response.
+            Add your name and some basic information to see a preview of your
+            portfolio.
           </p>
         </div>
       </div>
     );
   }
-  console.log(username);
 
   return (
     <div className="w-full">
@@ -267,12 +330,30 @@ export function PortfolioPreview({
           Live Preview
         </div>
 
-        {/* Info banner if username not set */}
-        {!username && (
+        {/* Info banner for chat status */}
+        {fetchingToken && (
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[60] max-w-md px-4 py-2 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 text-sm rounded-lg border border-blue-200 dark:border-blue-800 shadow-sm">
+            <p className="text-center">⏳ Loading chat functionality...</p>
+          </div>
+        )}
+
+        {tokenError && (
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[60] max-w-md px-4 py-2 bg-yellow-50 dark:bg-yellow-950 text-yellow-900 dark:text-yellow-100 text-sm rounded-lg border border-yellow-200 dark:border-yellow-800 shadow-sm">
+            <p className="text-center">⚠️ Chat unavailable: {tokenError}</p>
+          </div>
+        )}
+
+        {!fetchingToken && !tokenError && !username && (
           <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[60] max-w-md px-4 py-2 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 text-sm rounded-lg border border-blue-200 dark:border-blue-800 shadow-sm">
             <p className="text-center">
               💡 Set a username to enable live AI chat in preview
             </p>
+          </div>
+        )}
+
+        {!fetchingToken && username && publicToken && (
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[60] max-w-md px-4 py-2 bg-green-50 dark:bg-green-950 text-green-900 dark:text-green-100 text-sm rounded-lg border border-green-200 dark:border-green-800 shadow-sm">
+            <p className="text-center">✓ Live AI chat enabled</p>
           </div>
         )}
 
@@ -286,8 +367,9 @@ export function PortfolioPreview({
             suggestions={suggestions}
             presets={presets}
             username={username}
-            apiBaseUrl={apiBaseUrl}
+            apiBaseUrl={env.API_BASE_URL}
             authToken={authToken}
+            publicToken={publicToken}
           />
         </div>
       </div>

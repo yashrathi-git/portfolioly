@@ -1,103 +1,132 @@
-import {
-  TemplateProvider,
-  PortfolioProvider,
-  TraditionalPortfolio,
-  ChatPortfolio,
-} from "@portfolioly/template-components";
-import type { Profile, Suggestion } from "@portfolioly/template-components";
+"use client";
+
+import { useEffect, useState } from "react";
+import { TemplateProvider, Portfolio } from "@portfolioly/template-components";
+
+// Get API base URL from environment or use default
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
+interface EnsureUsernameResponse {
+  username: string;
+}
+
+interface EnsureTokenResponse {
+  token: string;
+}
 
 export default function Home() {
-  const profile: Profile = {
-    name: "Alex Chen",
-    badge: "Chat Portfolio",
-    links: [
-      { type: "github", href: "#" },
-      { type: "mail", href: "#" },
-      { type: "link", href: "#" },
-    ],
-  };
+  const [username, setUsername] = useState<string | undefined>();
+  const [publicToken, setPublicToken] = useState<string | undefined>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>();
 
-  const suggestions: Suggestion[] = [
-    { id: "me", label: "Me", icon: "user", color: "bg-[oklch(0.74_0.15_310)]" },
-    {
-      id: "projects",
-      label: "Projects",
-      icon: "folderGit2",
-      color: "bg-[oklch(0.646_0.222_41.116)]",
-    },
-    {
-      id: "skills",
-      label: "Skills",
-      icon: "wrench",
-      color: "bg-[oklch(0.6_0.118_184.704)]",
-    },
-    {
-      id: "fun",
-      label: "Fun",
-      icon: "smile",
-      color: "bg-[oklch(0.828_0.189_84.429)]",
-    },
-    {
-      id: "contact",
-      label: "Contact",
-      icon: "mail",
-      color: "bg-[oklch(0.769_0.188_70.08)]",
-    },
-    // add more to demonstrate inline "show more"
-    { id: "stack", label: "Tech Stack", icon: "wrench" },
-    { id: "latest", label: "Latest Work", icon: "folderGit2" },
-    { id: "about", label: "About", icon: "user" },
-    { id: "hobbies", label: "Hobbies", icon: "smile" },
-    { id: "education", label: "Education", icon: "user" },
-  ];
+  // For demo purposes, we'll use a hardcoded user_id
+  // In a real app, this would come from authentication context
+  const userId = "demo-user-id";
 
-  const presets: Record<string, string> = {
-    Me: `I'm Alex Chen — a product-focused frontend engineer crafting elegant, fast interfaces with React, Next.js, and motion. I obsess over micro-interactions, accessibility, and performance.`,
-    Projects: `Recent work:\n• Aura — A minimalist AI notes app with semantic search.\n• Kino — Film discovery site with delightful transitions.\n• Loomis — A finance dashboard with realtime charts.\nAsk me about any project to see details and links.`,
-    Skills: `Core: React, Next.js (App Router), TypeScript, Tailwind v4, Shadcn/UI\nTooling: Vite, Vitest, Playwright, Turborepo\nUX: Motion design, accessibility (WCAG), design systems`,
-    Fun: `Outside of work: film photography, specialty coffee, and cycling. Always down for a coffee chat ☕️`,
-    Contact: `Best ways to reach me:\n• Email: alex@example.com\n• GitHub: github.com/alexchen\n• Portfolio: alexchen.dev`,
-    "Tech Stack": `React • Next.js • TypeScript • Tailwind v4 • Shadcn/UI • Framer Motion`,
-    "Latest Work": `Recently shipped Aura 1.2 with faster sync and new semantic search. Want a demo?`,
-    About: `I love building calm software with delightful motion and accessibility at the core.`,
-    Hobbies: `Film photography, specialty coffee, cycling, and learning generative art.`,
-    Education: `I studied Computer Science at University of Somewhere, graduating in 2019.`,
-  };
+  useEffect(() => {
+    async function fetchUsernameAndToken() {
+      try {
+        // Step 1: Ensure username exists for the user
+        const usernameResponse = await fetch(
+          `${API_BASE_URL}/public/ensure-username`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ user_id: userId }),
+          }
+        );
+
+        if (!usernameResponse.ok) {
+          throw new Error(`Failed to get username: ${usernameResponse.status}`);
+        }
+
+        const usernameData: EnsureUsernameResponse =
+          await usernameResponse.json();
+        setUsername(usernameData.username);
+
+        // Step 2: Fetch token for the username
+        const tokenResponse = await fetch(
+          `${API_BASE_URL}/public/ensure-token`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username: usernameData.username }),
+          }
+        );
+
+        if (tokenResponse.status === 404) {
+          setError("Portfolio not found");
+          setLoading(false);
+          return;
+        }
+
+        if (!tokenResponse.ok) {
+          throw new Error(`Failed to fetch token: ${tokenResponse.status}`);
+        }
+
+        const tokenData: EnsureTokenResponse = await tokenResponse.json();
+        setPublicToken(tokenData.token);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching username and token:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load portfolio"
+        );
+        setLoading(false);
+      }
+    }
+
+    fetchUsernameAndToken();
+  }, [userId]);
+
+  // Show loading screen while fetching
+  if (loading) {
+    return (
+      <TemplateProvider>
+        <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Loading portfolio...</p>
+          </div>
+        </main>
+      </TemplateProvider>
+    );
+  }
+
+  // Show error screen if fetch failed
+  if (error) {
+    return (
+      <TemplateProvider>
+        <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
+          <div className="text-center space-y-4 max-w-md">
+            <div className="text-4xl">⚠️</div>
+            <h1 className="text-2xl font-semibold">Error Loading Portfolio</h1>
+            <p className="text-muted-foreground">{error}</p>
+          </div>
+        </main>
+      </TemplateProvider>
+    );
+  }
+
+  // Don't render until both username and token are available
+  if (!username || !publicToken) {
+    return null;
+  }
 
   return (
     <TemplateProvider>
       <main className="min-h-screen bg-background text-foreground">
-        <div className="py-12">
-          <div className="container mx-auto max-w-5xl space-y-16">
-            <section className="space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight">
-                Traditional Portfolio
-              </h2>
-              <p className="text-muted-foreground">
-                Fully responsive layout built for real-world profiles.
-              </p>
-              <div className="rounded-xl border bg-card shadow-sm">
-                <PortfolioProvider portfolioData={null}>
-                  <TraditionalPortfolio />
-                </PortfolioProvider>
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight">
-                Chat Portfolio
-              </h2>
-              <p className="text-muted-foreground">
-                Conversational portfolio experience with knowledge widgets.
-              </p>
-              <div className="rounded-xl border bg-card shadow-sm">
-                <PortfolioProvider portfolioData={null}>
-                  <ChatPortfolio />
-                </PortfolioProvider>
-              </div>
-            </section>
-          </div>
-        </div>
+        <Portfolio
+          apiBaseUrl={API_BASE_URL}
+          username={username}
+          publicToken={publicToken}
+        />
       </main>
     </TemplateProvider>
   );

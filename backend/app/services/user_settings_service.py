@@ -6,6 +6,8 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime
 import logging
 import re
+import secrets
+import string
 
 from ..core.firebase import get_firebase_auth
 from ..schemas.user_settings import UserSettings, UserSettingsCreate, UserSettingsUpdate
@@ -246,6 +248,69 @@ class UserSettingsService:
         except Exception as e:
             logger.error(f"Error validating username {username}: {e}")
             return {"valid": False, "error": "Username validation failed"}
+
+    def generate_username_from_email(self, email: str) -> str:
+        """
+        Generate a unique username from an email address.
+
+        Algorithm:
+        1. Extract part before @ from email
+        2. Sanitize to alphanumeric + hyphens/underscores
+        3. Try username alone first
+        4. If taken, append 6-char URL-safe random string (base62: a-zA-Z0-9)
+        5. Keep trying until unique (max 10 attempts)
+
+        Args:
+            email: User's email address
+
+        Returns:
+            str: A unique username
+
+        Raises:
+            UserSettingsError: If unable to generate unique username after max attempts
+        """
+        try:
+            # Extract and sanitize email prefix
+            email_prefix = email.split("@")[0]
+            base_username = re.sub(r"[^a-zA-Z0-9_-]", "", email_prefix).lower()
+
+            # Ensure base username is not empty
+            if not base_username:
+                base_username = "user"
+
+            # Ensure minimum length
+            if len(base_username) < 3:
+                base_username = base_username + "user"
+
+            # Try base username first
+            if not self.get_user_settings_by_username(base_username):
+                logger.info(f"Generated username from email: {base_username}")
+                return base_username
+
+            # Try with random suffix (base62: a-zA-Z0-9)
+            chars = string.ascii_letters + string.digits
+            max_attempts = 10
+
+            for attempt in range(max_attempts):
+                suffix = "".join(secrets.choice(chars) for _ in range(6))
+                username = f"{base_username}_{suffix}"
+
+                if not self.get_user_settings_by_username(username):
+                    logger.info(
+                        f"Generated username from email with suffix: {username}"
+                    )
+                    return username
+
+            # If we get here, we failed to generate a unique username
+            raise UserSettingsError(
+                f"Failed to generate unique username after {max_attempts} attempts"
+            )
+
+        except UserSettingsError:
+            raise
+        except Exception as e:
+            logger.error(f"Error generating username from email {email}: {e}")
+            raise UserSettingsError(f"Failed to generate username: {e}")
 
 
 # Singleton instance

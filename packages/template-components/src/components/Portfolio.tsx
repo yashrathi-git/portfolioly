@@ -21,6 +21,7 @@ export interface PortfolioProps {
   username?: string; // Portfolio username for API calls
   apiBaseUrl?: string; // Base URL for API calls
   authToken?: string; // Authentication token for authenticated API calls
+  publicToken?: string; // Public token for token-based authentication
 }
 
 /**
@@ -42,6 +43,7 @@ export const Portfolio = ({
   username,
   apiBaseUrl,
   authToken,
+  publicToken,
 }: PortfolioProps) => {
   // Extract layout settings from portfolio data
   const layoutSettings: LayoutSettings = useMemo(() => {
@@ -160,6 +162,7 @@ export const Portfolio = ({
       username={username}
       apiBaseUrl={apiBaseUrl}
       authToken={authToken}
+      publicToken={publicToken}
     />
   );
 };

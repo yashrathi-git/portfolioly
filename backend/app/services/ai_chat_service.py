@@ -201,8 +201,7 @@ Remember: Your goal is to help visitors understand {name}'s professional capabil
             personal_details = []
             if info.full_name:
                 personal_details.append(f"Name: {info.full_name}")
-            if info.title:
-                personal_details.append(f"Title: {info.title}")
+
             if info.email:
                 personal_details.append(f"Email: {info.email}")
             if info.phone:
@@ -215,96 +214,96 @@ Remember: Your goal is to help visitors understand {name}'s professional capabil
                 )
 
         # About/Summary
-        if portfolio_data.text_blobs:
-            for blob in portfolio_data.text_blobs:
-                if blob.type == "about" and blob.content:
-                    summary_parts.append(f"### About\n{blob.content}")
-                elif blob.type == "summary" and blob.content:
-                    summary_parts.append(f"### Summary\n{blob.content}")
+        # if portfolio_data.text_blobs:
+        #     for blob in portfolio_data.text_blobs:
+        #         if blob.type == "about" and blob.content:
+        #             summary_parts.append(f"### About\n{blob.content}")
+        #         elif blob.type == "summary" and blob.content:
+        #             summary_parts.append(f"### Summary\n{blob.content}")
 
         # Skills - complete list
-        if portfolio_data.skills:
-            skills_text = ", ".join(portfolio_data.skills)
-            summary_parts.append(f"### Skills\n{skills_text}")
+        # if portfolio_data.tags:
+        #     skills_text = ", ".join(portfolio_data.skills)
+        #     summary_parts.append(f"### Skills\n{skills_text}")
 
         # Work Experience - detailed
         if portfolio_data.work_experiences:
             exp_details = []
             for i, exp in enumerate(portfolio_data.work_experiences, 1):
-                exp_text = f"\n{i}. {exp.title} at {exp.company}"
+                exp_text = f"\n{i}. {exp.title} at {exp.organization}"
                 if exp.start_date or exp.end_date:
                     dates = f" ({exp.start_date or 'Unknown'} - {exp.end_date or 'Present'})"
                     exp_text += dates
                 if exp.location:
                     exp_text += f"\n   Location: {exp.location}"
-                if exp.description:
-                    exp_text += f"\n   Description: {exp.description}"
+                # if exp.description:
+                #     exp_text += f"\n   Description: {exp.description}"
                 if exp.technologies:
                     exp_text += f"\n   Technologies: {', '.join(exp.technologies)}"
                 exp_details.append(exp_text)
             summary_parts.append("### Work Experience" + "".join(exp_details))
 
-        # Projects - detailed
-        if portfolio_data.projects:
-            project_details = []
-            for i, proj in enumerate(portfolio_data.projects, 1):
-                proj_text = f"\n{i}. {proj.name}"
-                if proj.description:
-                    proj_text += f"\n   Description: {proj.description}"
-                if proj.technologies:
-                    proj_text += f"\n   Technologies: {', '.join(proj.technologies)}"
-                if proj.url:
-                    proj_text += f"\n   URL: {proj.url}"
-                if proj.github_url:
-                    proj_text += f"\n   GitHub: {proj.github_url}"
-                if proj.start_date or proj.end_date:
-                    dates = f"\n   Duration: {proj.start_date or 'Unknown'} - {proj.end_date or 'Present'}"
-                    proj_text += dates
-                if proj.highlights:
-                    proj_text += f"\n   Highlights: {'; '.join(proj.highlights)}"
-                project_details.append(proj_text)
-            summary_parts.append("### Projects" + "".join(project_details))
+        # # Projects - detailed
+        # if portfolio_data.projects:
+        #     project_details = []
+        #     for i, proj in enumerate(portfolio_data.projects, 1):
+        #         proj_text = f"\n{i}. {proj.name}"
+        #         if proj.description:
+        #             proj_text += f"\n   Description: {proj.description}"
+        #         if proj.technologies:
+        #             proj_text += f"\n   Technologies: {', '.join(proj.technologies)}"
+        #         if proj.url:
+        #             proj_text += f"\n   URL: {proj.url}"
+        #         if proj.github_url:
+        #             proj_text += f"\n   GitHub: {proj.github_url}"
+        #         if proj.start_date or proj.end_date:
+        #             dates = f"\n   Duration: {proj.start_date or 'Unknown'} - {proj.end_date or 'Present'}"
+        #             proj_text += dates
+        #         if proj.highlights:
+        #             proj_text += f"\n   Highlights: {'; '.join(proj.highlights)}"
+        #         project_details.append(proj_text)
+        #     summary_parts.append("### Projects" + "".join(project_details))
 
-        # Education - detailed
-        if portfolio_data.education:
-            edu_details = []
-            for i, edu in enumerate(portfolio_data.education, 1):
-                edu_text = f"\n{i}. {edu.degree}"
-                if edu.field_of_study:
-                    edu_text += f" in {edu.field_of_study}"
-                edu_text += f" from {edu.institution}"
-                if edu.start_date or edu.end_date:
-                    dates = f" ({edu.start_date or 'Unknown'} - {edu.end_date or 'Present'})"
-                    edu_text += dates
-                if edu.gpa:
-                    edu_text += f"\n   GPA: {edu.gpa}"
-                if edu.location:
-                    edu_text += f"\n   Location: {edu.location}"
-                if edu.description:
-                    edu_text += f"\n   Description: {edu.description}"
-                edu_details.append(edu_text)
-            summary_parts.append("### Education" + "".join(edu_details))
+        # # Education - detailed
+        # if portfolio_data.education:
+        #     edu_details = []
+        #     for i, edu in enumerate(portfolio_data.education, 1):
+        #         edu_text = f"\n{i}. {edu.degree}"
+        #         if edu.field_of_study:
+        #             edu_text += f" in {edu.field_of_study}"
+        #         edu_text += f" from {edu.institution}"
+        #         if edu.start_date or edu.end_date:
+        #             dates = f" ({edu.start_date or 'Unknown'} - {edu.end_date or 'Present'})"
+        #             edu_text += dates
+        #         if edu.gpa:
+        #             edu_text += f"\n   GPA: {edu.gpa}"
+        #         if edu.location:
+        #             edu_text += f"\n   Location: {edu.location}"
+        #         if edu.description:
+        #             edu_text += f"\n   Description: {edu.description}"
+        #         edu_details.append(edu_text)
+        #     summary_parts.append("### Education" + "".join(edu_details))
 
-        # Certifications
-        if portfolio_data.certifications:
-            cert_details = []
-            for i, cert in enumerate(portfolio_data.certifications, 1):
-                cert_text = f"\n{i}. {cert.name}"
-                if cert.issuer:
-                    cert_text += f" (issued by {cert.issuer})"
-                if cert.date:
-                    cert_text += f"\n   Date: {cert.date}"
-                if cert.url:
-                    cert_text += f"\n   URL: {cert.url}"
-                cert_details.append(cert_text)
-            summary_parts.append("### Certifications" + "".join(cert_details))
+        # # Certifications
+        # if portfolio_data.certifications:
+        #     cert_details = []
+        #     for i, cert in enumerate(portfolio_data.certifications, 1):
+        #         cert_text = f"\n{i}. {cert.name}"
+        #         if cert.issuer:
+        #             cert_text += f" (issued by {cert.issuer})"
+        #         if cert.date:
+        #             cert_text += f"\n   Date: {cert.date}"
+        #         if cert.url:
+        #             cert_text += f"\n   URL: {cert.url}"
+        #         cert_details.append(cert_text)
+        #     summary_parts.append("### Certifications" + "".join(cert_details))
 
-        # Profiles (GitHub, LinkedIn, etc.)
-        if portfolio_data.profiles:
-            profile_details = []
-            for profile in portfolio_data.profiles:
-                profile_details.append(f"{profile.platform}: {profile.url}")
-            summary_parts.append("### Profiles\n" + "\n".join(profile_details))
+        # # Profiles (GitHub, LinkedIn, etc.)
+        # if portfolio_data.profiles:
+        #     profile_details = []
+        #     for profile in portfolio_data.profiles:
+        #         profile_details.append(f"{profile.platform}: {profile.url}")
+        #     summary_parts.append("### Profiles\n" + "\n".join(profile_details))
 
         return (
             "\n\n".join(summary_parts)

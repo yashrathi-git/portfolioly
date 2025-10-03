@@ -37,6 +37,13 @@ class UserSettings(BaseModel):
     is_public: bool = Field(
         False, description="Whether the portfolio is publicly accessible"
     )
+    public_token_enabled: bool = Field(
+        True, description="Whether public token generation is enabled"
+    )
+    public_token_ver: int = Field(
+        1,
+        description="Token version for invalidation (increment to invalidate all tokens)",
+    )
     created_at: Optional[datetime] = Field(
         default_factory=datetime.utcnow, description="When settings were created"
     )
@@ -94,6 +101,8 @@ class UserSettings(BaseModel):
                 "user_id": "firebase_user_123",
                 "username": "johndoe",
                 "is_public": True,
+                "public_token_enabled": True,
+                "public_token_ver": 1,
                 "created_at": "2024-01-15T10:30:00Z",
                 "updated_at": "2024-01-15T10:30:00Z",
             }

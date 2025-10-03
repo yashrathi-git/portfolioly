@@ -47,7 +47,8 @@ export class PublicApiClient {
    * Get public portfolio data by username
    */
   async getPublicPortfolioData(
-    username: string
+    username: string,
+    publicToken?: string
   ): Promise<BackendPortfolioData | null> {
     if (!username || username.trim() === "") {
       throw new DataProviderError(
@@ -68,11 +69,18 @@ export class PublicApiClient {
         url
       );
 
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      // Add Authorization header if publicToken is provided
+      if (publicToken) {
+        headers["Authorization"] = `Bearer ${publicToken}`;
+      }
+
       const response = await fetch(url, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
       });
 
       const data = await this.handleResponse<BackendPortfolioData | null>(
@@ -90,6 +98,88 @@ export class PublicApiClient {
 
       throw new DataProviderError(
         "Failed to fetch public portfolio data",
+        "network",
+        error as Error
+      );
+    }
+  }
+
+  /**
+   * Chat with a public portfolio
+   * Requires publicToken for authentication
+   */
+  async chatWithPortfolio(
+    username: string,
+    message: string,
+    publicToken: string,
+    conversationId?: string
+  ): Promise<Response> {
+    if (!username || username.trim() === "") {
+      throw new DataProviderError(
+        "Username is required for chat",
+        "validation"
+      );
+    }
+
+    if (!publicToken) {
+      throw new DataProviderError(
+        "Public token is required for chat",
+        "validation"
+      );
+    }
+
+    if (!message || message.trim() === "") {
+      throw new DataProviderError("Message is required for chat", "validation");
+    }
+
+    try {
+      const endpoint = this.config.apiEndpoints?.chat || "/api/public/chat";
+      const url = `${this.baseUrl}${endpoint}/${encodeURIComponent(username)}`;
+
+      this.log("Sending chat message to:", url);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${publicToken}`,
+        },
+        body: JSON.stringify({
+          message,
+          conversation_id: conversationId,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new DataProviderError("Invalid or expired token", "validation");
+        } else if (response.status === 404) {
+          throw new DataProviderError(
+            "Portfolio not found or chat is disabled",
+            "validation"
+          );
+        } else if (response.status === 429) {
+          throw new DataProviderError(
+            "Rate limit exceeded. Please try again later.",
+            "network"
+          );
+        }
+        throw new DataProviderError(
+          `Chat request failed with status ${response.status}`,
+          "network"
+        );
+      }
+
+      return response;
+    } catch (error) {
+      this.log("Error sending chat message:", error);
+
+      if (error instanceof DataProviderError) {
+        throw error;
+      }
+
+      throw new DataProviderError(
+        "Failed to send chat message",
         "network",
         error as Error
       );

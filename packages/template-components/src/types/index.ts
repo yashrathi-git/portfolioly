@@ -42,3 +42,26 @@ export interface UserSettings {
   createdAt?: string;
   updatedAt?: string;
 }
+
+// Token-related types
+export interface EnsureTokenRequest {
+  username: string;
+}
+
+export interface EnsureTokenResponse {
+  token: string;
+}
+
+export interface EnsureUsernameRequest {
+  user_id: string;
+}
+
+export interface EnsureUsernameResponse {
+  username: string;
+}
+
+export interface PortfolioConfig {
+  apiBaseUrl: string;
+  username: string;
+  publicToken?: string;
+}

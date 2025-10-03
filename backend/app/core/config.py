@@ -2,7 +2,7 @@
 
 import os
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import dotenv
 
@@ -59,6 +59,7 @@ class Settings(BaseSettings):
 
     # Security settings
     require_email_verification: bool = True
+    global_secret: str  # Required: Global secret for token generation (min 32 chars)
 
     # Azure AI settings
     azure_ai_endpoint: Optional[str] = None
@@ -74,6 +75,22 @@ class Settings(BaseSettings):
         extra="ignore",
         env_nested_delimiter="__",
     )
+
+    @field_validator("global_secret")
+    @classmethod
+    def validate_global_secret(cls, v: str) -> str:
+        """Validate that GLOBAL_SECRET is configured and meets minimum length."""
+        if not v:
+            raise ValueError(
+                "GLOBAL_SECRET must be configured in environment variables. "
+                "This is required for public token generation."
+            )
+        if len(v) < 32:
+            raise ValueError(
+                f"GLOBAL_SECRET must be at least 32 characters long. "
+                f"Current length: {len(v)}"
+            )
+        return v
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

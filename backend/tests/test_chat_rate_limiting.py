@@ -45,10 +45,20 @@ class TestIPRateLimiting:
         mock_rate_limiter.check_rate_limit.return_value = (True, 10, 1234567890)
         mock_rate_limiter.increment_counter.return_value = 11
 
-        ip_address = await check_chat_ip_rate_limit(mock_request, mock_rate_limiter)
+        username = "testuser"
+        token = "psk_abc123def456"
+
+        with patch(
+            "app.dependencies.chat_rate_limiting.get_rate_limiter",
+            return_value=mock_rate_limiter,
+        ):
+            ip_address = await check_chat_ip_rate_limit(mock_request, username, token)
 
         assert ip_address == "192.168.1.1"
         mock_rate_limiter.check_rate_limit.assert_called_once()
+        # Verify the composite key includes IP, username, and token hash
+        call_args = mock_rate_limiter.check_rate_limit.call_args
+        assert "192.168.1.1_testuser_psk_abc1" in call_args[1]["user_id"]
         mock_rate_limiter.increment_counter.assert_called_once()
 
     @pytest.mark.asyncio
@@ -56,8 +66,15 @@ class TestIPRateLimiting:
         """Test that requests exceeding limit are rejected."""
         mock_rate_limiter.check_rate_limit.return_value = (False, 50, 1234567890)
 
-        with pytest.raises(HTTPException) as exc_info:
-            await check_chat_ip_rate_limit(mock_request, mock_rate_limiter)
+        username = "testuser"
+        token = "psk_abc123def456"
+
+        with patch(
+            "app.dependencies.chat_rate_limiting.get_rate_limiter",
+            return_value=mock_rate_limiter,
+        ):
+            with pytest.raises(HTTPException) as exc_info:
+                await check_chat_ip_rate_limit(mock_request, username, token)
 
         assert exc_info.value.status_code == 429
         assert "CHAT_IP_RATE_LIMIT_EXCEEDED" in str(exc_info.value.detail)
@@ -72,9 +89,43 @@ class TestIPRateLimiting:
         mock_rate_limiter.check_rate_limit.return_value = (True, 1, 1234567890)
         mock_rate_limiter.increment_counter.return_value = 2
 
-        ip_address = await check_chat_ip_rate_limit(request, mock_rate_limiter)
+        username = "testuser"
+        token = "psk_abc123def456"
+
+        with patch(
+            "app.dependencies.chat_rate_limiting.get_rate_limiter",
+            return_value=mock_rate_limiter,
+        ):
+            ip_address = await check_chat_ip_rate_limit(request, username, token)
 
         assert ip_address == "unknown"
+
+    @pytest.mark.asyncio
+    async def test_different_tokens_separate_limits(
+        self, mock_request, mock_rate_limiter
+    ):
+        """Test that different tokens get separate rate limit buckets."""
+        mock_rate_limiter.check_rate_limit.return_value = (True, 10, 1234567890)
+        mock_rate_limiter.increment_counter.return_value = 11
+
+        username = "testuser"
+        token1 = "psk_abc123def456"
+        token2 = "psk_xyz789ghi012"
+
+        with patch(
+            "app.dependencies.chat_rate_limiting.get_rate_limiter",
+            return_value=mock_rate_limiter,
+        ):
+            await check_chat_ip_rate_limit(mock_request, username, token1)
+            call_args_1 = mock_rate_limiter.check_rate_limit.call_args[1]["user_id"]
+
+            await check_chat_ip_rate_limit(mock_request, username, token2)
+            call_args_2 = mock_rate_limiter.check_rate_limit.call_args[1]["user_id"]
+
+        # Verify different tokens create different composite keys
+        assert call_args_1 != call_args_2
+        assert "psk_abc1" in call_args_1
+        assert "psk_xyz7" in call_args_2
 
 
 class TestPortfolioOwnerUsageTracking:

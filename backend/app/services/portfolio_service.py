@@ -132,6 +132,55 @@ class PortfolioService:
             )
             raise FirebaseError(f"Failed to retrieve portfolio data: {str(e)}")
 
+    def get_portfolio_by_username(self, username: str) -> Optional[PortfolioData]:
+        """
+        Retrieve portfolio data by username.
+
+        This method looks up the user_id from user_settings collection by username,
+        then retrieves the portfolio data.
+
+        Args:
+            username: Username to retrieve portfolio for
+
+        Returns:
+            PortfolioData or None if not found
+
+        Raises:
+            FirebaseError: If retrieval operation fails
+        """
+        try:
+            # Query user_settings collection to find user_id by username
+            user_settings_ref = self.db.collection("user_settings")
+            query = user_settings_ref.where(
+                filter=FieldFilter("username", "==", username)
+            ).limit(1)
+            docs = query.stream()
+
+            # Get the first matching document
+            user_doc = next(docs, None)
+
+            if not user_doc:
+                logger.info(f"No user found with username: {username}")
+                return None
+
+            user_settings = user_doc.to_dict()
+            user_id = user_settings.get("user_id")
+
+            if not user_id:
+                logger.error(
+                    f"User settings found for username '{username}' but no user_id"
+                )
+                return None
+
+            # Now get the portfolio data using the user_id
+            return self.get_portfolio_data(user_id)
+
+        except Exception as e:
+            logger.error(
+                f"Failed to retrieve portfolio data for username {username}: {str(e)}"
+            )
+            raise FirebaseError(f"Failed to retrieve portfolio data: {str(e)}")
+
     def map_github_only_data(self, github_repos: List[GitHubRepoData]) -> PortfolioData:
         """
         Map GitHub repository data directly to PortfolioData schema.
