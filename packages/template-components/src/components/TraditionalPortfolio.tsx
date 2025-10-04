@@ -32,35 +32,43 @@ const TraditionalPortfolioComponent = ({
 
   const effectiveData = data;
 
-  // Show loading state
+  // Enhanced loading state with better mobile design
   if (isLoading && !data) {
     return (
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] px-4`}
       >
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-[var(--muted-foreground)]">Loading portfolio...</p>
+        <div className="text-center max-w-sm mx-auto">
+          <div className="relative mb-6">
+            <div className="animate-spin h-12 w-12 border-3 border-blue-500/30 border-t-blue-500 rounded-full mx-auto"></div>
+            <div className="animate-pulse absolute inset-0 h-12 w-12 border-2 border-blue-300/20 rounded-full mx-auto"></div>
+          </div>
+          <h2 className="text-lg sm:text-xl font-semibold mb-2">Loading Portfolio</h2>
+          <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
+            Please wait while we prepare your portfolio...
+          </p>
         </div>
       </div>
     );
   }
 
-  // Show error state
+  // Enhanced error state with better mobile design
   if (error && !data) {
     return (
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] px-4`}
       >
-        <div className="text-center max-w-md">
-          <div className="text-red-500 mb-4 text-2xl">⚠️</div>
-          <h2 className="text-xl font-semibold mb-2">
+        <div className="text-center max-w-md mx-auto">
+          <div className="mb-6 text-4xl sm:text-5xl">⚠️</div>
+          <h2 className="text-xl sm:text-2xl font-semibold mb-3 text-red-600 dark:text-red-400">
             Failed to Load Portfolio
           </h2>
-          <p className="text-[var(--muted-foreground)] mb-4">{error}</p>
+          <p className="text-sm sm:text-base text-[var(--muted-foreground)] mb-6 leading-relaxed">
+            {error}
+          </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium text-sm min-h-[44px]"
           >
             Try Again
           </button>
@@ -69,17 +77,18 @@ const TraditionalPortfolioComponent = ({
     );
   }
 
+  // Enhanced empty state with better mobile design
   if (!effectiveData || !effectiveData.profile) {
     return (
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] px-4`}
       >
-        <div className="text-center max-w-md">
-          <div className="text-2xl mb-4">🤖</div>
-          <h2 className="text-xl font-semibold mb-2">Portfolio coming soon</h2>
-          <p className="text-[var(--muted-foreground)]">
-            We couldn’t find enough information to show the traditional layout.
-            I’ll ask our AI assistant to help fill in the details.
+        <div className="text-center max-w-md mx-auto">
+          <div className="mb-6 text-4xl sm:text-5xl">🤖</div>
+          <h2 className="text-xl sm:text-2xl font-semibold mb-3">Portfolio Coming Soon</h2>
+          <p className="text-sm sm:text-base text-[var(--muted-foreground)] leading-relaxed">
+            We couldn't find enough information to show the traditional layout.
+            Our AI assistant will help fill in the details soon.
           </p>
         </div>
       </div>
@@ -93,66 +102,87 @@ const TraditionalPortfolioComponent = ({
       >
         <Hero profile={effectiveData.profile} />
 
-        <main className="mx-auto max-w-5xl px-6 py-10 pb-16 space-y-10">
+        {/* Enhanced main content with better spacing and responsive padding */}
+        <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 pb-20 sm:pb-24 space-y-12 sm:space-y-16 lg:space-y-20">
           {effectiveData.skills && effectiveData.skills.length > 0 && (
-            <section>
+            <section className="scroll-mt-20" id="skills">
               <Skills items={effectiveData.skills} />
             </section>
           )}
 
           {effectiveData.projects && effectiveData.projects.length > 0 && (
-            <section>
+            <section className="scroll-mt-20" id="projects">
               <Projects items={effectiveData.projects} />
             </section>
           )}
 
           {effectiveData.experience && effectiveData.experience.length > 0 && (
-            <section>
+            <section className="scroll-mt-20" id="experience">
               <Experience items={effectiveData.experience} />
             </section>
           )}
 
           {effectiveData.education && effectiveData.education.length > 0 && (
-            <section>
+            <section className="scroll-mt-20" id="education">
               <Education items={effectiveData.education} />
             </section>
           )}
 
           {effectiveData.achievements &&
             effectiveData.achievements.length > 0 && (
-              <section>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-8">
-                  Achievements
-                </h2>
-                <ul className="grid gap-3 sm:grid-cols-2">
-                  {effectiveData.achievements.map((a) => (
-                    <li
-                      key={a}
-                      className="rounded-lg border border-border bg-card px-4 py-3 text-sm"
+              <section className="scroll-mt-20" id="achievements">
+                <div className="mb-8 sm:mb-10">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-3">
+                    Achievements
+                  </h2>
+                  <div className="w-16 h-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"></div>
+                </div>
+                <div className="grid gap-4 sm:gap-5 lg:gap-6 sm:grid-cols-2">
+                  {effectiveData.achievements.map((a, index) => (
+                    <div
+                      key={`${a}-${index}`}
+                      className="group rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:border-[var(--foreground)]/20 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1"
                     >
-                      {a}
-                    </li>
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-2 h-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mt-2 group-hover:scale-125 transition-transform duration-200"></div>
+                        <p className="text-sm sm:text-base text-[var(--foreground)] leading-relaxed font-medium">
+                          {a}
+                        </p>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </section>
             )}
 
           {effectiveData.certificates &&
             effectiveData.certificates.length > 0 && (
-              <section>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-8">
-                  Certificates
-                </h2>
-                <ul className="grid gap-3 sm:grid-cols-2">
-                  {effectiveData.certificates.map((c) => (
-                    <li
-                      key={c}
-                      className="rounded-lg border border-border bg-card px-4 py-3 text-sm"
+              <section className="scroll-mt-20" id="certificates">
+                <div className="mb-8 sm:mb-10">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-3">
+                    Certificates
+                  </h2>
+                  <div className="w-16 h-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"></div>
+                </div>
+                <div className="grid gap-4 sm:gap-5 lg:gap-6 sm:grid-cols-2">
+                  {effectiveData.certificates.map((c, index) => (
+                    <div
+                      key={`${c}-${index}`}
+                      className="group rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:border-[var(--foreground)]/20 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1"
                     >
-                      {c}
-                    </li>
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mt-0.5 group-hover:scale-110 transition-transform duration-200">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <p className="text-sm sm:text-base text-[var(--foreground)] leading-relaxed font-medium">
+                          {c}
+                        </p>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </section>
             )}
         </main>
