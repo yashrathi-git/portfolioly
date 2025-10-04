@@ -102,8 +102,8 @@ const TraditionalPortfolioComponent = ({
       >
         <Hero profile={effectiveData.profile} />
 
-        {/* Enhanced main content with better spacing and responsive padding */}
-        <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 pb-20 sm:pb-24 space-y-12 sm:space-y-16 lg:space-y-20">
+        {/* Enhanced main content with perfect mobile spacing and safe areas */}
+        <main className="portfolio-mobile-safe mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 xl:px-4 py-8 sm:py-12 lg:py-16 pb-24 sm:pb-28 lg:pb-32 space-y-12 sm:space-y-16 lg:space-y-20 text-crisp">
           {effectiveData.skills && effectiveData.skills.length > 0 && (
             <section className="scroll-mt-20" id="skills">
               <Skills items={effectiveData.skills} />
