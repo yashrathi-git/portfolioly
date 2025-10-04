@@ -109,33 +109,41 @@ export const PortfolioLayoutContainer = ({
     }
   };
 
-  // Show loading state
+  // Enhanced loading state
   if (isLoading && !portfolioData) {
     return (
-      <div className="min-h-[100svh] w-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-[color:var(--muted-foreground)]">
-            Loading portfolio...
+      <div className="min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] px-4">
+        <div className="text-center max-w-sm mx-auto">
+          <div className="relative mb-6">
+            <div className="animate-spin h-12 w-12 border-3 border-blue-500/30 border-t-blue-500 rounded-full mx-auto"></div>
+            <div className="animate-pulse absolute inset-0 h-12 w-12 border-2 border-blue-300/20 rounded-full mx-auto"></div>
+          </div>
+          <h2 className="text-lg sm:text-xl font-semibold mb-2 text-[var(--foreground)]">
+            Loading Portfolio
+          </h2>
+          <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
+            Please wait while we prepare the experience...
           </p>
         </div>
       </div>
     );
   }
 
-  // Show error state
+  // Enhanced error state
   if (error && !portfolioData) {
     return (
-      <div className="min-h-[100svh] w-full flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="text-red-500 mb-4 text-2xl">⚠️</div>
-          <h2 className="text-xl font-semibold mb-2">
+      <div className="min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] px-4">
+        <div className="text-center max-w-md mx-auto">
+          <div className="text-4xl sm:text-5xl mb-6">⚠️</div>
+          <h2 className="text-xl sm:text-2xl font-semibold mb-3 text-red-600 dark:text-red-400">
             Failed to Load Portfolio
           </h2>
-          <p className="text-[color:var(--muted-foreground)] mb-4">{error}</p>
+          <p className="text-sm sm:text-base text-[var(--muted-foreground)] mb-6 leading-relaxed">
+            {error}
+          </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium text-sm min-h-[44px]"
           >
             Try Again
           </button>
@@ -148,8 +156,8 @@ export const PortfolioLayoutContainer = ({
 
   return (
     <PortfolioErrorBoundary>
-      <div className="min-h-[100svh] w-full relative">
-        {/* Layout Switcher */}
+      <div className="min-h-[100svh] w-full relative bg-[var(--background)]">
+        {/* Enhanced Layout Switcher with better positioning */}
         {showSwitcher && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -157,8 +165,8 @@ export const PortfolioLayoutContainer = ({
             transition={{ duration: 0.3 }}
             className={
               isPreview
-                ? "absolute top-4 left-1/2 -translate-x-1/2 z-50"
-                : "fixed top-4 left-1/2 -translate-x-1/2 z-50"
+                ? "absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4"
+                : "fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4"
             }
           >
             <LayoutSwitcher
@@ -169,14 +177,17 @@ export const PortfolioLayoutContainer = ({
           </motion.div>
         )}
 
-        {/* Layout Content */}
+        {/* Enhanced Layout Content with smooth transitions */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentLayout}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ 
+              duration: 0.3,
+              ease: [0.4, 0, 0.2, 1],
+            }}
             className="w-full h-full"
           >
             {currentLayout === "chat" ? (
