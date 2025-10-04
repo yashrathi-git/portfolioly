@@ -1,10 +1,9 @@
 :local(.portfolioTheme) {
-  /* Light mode tuning for the portfolio preview only */
-  /* Slightly warmer neutrals and softer borders */
+  /* Enhanced light mode with better mobile contrast and polish */
   --background: oklch(0.99 0 0);
-  --foreground: oklch(0.18 0 0);
+  --foreground: oklch(0.15 0 0);
 
-  --card: oklch(0.985 0 0);
+  --card: oklch(0.988 0 0);
   --card-foreground: var(--foreground);
 
   --popover: oklch(1 0 0);
@@ -13,27 +12,41 @@
   --primary: oklch(0.28 0.02 260);
   --primary-foreground: oklch(0.985 0 0);
 
-  --secondary: oklch(0.96 0 0);
+  --secondary: oklch(0.97 0 0);
   --secondary-foreground: var(--foreground);
 
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.48 0 0);
+  --muted: oklch(0.965 0 0);
+  --muted-foreground: oklch(0.45 0 0);
 
-  --accent: oklch(0.96 0 0);
+  --accent: oklch(0.97 0 0);
   --accent-foreground: var(--foreground);
 
   --destructive: oklch(0.62 0.22 25);
 
-  --border: oklch(0.92 0 0 / 80%);
-  --input: oklch(0.92 0 0 / 85%);
-  --ring: oklch(0.72 0 0);
+  --border: oklch(0.90 0 0 / 60%);
+  --input: oklch(0.90 0 0 / 70%);
+  --ring: oklch(0.28 0.02 260);
 
-  /* Charts keep existing brand hues but with comfortable contrast */
+  /* Enhanced gradient support */
+  --gradient-primary: linear-gradient(135deg, oklch(0.64 0.22 41), oklch(0.6 0.12 185));
+  --gradient-secondary: linear-gradient(135deg, oklch(0.46 0.08 228), oklch(0.83 0.19 84));
+
+  /* Charts with better harmony */
   --chart-1: oklch(0.64 0.22 41);
   --chart-2: oklch(0.6 0.12 185);
   --chart-3: oklch(0.46 0.08 228);
   --chart-4: oklch(0.83 0.19 84);
   --chart-5: oklch(0.77 0.19 70);
+
+  /* Enhanced mobile and accessibility support */
+  font-size: 16px; /* Prevent mobile zoom */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Better mobile scroll behavior */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 :global(.dark) :local(.portfolioTheme) {
