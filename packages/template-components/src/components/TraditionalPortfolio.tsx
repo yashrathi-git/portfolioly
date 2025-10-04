@@ -32,21 +32,29 @@ const TraditionalPortfolioComponent = ({
 
   const effectiveData = data;
 
-  // Enhanced loading state with better mobile design
+  // Enhanced loading state with better mobile design and animation
   if (isLoading && !data) {
     return (
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] px-4`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] px-4 portfolio-mobile-safe`}
       >
         <div className="text-center max-w-sm mx-auto">
-          <div className="relative mb-6">
-            <div className="animate-spin h-12 w-12 border-3 border-blue-500/30 border-t-blue-500 rounded-full mx-auto"></div>
-            <div className="animate-pulse absolute inset-0 h-12 w-12 border-2 border-blue-300/20 rounded-full mx-auto"></div>
+          <div className="relative mb-8">
+            <div className="animate-spin h-12 w-12 border-3 border-blue-500/20 border-t-blue-500 rounded-full mx-auto"></div>
+            <div className="animate-pulse absolute inset-0 h-12 w-12 border-2 border-blue-300/10 rounded-full mx-auto" style={{animationDelay: '0.5s'}}></div>
+            <div className="absolute inset-0 h-12 w-12 border border-purple-400/20 rounded-full mx-auto animate-ping" style={{animationDelay: '1s'}}></div>
           </div>
-          <h2 className="text-lg sm:text-xl font-semibold mb-2">Loading Portfolio</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 text-crisp">Loading Portfolio</h2>
           <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
-            Please wait while we prepare your portfolio...
+            Please wait while we prepare your portfolio experience...
           </p>
+          <div className="mt-6 flex justify-center">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
+          </div>
         </div>
       </div>
     );
