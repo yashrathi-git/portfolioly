@@ -20,6 +20,12 @@ from ..services.user_settings_service import (
 )
 from ..services.public_token_service import get_public_token_service
 from ..core.firebase import get_firebase_auth
+from .utils.auth_helpers import (
+    extract_bearer_token,
+    verify_firebase_jwt,
+    get_user_settings_by_username,
+    validate_portfolio_access,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/public", tags=["public-portfolio"])
@@ -29,55 +35,24 @@ router = APIRouter(prefix="/public", tags=["public-portfolio"])
 def get_public_portfolio(
     username: str = Path(..., description="Username of the portfolio to retrieve"),
     authorization: Optional[str] = Header(
-        None, description="Optional Bearer token for authentication"
+        None, description="Public token for authentication"
     ),
 ):
     """
     Get a public portfolio by username.
 
-    Optionally accepts an Authorization header with a Bearer token.
-    If provided, the token will be verified. Returns 401 if token is invalid.
+    Authentication: Public token only (psk_xxx...)
+    - Requires valid public token in Authorization header
+    - Token must match the username
 
-    Returns 404 if the portfolio doesn't exist or is private.
+    Returns 401 if token is missing or invalid.
+    Returns 404 if portfolio doesn't exist.
     """
     try:
-        user_settings_service = get_user_settings_service()
-        portfolio_service = get_portfolio_service()
-
-        # First, check if the username exists and portfolio is public
-        user_settings = user_settings_service.get_user_settings_by_username(username)
-
-        if not user_settings:
-            logger.info(f"Username '{username}' not found")
-            raise HTTPException(status_code=404, detail="Portfolio not found")
-
-        # If authorization header is present, verify the token
-        if authorization:
-            # Extract Bearer token
-            if not authorization.startswith("Bearer "):
-                logger.warning(
-                    f"Invalid authorization header format for username '{username}'"
-                )
-                raise HTTPException(status_code=401, detail="Invalid token")
-
-            token = authorization[7:]  # Remove "Bearer " prefix
-
-            # Get token version from user settings
-            token_version = user_settings.get("public_token_ver", 1)
-
-            # Verify token
-            token_service = get_public_token_service()
-            is_valid = token_service.verify_public_token(username, token, token_version)
-
-            if not is_valid:
-                logger.warning(f"Invalid token provided for username '{username}'")
-                raise HTTPException(status_code=401, detail="Invalid token")
-
-            logger.info(f"Token verified successfully for username '{username}'")
-
-        if not user_settings.get("is_public", False):
-            logger.info(f"Portfolio for username '{username}' is private")
-            raise HTTPException(status_code=404, detail="Portfolio not found")
+        # Require token - no public requirement check
+        user_settings, _ = validate_portfolio_access(
+            username=username, authorization=authorization, require_public=False
+        )
 
         # Get the user ID from settings
         user_id = user_settings.get("user_id")
@@ -86,6 +61,7 @@ def get_public_portfolio(
             raise HTTPException(status_code=404, detail="Portfolio not found")
 
         # Fetch the portfolio data
+        portfolio_service = get_portfolio_service()
         portfolio_data = portfolio_service.get_portfolio_data(user_id)
 
         if not portfolio_data:
@@ -100,11 +76,7 @@ def get_public_portfolio(
         return portfolio_data
 
     except HTTPException:
-        # Re-raise HTTP exceptions as-is
         raise
-    except UserSettingsError as e:
-        logger.error(f"User settings error for username '{username}': {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve portfolio")
     except FirebaseError as e:
         logger.error(
             f"Firebase error retrieving portfolio for username '{username}': {e}"
@@ -118,22 +90,38 @@ def get_public_portfolio(
 
 
 @router.post("/ensure-username", response_model=EnsureUsernameResponse)
-def ensure_username(request: EnsureUsernameRequest):
+def ensure_username(
+    request: EnsureUsernameRequest,
+    authorization: str = Header(..., description="Firebase JWT token required"),
+):
     """
     Get or generate a username for a user.
 
+    Authentication: Firebase JWT only (required)
+
     Flow:
-    1. Fetch user settings by user_id
-    2. If username exists, return it
-    3. If no username, get user email from Firebase Auth
-    4. Generate username from email (part before @)
-    5. Store username in user_settings
-    6. Return username
+    1. Verify Firebase JWT token
+    2. Check if user already has a username
+    3. If not, generate one from their email
+    4. Store and return the username
     """
     try:
+        # Verify Firebase JWT
+        token = extract_bearer_token(authorization)
+        if not token:
+            raise HTTPException(status_code=401, detail="Missing authentication token")
+
+        firebase_user = verify_firebase_jwt(token)
+        if not firebase_user:
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
+
+        # Verify the token user_id matches the request user_id
+        if firebase_user.uid != request.user_id:
+            raise HTTPException(status_code=403, detail="Unauthorized")
+
         user_settings_service = get_user_settings_service()
 
-        # Check if user already has settings with a username
+        # Check if user already has a username
         existing_settings = user_settings_service.get_user_settings(request.user_id)
 
         if existing_settings and existing_settings.get("username"):
@@ -141,32 +129,21 @@ def ensure_username(request: EnsureUsernameRequest):
             logger.info(f"User {request.user_id} already has username: {username}")
             return EnsureUsernameResponse(username=username)
 
-        # User doesn't have a username, generate one from email
-        try:
-            auth = get_firebase_auth()
-            user_record = auth.get_user(request.user_id)
-            email = user_record.email
+        # Generate username from email
+        auth = get_firebase_auth()
+        user_record = auth.get_user(request.user_id)
 
-            if not email:
-                logger.error(f"User {request.user_id} has no email address")
-                raise HTTPException(status_code=400, detail="User has no email address")
+        if not user_record.email:
+            logger.error(f"User {request.user_id} has no email address")
+            raise HTTPException(status_code=400, detail="User has no email address")
 
-            # Generate username from email
-            username = user_settings_service.generate_username_from_email(email)
+        username = user_settings_service.generate_username_from_email(user_record.email)
+        user_settings_service.set_username(request.user_id, username)
 
-            # Store the username in user settings
-            user_settings_service.set_username(request.user_id, username)
-
-            logger.info(
-                f"Generated and stored username '{username}' for user {request.user_id}"
-            )
-            return EnsureUsernameResponse(username=username)
-
-        except Exception as e:
-            logger.error(f"Error getting user email from Firebase Auth: {e}")
-            raise HTTPException(
-                status_code=500, detail="Failed to retrieve user information"
-            )
+        logger.info(
+            f"Generated and stored username '{username}' for user {request.user_id}"
+        )
+        return EnsureUsernameResponse(username=username)
 
     except HTTPException:
         raise
@@ -181,48 +158,62 @@ def ensure_username(request: EnsureUsernameRequest):
 
 
 @router.post("/ensure-token", response_model=EnsureTokenResponse)
-def ensure_token(request: EnsureTokenRequest):
+def ensure_token(
+    request: EnsureTokenRequest,
+    authorization: Optional[str] = Header(
+        None, description="Optional Firebase JWT token"
+    ),
+):
     """
     Generate a public token for a username.
 
+    Authentication rules:
+    - With valid Firebase JWT: Always returns token (regardless of portfolio visibility)
+    - Without Firebase JWT: Returns token only if portfolio is public
+
     Returns 404 if:
     - Username doesn't exist
-    - Portfolio is private (is_public == false)
     - Token generation disabled (public_token_enabled == false)
+    - Portfolio is private AND no valid Firebase JWT provided
 
     Returns:
         EnsureTokenResponse with the generated token in format "psk_xxx..."
     """
     try:
-        user_settings_service = get_user_settings_service()
-        token_service = get_public_token_service()
+        # Get user settings
+        user_settings = get_user_settings_by_username(request.username)
 
-        # Fetch user settings by username
-        user_settings = user_settings_service.get_user_settings_by_username(
-            request.username
-        )
-
-        # Return 404 if username doesn't exist
         if not user_settings:
             logger.info(f"Username '{request.username}' not found for token generation")
             raise HTTPException(status_code=404, detail="Portfolio not found")
 
-        # Return 404 if portfolio is private
-        # if not user_settings.get("is_public", False):
-        #     logger.info(
-        #         f"Portfolio for username '{request.username}' is private, cannot generate token"
-        #     )
-        #     raise HTTPException(status_code=404, detail="Portfolio not found")
-
-        # Return 404 if token generation is disabled
+        # Check if token generation is disabled
         if not user_settings.get("public_token_enabled", True):
             logger.info(f"Token generation disabled for username '{request.username}'")
             raise HTTPException(status_code=404, detail="Portfolio not found")
 
-        # Get the token version from user settings
-        token_version = user_settings.get("public_token_ver", 1)
+        # Check authentication
+        token = extract_bearer_token(authorization)
+        has_firebase_auth = False
+
+        if token:
+            firebase_user = verify_firebase_jwt(token)
+            if firebase_user:
+                has_firebase_auth = True
+                logger.info(
+                    f"Firebase JWT verified for token generation: {request.username}"
+                )
+
+        # If no Firebase auth, require portfolio to be public
+        if not has_firebase_auth and not user_settings.get("is_public", False):
+            logger.info(
+                f"Portfolio for username '{request.username}' is private and no Firebase auth provided"
+            )
+            raise HTTPException(status_code=404, detail="Portfolio not found")
 
         # Generate the token
+        token_version = user_settings.get("public_token_ver", 1)
+        token_service = get_public_token_service()
         token = token_service.derive_public_token(request.username, token_version)
 
         logger.info(
@@ -247,12 +238,26 @@ def ensure_token(request: EnsureTokenRequest):
 @router.get("/username/{username}/available", response_model=dict)
 def check_username_availability(
     username: str = Path(..., description="Username to check availability for"),
+    authorization: str = Header(..., description="Firebase JWT token required"),
 ):
     """
     Check if a username is available for registration.
-    Returns {"available": true/false}
+
+    Authentication: Firebase JWT only (required)
+
+    Returns:
+        {"available": true/false, "reason": "..."}
     """
     try:
+        # Verify Firebase JWT
+        token = extract_bearer_token(authorization)
+        if not token:
+            raise HTTPException(status_code=401, detail="Missing authentication token")
+
+        firebase_user = verify_firebase_jwt(token)
+        if not firebase_user:
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
+
         user_settings_service = get_user_settings_service()
 
         # Validate username format
@@ -264,9 +269,7 @@ def check_username_availability(
             }
 
         # Check if username is already taken
-        existing_settings = user_settings_service.get_user_settings_by_username(
-            username
-        )
+        existing_settings = get_user_settings_by_username(username)
         is_available = existing_settings is None
 
         logger.info(f"Username '{username}' availability check: {is_available}")
@@ -277,11 +280,8 @@ def check_username_availability(
 
         return result
 
-    except UserSettingsError as e:
-        logger.error(f"User settings error checking username '{username}': {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to check username availability"
-        )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Unexpected error checking username '{username}': {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -299,9 +299,9 @@ async def chat_with_public_portfolio(
     This endpoint processes natural language queries about a portfolio and returns
     intelligent responses with optional widget rendering through tool calls.
 
-    Access control:
+    Authentication: Public token only (psk_xxx...)
     - Requires valid public token in Authorization header
-    - Portfolio must be public (is_public == true)
+    - Token must match the username
 
     Rate limiting:
     - IP-based: 50 requests per hour per IP address
@@ -310,13 +310,13 @@ async def chat_with_public_portfolio(
     Args:
         username: Portfolio username to chat about
         request: FastAPI request object
-        authorization: Bearer token (required)
+        authorization: Public token (required)
 
     Returns:
         StreamingResponse with Server-Sent Events (SSE) format
 
     Raises:
-        HTTPException: 401 for missing/invalid token, 404 for private/missing portfolio
+        HTTPException: 401 for missing/invalid token, 404 for missing portfolio
     """
     from fastapi.responses import StreamingResponse
     from typing import AsyncGenerator
@@ -331,35 +331,13 @@ async def chat_with_public_portfolio(
     )
 
     try:
-        # Extract Bearer token from authorization header
-        if not authorization.startswith("Bearer "):
-            logger.warning(
-                f"Invalid authorization header format for username '{username}'"
-            )
-            raise HTTPException(status_code=401, detail="Invalid token")
+        # Validate access - no public requirement for chat
+        user_settings, _ = validate_portfolio_access(
+            username=username, authorization=authorization, require_public=False
+        )
 
-        token = authorization[7:]  # Remove "Bearer " prefix
-
-        # Fetch user settings by username to get public_token_ver
-        user_settings_service = get_user_settings_service()
-        user_settings = user_settings_service.get_user_settings_by_username(username)
-
-        if not user_settings:
-            logger.info(f"Username '{username}' not found for chat")
-            raise HTTPException(status_code=404, detail="Portfolio not found")
-
-        # Verify token using token service (token is the only barrier)
-        token_version = user_settings.get("public_token_ver", 1)
-        token_service = get_public_token_service()
-        is_valid = token_service.verify_public_token(username, token, token_version)
-
-        if not is_valid:
-            logger.warning(
-                f"Invalid token provided for chat with username '{username}'"
-            )
-            raise HTTPException(status_code=401, detail="Invalid token")
-
-        logger.info(f"Token verified successfully for chat with username '{username}'")
+        # Extract token for rate limiting
+        token = extract_bearer_token(authorization)
 
         # Check rate limiting with token-based keys
         from ..dependencies.chat_rate_limiting import check_chat_ip_rate_limit
