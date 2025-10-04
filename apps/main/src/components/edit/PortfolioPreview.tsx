@@ -7,20 +7,13 @@ import type { PortfolioData as MainPortfolioData } from "@/types/portfolio";
 import { mapPortfolioDataToTemplate } from "@/utils/portfolioDataMapper";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { env } from "@/lib/env";
+import { fetchUsernameAndToken, PublicTokenError } from "@/lib/api/publicToken";
 
 // Import the compiled CSS styles to ensure they're loaded
 import "@portfolioly/template-components/style.css";
 
 export interface PortfolioPreviewProps {
   data: MainPortfolioData;
-}
-
-interface EnsureUsernameResponse {
-  username: string;
-}
-
-interface EnsureTokenResponse {
-  token: string;
 }
 
 export function PortfolioPreview({ data }: PortfolioPreviewProps) {
@@ -38,7 +31,7 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
 
   // Fetch username and public token for the authenticated user
   useEffect(() => {
-    async function fetchUsernameAndToken() {
+    async function loadUsernameAndToken() {
       if (!user) {
         setUsername(undefined);
         setPublicToken(undefined);
@@ -54,56 +47,24 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
         const firebaseToken = await user.getIdToken();
         setAuthToken(firebaseToken);
 
-        // Step 1: Ensure username exists for the user
-        const usernameResponse = await fetch(
-          `${env.API_BASE_URL}/public/ensure-username`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${firebaseToken}`,
-            },
-            body: JSON.stringify({ user_id: user.uid }),
-          }
-        );
-
-        if (!usernameResponse.ok) {
-          throw new Error(`Failed to get username: ${usernameResponse.status}`);
-        }
-
-        const usernameData: EnsureUsernameResponse =
-          await usernameResponse.json();
-        setUsername(usernameData.username);
-
-        // Step 2: Fetch public token for the username
-        const tokenResponse = await fetch(
-          `${env.API_BASE_URL}/public/ensure-token`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ username: usernameData.username }),
-          }
-        );
-
-        if (tokenResponse.status === 404) {
-          setTokenError("Portfolio not found");
-          setPublicToken(undefined);
-          return;
-        }
-
-        if (!tokenResponse.ok) {
-          throw new Error(`Failed to fetch token: ${tokenResponse.status}`);
-        }
-
-        const tokenData: EnsureTokenResponse = await tokenResponse.json();
-        setPublicToken(tokenData.token);
+        // Fetch username and public token using API helper
+        const result = await fetchUsernameAndToken(user.uid, firebaseToken);
+        setUsername(result.username);
+        setPublicToken(result.publicToken);
       } catch (err) {
         console.error("Error fetching username and token:", err);
-        setTokenError(
-          err instanceof Error ? err.message : "Failed to load chat token"
-        );
+
+        if (err instanceof PublicTokenError) {
+          // Handle specific error cases
+          if (err.statusCode === 404) {
+            setTokenError("Portfolio not found");
+          } else {
+            setTokenError(err.message);
+          }
+        } else {
+          setTokenError("Failed to load chat token");
+        }
+
         setUsername(undefined);
         setPublicToken(undefined);
       } finally {
@@ -111,7 +72,7 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
       }
     }
 
-    fetchUsernameAndToken();
+    loadUsernameAndToken();
   }, [user]);
 
   // Generate dynamic profile for chat header based on actual data
