@@ -106,9 +106,14 @@ const TraditionalPortfolioComponent = ({
   return (
     <PortfolioErrorBoundary>
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full bg-[var(--background)] text-[var(--foreground)] thin-scrollbar`}
       >
         <Hero profile={effectiveData.profile} />
+
+        {/* Subtle progress indicator */}
+        <div className="sticky top-0 z-10 h-1 bg-gradient-to-r from-transparent via-[var(--border)]/30 to-transparent">
+          <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300 w-0 hover:w-full"></div>
+        </div>
 
         {/* Enhanced main content with perfect mobile spacing and safe areas */}
         <main className="portfolio-mobile-safe mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 xl:px-4 py-8 sm:py-12 lg:py-16 pb-24 sm:pb-28 lg:pb-32 space-y-12 sm:space-y-16 lg:space-y-20 text-crisp">
