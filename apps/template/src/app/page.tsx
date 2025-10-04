@@ -1,80 +1,46 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TemplateProvider, Portfolio } from "@portfolioly/template-components";
-
-// Get API base URL from environment or use default
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-
-interface EnsureUsernameResponse {
-  username: string;
-}
-
-interface EnsureTokenResponse {
-  token: string;
-}
+import {
+  TemplateProvider,
+  Portfolio,
+  mapBackendToFrontend,
+} from "@portfolioly/template-components";
+import { fetchPublicPortfolio } from "@/lib/api/publicPortfolio";
+import { getPSKToken, getUsername, getAPIBaseURL } from "@/lib/env";
+import type { PortfolioData } from "@portfolioly/template-components";
 
 export default function Home() {
-  const [username, setUsername] = useState<string | undefined>();
-  const [publicToken, setPublicToken] = useState<string | undefined>();
+  const [portfolioData, setPortfolioData] = useState<
+    PortfolioData | null | undefined
+  >();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
 
-  // For demo purposes, we'll use a hardcoded user_id
-  // In a real app, this would come from authentication context
-  const userId = "demo-user-id";
+  // Get configuration from environment
+  const apiBaseUrl = getAPIBaseURL();
+  const username = getUsername();
+  const pskToken = getPSKToken();
 
   useEffect(() => {
-    async function fetchUsernameAndToken() {
+    async function loadPortfolio() {
       try {
-        // Step 1: Ensure username exists for the user
-        const usernameResponse = await fetch(
-          `${API_BASE_URL}/public/ensure-username`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ user_id: userId }),
-          }
+        // Fetch portfolio data using username and PSK token
+        const backendData = await fetchPublicPortfolio(
+          apiBaseUrl,
+          username,
+          pskToken
         );
 
-        if (!usernameResponse.ok) {
-          throw new Error(`Failed to get username: ${usernameResponse.status}`);
-        }
+        // Map backend data to portfolio data format
+        const mappedData = backendData
+          ? mapBackendToFrontend(backendData)
+          : null;
 
-        const usernameData: EnsureUsernameResponse =
-          await usernameResponse.json();
-        setUsername(usernameData.username);
-
-        // Step 2: Fetch token for the username
-        const tokenResponse = await fetch(
-          `${API_BASE_URL}/public/ensure-token`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ username: usernameData.username }),
-          }
-        );
-
-        if (tokenResponse.status === 404) {
-          setError("Portfolio not found");
-          setLoading(false);
-          return;
-        }
-
-        if (!tokenResponse.ok) {
-          throw new Error(`Failed to fetch token: ${tokenResponse.status}`);
-        }
-
-        const tokenData: EnsureTokenResponse = await tokenResponse.json();
-        setPublicToken(tokenData.token);
+        setPortfolioData(mappedData);
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching username and token:", err);
+        console.error("Error loading portfolio:", err);
         setError(
           err instanceof Error ? err.message : "Failed to load portfolio"
         );
@@ -82,8 +48,8 @@ export default function Home() {
       }
     }
 
-    fetchUsernameAndToken();
-  }, [userId]);
+    loadPortfolio();
+  }, [apiBaseUrl, username, pskToken]);
 
   // Show loading screen while fetching
   if (loading) {
@@ -114,18 +80,14 @@ export default function Home() {
     );
   }
 
-  // Don't render until both username and token are available
-  if (!username || !publicToken) {
-    return null;
-  }
-
   return (
     <TemplateProvider>
       <main className="min-h-screen bg-background text-foreground">
         <Portfolio
-          apiBaseUrl={API_BASE_URL}
+          portfolioData={portfolioData}
+          apiBaseUrl={apiBaseUrl}
           username={username}
-          publicToken={publicToken}
+          publicToken={pskToken}
         />
       </main>
     </TemplateProvider>
