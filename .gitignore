@@ -84,4 +84,7 @@ firebaseServiceKeyJson
 firebaseServiceKeyJson/*
 firebaseServiceKey.json
 *.pyc
-.kiro/specs
+.kiro/specs-e 
+# Environment files
+*.env
+*.env.*
