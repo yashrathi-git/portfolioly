@@ -3,28 +3,69 @@
    if the app chooses to import this file. Prefer adding @source to the app instead. */
 @source "./";
 
-/* Minimal, sleek scrollbar utility - localized to portfolio template components */
+/* Enhanced scrollbar utility - more polished and mobile-friendly */
 .thin-scrollbar {
   scrollbar-width: thin; /* Firefox */
   scrollbar-color: var(--input) transparent; /* Firefox */
 }
 
 .thin-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .thin-scrollbar::-webkit-scrollbar-track {
   background: transparent;
+  border-radius: 10px;
 }
 
 .thin-scrollbar::-webkit-scrollbar-thumb {
-  background-color: color-mix(in oklch, var(--input) 70%, transparent);
-  border-radius: 9999px;
-  border: 2px solid transparent;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--input) 60%, transparent), color-mix(in oklch, var(--input) 80%, transparent));
+  border-radius: 10px;
+  border: 1px solid transparent;
   background-clip: padding-box;
 }
 
 .thin-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: color-mix(in oklch, var(--input) 85%, transparent);
+  background: linear-gradient(135deg, color-mix(in oklch, var(--input) 80%, transparent), color-mix(in oklch, var(--input) 100%, transparent));
+}
+
+/* Enhanced mobile viewport handling */
+@supports (-webkit-touch-callout: none) {
+  .portfolio-mobile-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Smooth animations for better user experience */
+.smooth-animation {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.smooth-animation:hover {
+  transform: translateY(-2px);
+}
+
+/* Enhanced focus states for better accessibility */
+.focus-enhanced:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Better text rendering */
+.text-crisp {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, var(--foreground), color-mix(in oklch, var(--foreground) 80%, transparent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
