@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Optional, AsyncGenerator, Dict
+from typing import Optional, AsyncGenerator
 
 from fastapi import HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -128,43 +128,77 @@ async def _stream_chat_response(
         content_buffer = ""
         tool_calls: list[ToolCall] = []
 
-        async for chunk in ai_chat_service.process_chat_streaming(
-            user_message=user_message,
-            portfolio_data=portfolio_data,
-            conversation_history=conversation_history,
-        ):
-            chunk_type = chunk.get("type")
-            data = chunk.get("data")
+        try:
+            async for chunk in ai_chat_service.process_chat_streaming(
+                user_message=user_message,
+                portfolio_data=portfolio_data,
+                conversation_history=conversation_history,
+            ):
+                chunk_type = chunk.get("type")
+                data = chunk.get("data")
 
-            if chunk_type == "content" and isinstance(data, str):
-                content_buffer += data
-                yield f"data: {json.dumps({'type': 'content', 'data': data})}\n\n"
-            elif chunk_type == "tool_call" and isinstance(data, ToolCall):
-                tool_calls.append(data)
-                yield f"data: {json.dumps({'type': 'tool_call', 'data': data.model_dump()})}\n\n"
-            elif chunk_type == "error":
-                yield f"data: {json.dumps({'type': 'error', 'data': data})}\n\n"
-                return
+                if chunk_type == "content" and isinstance(data, str):
+                    content_buffer += data
+                    # Stream each content chunk immediately
+                    yield f"data: {json.dumps({'type': 'content', 'data': data})}\n\n"
 
-        assistant_message = ChatMessage(
-            role="assistant",
-            content=content_buffer,
-            tool_calls=tool_calls or None,
-        )
-        await _persist_assistant_message(
-            chat_storage,
-            conversation_id,
-            assistant_message,
-            username,
-            ip_address,
-            portfolio_owner_user_id,
-        )
+                elif chunk_type == "cmd" and isinstance(data, str):
+                    # Stream command delimiter as separate event
+                    yield f"data: {json.dumps({'type': 'cmd', 'data': data})}\n\n"
 
-        done_payload = {
-            "type": "done",
-            "data": {"conversation_id": conversation_id},
-        }
-        yield f"data: {json.dumps(done_payload)}\n\n"
+                    # Parse command to extract tool call information
+                    if data.startswith("WIDGET:"):
+                        parts = data[7:].split(":")
+                        widget_name = parts[0]
+                        indices = None
+                        if len(parts) > 1:
+                            try:
+                                indices = [int(i.strip()) for i in parts[1].split(",")]
+                            except (ValueError, AttributeError):
+                                pass
+
+                        tool_call = ToolCall(
+                            type="widget_render",
+                            widget=widget_name,
+                            indices=indices,
+                            explanation=None,
+                        )
+                        tool_calls.append(tool_call)
+
+                elif chunk_type == "done":
+                    # Processing completed successfully
+                    break
+
+                elif chunk_type == "error":
+                    # Stream error and exit
+                    yield f"data: {json.dumps({'type': 'error', 'data': data})}\n\n"
+                    return
+
+            # Store assistant message with accumulated content and tool calls
+            assistant_message = ChatMessage(
+                role="assistant",
+                content=content_buffer,
+                tool_calls=tool_calls or None,
+            )
+            await _persist_assistant_message(
+                chat_storage,
+                conversation_id,
+                assistant_message,
+                username,
+                ip_address,
+                portfolio_owner_user_id,
+            )
+
+            # Send completion event
+            done_payload = {
+                "type": "done",
+                "data": {"conversation_id": conversation_id},
+            }
+            yield f"data: {json.dumps(done_payload)}\n\n"
+
+        except Exception as e:
+            logger.error(f"Error in event stream: {str(e)}", exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'data': f'Stream error: {str(e)}'})}\n\n"
 
     return StreamingResponse(
         event_stream(),
@@ -173,6 +207,7 @@ async def _stream_chat_response(
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
+            "Content-Type": "text/event-stream",
         },
     )
 

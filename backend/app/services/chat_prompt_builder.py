@@ -1,36 +1,23 @@
-"""Helpers for constructing chat system prompts from portfolio data."""
+"""
+Build system prompts for AI chat service.
 
-from __future__ import annotations
+Constructs comprehensive prompts from portfolio data for context-aware conversations.
+"""
 
 import textwrap
-from typing import List, Optional
+from typing import Optional, List
 
 from ..schemas.portfolio import (
     PortfolioData,
     PersonalInfo,
-    Profile,
     WorkExperience,
     Project,
     Education,
     Certification,
     DateInfo,
-    TextBlobs,
+    Profile,
 )
-
-
-def _format_date(date_info: Optional[DateInfo]) -> str:
-    """Return a human-readable representation for a ``DateInfo`` value."""
-
-    if not date_info:
-        return "Unknown"
-
-    parts: List[str] = []
-    if date_info.month:
-        parts.append(f"{date_info.month:02d}")
-    if date_info.year:
-        parts.append(str(date_info.year))
-
-    return " / ".join(parts) if parts else "Unknown"
+from ..constants.chat_delimiters import ChatDelimiters
 
 
 def _format_range(
@@ -38,36 +25,49 @@ def _format_range(
 ) -> str:
     """Return a formatted date range string for experience/education entries."""
 
-    start_str = _format_date(start)
+    def _date_str(d: Optional[DateInfo]) -> str:
+        if not d:
+            return ""
+        if d.year and d.month:
+            return f"{d.month}/{d.year}"
+        if d.year:
+            return str(d.year)
+        return ""
+
+    start_str = _date_str(start)
     if is_current:
-        end_str = "Present"
-    else:
-        end_str = _format_date(end)
+        return f"{start_str} – Present"
+    end_str = _date_str(end)
+    if start_str and end_str:
+        return f"{start_str} – {end_str}"
+    return start_str or end_str or "Dates not specified"
 
-    if start_str == "Unknown" and end_str == "Unknown":
-        return "Dates not provided"
 
-    return f"{start_str} - {end_str}"
+def _profile_line(profile: Profile) -> Optional[str]:
+    """Format a single social profile link."""
+    label = profile.label or (profile.type.value if profile.type else "Profile")
+    return f"{label}: {profile.url}" if profile.url else None
 
 
 def _personal_info_section(info: Optional[PersonalInfo]) -> Optional[str]:
+    """Build personal info section for system prompt."""
     if not info:
         return None
 
     lines: List[str] = []
-
     if info.full_name:
         lines.append(f"Name: {info.full_name}")
     if info.headline:
         lines.append(f"Headline: {info.headline}")
-    if info.summary:
-        lines.append(f"Summary: {info.summary}")
-    if info.location:
-        lines.append(f"Location: {info.location}")
     if info.email:
         lines.append(f"Email: {info.email}")
     if info.phone:
         lines.append(f"Phone: {info.phone}")
+    if info.location:
+        lines.append(f"Location: {info.location}")
+
+    if info.summary:
+        lines.append(f"Summary: {info.summary}")
 
     profile_lines: List[str] = []
     for profile in info.profiles or []:
@@ -77,32 +77,9 @@ def _personal_info_section(info: Optional[PersonalInfo]) -> Optional[str]:
 
     if profile_lines:
         lines.append("Profiles:")
-        lines.extend(f"- {item}" for item in profile_lines)
+        lines.extend(f"  - {p}" for p in profile_lines)
 
     return "\n".join(lines) if lines else None
-
-
-def _profile_line(profile: Profile) -> Optional[str]:
-    components: List[str] = []
-    if profile.type:
-        components.append(profile.type.value)
-    if profile.label:
-        components.append(profile.label)
-    if profile.url:
-        components.append(profile.url)
-
-    if not components:
-        return None
-
-    detail_parts: List[str] = []
-    if profile.tags:
-        detail_parts.append("tags: " + ", ".join(profile.tags))
-    if profile.more_context:
-        detail_parts.append(profile.more_context)
-
-    suffix = f" ({'; '.join(detail_parts)})" if detail_parts else ""
-
-    return " | ".join(components) + suffix
 
 
 def _work_experience_section(
@@ -111,16 +88,14 @@ def _work_experience_section(
     if not experiences:
         return None
 
-    entries: List[str] = []
+    lines: List[str] = []
+    for i, exp in enumerate(experiences, start=1):
+        lines.append(f"{i}. {exp.title or 'Role not specified'}")
 
-    for index, exp in enumerate(experiences, start=1):
-        lines: List[str] = []
-        headline_parts: List[str] = []
-        if exp.title:
-            headline_parts.append(exp.title)
         if exp.organization:
-            headline_parts.append(f"at {exp.organization}")
-        if headline_parts:
+            headline_parts = [exp.organization]
+            if exp.location:
+                headline_parts.append(exp.location)
             lines.append(" ".join(headline_parts))
 
         lines.append(
@@ -130,61 +105,61 @@ def _work_experience_section(
         if exp.location:
             lines.append(f"Location: {exp.location}")
 
-        if exp.highlights:
-            lines.append("Highlights:")
-            lines.extend(f"  - {highlight}" for highlight in exp.highlights)
-
         if exp.technologies:
-            lines.append("Technologies: " + ", ".join(exp.technologies))
+            lines.append(f"Technologies: {', '.join(exp.technologies)}")
 
         if exp.more_context:
-            lines.append(f"Context: {exp.more_context}")
+            lines.append(f"Description: {exp.more_context}")
 
-        entry = f"{index}. " + "\n".join(lines)
-        entries.append(entry)
+        if exp.highlights:
+            lines.append("Highlights:")
+            for highlight in exp.highlights:
+                lines.append(f"  - {highlight}")
 
-    return "\n\n".join(entries)
+        lines.append("")
+
+    return "\n".join(lines).strip() if lines else None
 
 
 def _projects_section(projects: Optional[List[Project]]) -> Optional[str]:
     if not projects:
         return None
 
-    entries: List[str] = []
+    lines: List[str] = []
+    for i, proj in enumerate(projects, start=1):
+        lines.append(f"{i}. {proj.name or 'Project name not specified'}")
 
-    for index, project in enumerate(projects, start=1):
-        lines: List[str] = []
-        if project.name:
-            lines.append(project.name)
-        if project.role:
-            lines.append(f"Role: {project.role}")
-        if project.highlights:
+        if proj.role:
+            lines.append(f"Role: {proj.role}")
+
+        if proj.more_context:
+            lines.append(f"Description: {proj.more_context}")
+
+        if proj.technologies:
+            lines.append(f"Technologies: {', '.join(proj.technologies)}")
+
+        if proj.highlights:
             lines.append("Highlights:")
-            lines.extend(f"  - {highlight}" for highlight in project.highlights)
-        if project.technologies:
-            lines.append("Technologies: " + ", ".join(project.technologies))
-        if project.github:
-            lines.append(f"GitHub: {project.github}")
-        if project.live_link:
-            lines.append(f"Live Link: {project.live_link}")
-        if project.more_context:
-            lines.append(f"Context: {project.more_context}")
+            for highlight in proj.highlights:
+                lines.append(f"  - {highlight}")
 
-        if not lines:
-            continue
+        if proj.github:
+            lines.append(f"GitHub: {proj.github}")
+        if proj.live_link:
+            lines.append(f"Live Link: {proj.live_link}")
 
-        entries.append(f"{index}. " + "\n".join(lines))
+        lines.append("")
 
-    return "\n\n".join(entries) if entries else None
+    return "\n".join(lines).strip() if lines else None
 
 
-def _education_section(education_items: Optional[List[Education]]) -> Optional[str]:
-    if not education_items:
+def _education_section(education: Optional[List[Education]]) -> Optional[str]:
+    if not education:
         return None
 
-    entries: List[str] = []
-    for index, edu in enumerate(education_items, start=1):
-        lines: List[str] = []
+    lines: List[str] = []
+    for i, edu in enumerate(education, start=1):
+        lines.append(f"{i}. Education Entry")
         if edu.degree or edu.branch:
             degree_parts = [part for part in [edu.degree, edu.branch] if part]
             lines.append(
@@ -201,10 +176,9 @@ def _education_section(education_items: Optional[List[Education]]) -> Optional[s
             lines.append(f"Location: {edu.location}")
         if edu.grade:
             lines.append(f"Grade: {edu.grade}")
+        lines.append("")
 
-        entries.append(f"{index}. " + "\n".join(lines))
-
-    return "\n\n".join(entries)
+    return "\n".join(lines).strip() if lines else None
 
 
 def _certifications_section(
@@ -213,96 +187,115 @@ def _certifications_section(
     if not certifications:
         return None
 
-    entries = []
-    for index, cert in enumerate(certifications, start=1):
-        lines: List[str] = []
-        if cert.name:
-            lines.append(cert.name)
+    lines: List[str] = []
+    for i, cert in enumerate(certifications, start=1):
+        lines.append(f"{i}. {cert.name or 'Certification not specified'}")
         if cert.link:
             lines.append(f"Link: {cert.link}")
-        entries.append(f"{index}. " + " | ".join(lines))
+        lines.append("")
 
-    return "\n".join(entries) if entries else None
-
-
-def _text_blobs_section(text_blobs: Optional[TextBlobs]) -> Optional[str]:
-    if not text_blobs:
-        return None
-
-    lines: List[str] = []
-    if text_blobs.achievements:
-        lines.append("Achievements:")
-        lines.append(text_blobs.achievements)
-    if text_blobs.additional_context:
-        lines.append("Additional Context:")
-        lines.append(text_blobs.additional_context)
-
-    return "\n".join(lines) if lines else None
-
-
-def build_portfolio_summary(portfolio_data: PortfolioData) -> str:
-    """Create a human-readable summary of the portfolio for the system prompt."""
-
-    sections: List[str] = []
-
-    personal_section = _personal_info_section(portfolio_data.personal_info)
-    if personal_section:
-        sections.append("### Personal Information\n" + personal_section)
-
-    work_section = _work_experience_section(portfolio_data.work_experiences)
-    if work_section:
-        sections.append("### Work Experience\n" + work_section)
-
-    projects_section = _projects_section(portfolio_data.projects)
-    if projects_section:
-        sections.append("### Projects\n" + projects_section)
-
-    education_section = _education_section(portfolio_data.education)
-    if education_section:
-        sections.append("### Education\n" + education_section)
-
-    certifications_section = _certifications_section(portfolio_data.certifications)
-    if certifications_section:
-        sections.append("### Certifications\n" + certifications_section)
-
-    text_section = _text_blobs_section(portfolio_data.text_blobs)
-    if text_section:
-        sections.append("### Additional Highlights\n" + text_section)
-
-    return "\n\n".join(sections) if sections else "No portfolio data available"
+    return "\n".join(lines).strip() if lines else None
 
 
 def build_system_prompt(portfolio_data: PortfolioData) -> str:
-    """Generate the full system prompt for the chat model."""
+    """
+    Build a comprehensive system prompt from portfolio data.
 
-    personal_info = portfolio_data.personal_info or PersonalInfo()
-    name = personal_info.full_name or "the portfolio owner"
+    Args:
+        portfolio_data: Structured portfolio data
 
-    portfolio_summary = build_portfolio_summary(portfolio_data)
+    Returns:
+        System prompt string with portfolio context
+    """
+    name = (
+        portfolio_data.personal_info.full_name
+        if portfolio_data.personal_info and portfolio_data.personal_info.full_name
+        else "the portfolio owner"
+    )
 
-    prompt = f"""You are an AI assistant for {name}'s portfolio website. Your role is to help visitors learn about {name}'s professional background, skills, and achievements in a warm, engaging, and professional manner.
+    sections: List[str] = []
 
-## Portfolio Context
-{portfolio_summary}
+    # Personal info
+    personal_section = _personal_info_section(portfolio_data.personal_info)
+    if personal_section:
+        sections.append(f"# Personal Information\n{personal_section}")
 
-## Guidelines
-- Keep responses concise (under 150 words) unless the visitor specifically requests more detail
-- Maintain a friendly, professional tone while showcasing {name}'s strengths
-- Encourage deeper exploration by offering relevant widgets when helpful
-- Always provide textual context when you trigger widgets so the visitor understands why the section matters
-- Refer to concrete examples, technologies, and results when possible
+    # Work experience
+    experience_section = _work_experience_section(portfolio_data.work_experiences)
+    if experience_section:
+        sections.append(f"# Work Experience\n{experience_section}")
 
-## Widget Usage
-- When you want to show portfolio sections, use special markers in your response: [WIDGET:widget_name]
-- Available widgets: about, projects, skills, contact, experience, education
-- Place the marker where you want the widget to appear in your response
-- Example: "Here are my recent projects: [WIDGET:projects]"
-- You can mention specific items by adding indices: [WIDGET:projects:0,1] to show first two projects
+    # Projects
+    projects_section = _projects_section(portfolio_data.projects)
+    if projects_section:
+        sections.append(f"# Projects\n{projects_section}")
 
-## Conversation Handling
-- For broad questions ("Tell me about {name}"), share a short overview and offer relevant widgets such as experience or projects
-- For specific questions ("What projects used React?"), answer directly and show the matching widget with narrowed indices when possible
-- Politely steer off-topic requests back to {name}'s professional work or achievements
+    # Education
+    education_section = _education_section(portfolio_data.education)
+    if education_section:
+        sections.append(f"# Education\n{education_section}")
+
+    # Certifications
+    certifications_section = _certifications_section(portfolio_data.certifications)
+    if certifications_section:
+        sections.append(f"# Certifications\n{certifications_section}")
+
+    # Text blobs
+    if portfolio_data.text_blobs:
+        if portfolio_data.text_blobs.achievements:
+            sections.append(f"# Achievements\n{portfolio_data.text_blobs.achievements}")
+        if portfolio_data.text_blobs.additional_context:
+            sections.append(
+                f"# Additional Information\n{portfolio_data.text_blobs.additional_context}"
+            )
+
+    portfolio_context = "\n\n".join(sections)
+
+    # Generate example widget commands using constants
+    widget_examples = [
+        f"- `{ChatDelimiters.WIDGET_ABOUT}` - Show about/personal info section",
+        f"- `{ChatDelimiters.WIDGET_PROJECTS}` - Show all projects",
+        f"- `{ChatDelimiters.get_widget_delimiter('projects', [0, 1])}` - Show specific projects by index (0-based)",
+        f"- `{ChatDelimiters.WIDGET_SKILLS}` - Show skills",
+        f"- `{ChatDelimiters.WIDGET_CONTACT}` - Show contact information",
+        f"- `{ChatDelimiters.WIDGET_EXPERIENCE}` - Show work experience",
+        f"- `{ChatDelimiters.WIDGET_EDUCATION}` - Show education",
+        f"- `{ChatDelimiters.MSG_BREAK}` - Split into separate message bubbles",
+    ]
+    widget_commands = "\n".join(widget_examples)
+
+    prompt = f"""
+You are an AI assistant representing {name}'s professional portfolio. Your role is to help visitors learn about {name}'s work, skills, and experience through natural conversation.
+
+# Portfolio Context
+{portfolio_context}
+
+# Response Guidelines
+- Be CONCISE and answer ONLY what is asked
+- Keep responses SHORT and EASY TO READ
+- Use simple, clear language
+- Maintain a friendly, professional tone
+- Refer to concrete examples and technologies when relevant
+
+# Widget Commands
+Use special commands to show portfolio sections or split messages:
+{widget_commands}
+
+# Widget Placement Rules
+- ALWAYS place widget commands at the END of your text, never inline
+- Each widget appears as a separate visual component below your text
+- Add a brief intro before the widget command
+- Example: "Here are my recent projects:\n{ChatDelimiters.WIDGET_PROJECTS}"
+
+# Message Splitting
+- Use `{ChatDelimiters.MSG_BREAK}` to split longer responses into digestible parts
+- Example: "I have 5 years of experience.\n{ChatDelimiters.MSG_BREAK}\nMy latest project was..."
+- This creates two separate chat bubbles for better readability
+
+# Conversation Handling
+- For broad questions ("Tell me about {name}"), give a SHORT overview and use widgets
+- For specific questions ("What projects used React?"), answer directly and concisely
+- Politely redirect off-topic questions back to {name}'s professional work
 """
 
     return textwrap.dedent(prompt).strip()

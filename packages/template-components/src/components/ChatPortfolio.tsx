@@ -482,11 +482,46 @@ const ChatPortfolioComponent = ({
         throw new Error("No response body");
       }
 
-      let contentBuffer = "";
-      let toolCallsBuffer: ToolCall[] = [];
+      let currentContentBuffer = "";
       let currentMessageId = crypto.randomUUID();
       let pending = "";
-      let assistantMessageCreated = false;
+      let messageCreated = false;
+
+      const ALLOWED_WIDGETS = new Set([
+        "about",
+        "projects",
+        "skills",
+        "contact",
+        "experience",
+        "education",
+      ]);
+
+      // Helper to finalize current message
+      const finalizeCurrentMessage = () => {
+        if (!currentContentBuffer.trim() && !messageCreated) return;
+
+        setMessages((m) => {
+          const existingIndex = m.findIndex(
+            (msg) => msg.id === currentMessageId
+          );
+          if (existingIndex >= 0) {
+            const updated = [...m];
+            updated[existingIndex] = {
+              ...updated[existingIndex],
+              content: currentContentBuffer.trim(),
+            };
+            return updated;
+          }
+          return [
+            ...m,
+            {
+              id: currentMessageId,
+              role: "assistant" as const,
+              content: currentContentBuffer.trim(),
+            },
+          ];
+        });
+      };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -511,13 +546,8 @@ const ChatPortfolioComponent = ({
           }
 
           if (parsed.type === "content") {
-            contentBuffer += parsed.data;
-            assistantMessageCreated = true;
-
-            // Strip widget markers from displayed content
-            const displayContent = contentBuffer
-              .replace(/\[WIDGET:\w+(?::[0-9,]+)?\]/g, "")
-              .trim();
+            currentContentBuffer += parsed.data;
+            messageCreated = true;
 
             setMessages((m) => {
               const existingIndex = m.findIndex(
@@ -527,7 +557,7 @@ const ChatPortfolioComponent = ({
                 const updated = [...m];
                 updated[existingIndex] = {
                   ...updated[existingIndex],
-                  content: displayContent,
+                  content: currentContentBuffer,
                 };
                 return updated;
               }
@@ -536,79 +566,67 @@ const ChatPortfolioComponent = ({
                 {
                   id: currentMessageId,
                   role: "assistant" as const,
-                  content: displayContent,
+                  content: currentContentBuffer,
                 },
               ];
             });
-          } else if (parsed.type === "tool_call") {
-            toolCallsBuffer.push({
-              type: "widget_render",
-              widget: parsed.data.widget,
-              indices: parsed.data.indices,
-              explanation: parsed.data.explanation,
-            });
-            assistantMessageCreated = true;
-            setMessages((m) => {
-              const existingIndex = m.findIndex(
-                (msg) => msg.id === currentMessageId
-              );
-              if (existingIndex >= 0) {
-                const updated = [...m];
-                updated[existingIndex] = {
-                  ...updated[existingIndex],
-                  toolCalls: [...toolCallsBuffer],
-                };
-                return updated;
-              }
-              return [
-                ...m,
-                {
-                  id: currentMessageId,
+          } else if (parsed.type === "cmd") {
+            const command = parsed.data as string;
+
+            if (command === "MSG_BREAK") {
+              // Finalize current message and start a new one
+              finalizeCurrentMessage();
+              currentContentBuffer = "";
+              currentMessageId = crypto.randomUUID();
+              messageCreated = false;
+            } else if (command.startsWith("WIDGET:")) {
+              // Parse widget command: WIDGET:name or WIDGET:name:0,1
+              const parts = command.slice(7).split(":");
+              const widgetName = parts[0];
+              const indicesStr = parts[1];
+
+              if (ALLOWED_WIDGETS.has(widgetName)) {
+                let indices: number[] | undefined = undefined;
+                if (indicesStr) {
+                  const nums = indicesStr
+                    .split(",")
+                    .map((s) => Number(s.trim()))
+                    .filter((n) => Number.isInteger(n));
+                  if (nums.length) indices = nums;
+                }
+
+                // Finalize current text message
+                finalizeCurrentMessage();
+
+                // Create widget message
+                const widgetMessage: Message = {
+                  id: crypto.randomUUID(),
                   role: "assistant" as const,
-                  content: contentBuffer,
-                  toolCalls: [...toolCallsBuffer],
-                },
-              ];
-            });
+                  content: "",
+                  toolCalls: [
+                    {
+                      type: "widget_render",
+                      widget: widgetName as any,
+                      indices,
+                      explanation: undefined,
+                    },
+                  ],
+                };
+                setMessages((m) => [...m, widgetMessage]);
+
+                // Reset for next message
+                currentContentBuffer = "";
+                currentMessageId = crypto.randomUUID();
+                messageCreated = false;
+              }
+            }
           } else if (parsed.type === "done") {
             if (parsed.data?.conversation_id) {
               setConversationId(parsed.data.conversation_id);
             }
 
-            // Strip widget markers from final content
-            const finalContent = contentBuffer
-              .replace(/\[WIDGET:\w+(?::[0-9,]+)?\]/g, "")
-              .trim();
-
-            if (!assistantMessageCreated) {
-              setMessages((m) => [
-                ...m,
-                {
-                  id: currentMessageId,
-                  role: "assistant",
-                  content: finalContent,
-                  toolCalls: toolCallsBuffer.length
-                    ? toolCallsBuffer
-                    : undefined,
-                },
-              ]);
-            } else {
-              // Update the final content to ensure markers are stripped
-              setMessages((m) => {
-                const existingIndex = m.findIndex(
-                  (msg) => msg.id === currentMessageId
-                );
-                if (existingIndex >= 0) {
-                  const updated = [...m];
-                  updated[existingIndex] = {
-                    ...updated[existingIndex],
-                    content: finalContent,
-                  };
-                  return updated;
-                }
-                return m;
-              });
-            }
+            // Finalize any remaining content
+            finalizeCurrentMessage();
 
             setIsThinking(false);
           } else if (parsed.type === "error") {
