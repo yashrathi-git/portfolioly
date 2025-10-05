@@ -12,13 +12,14 @@ class ChatConfig:
     RATE_LIMIT_WINDOW_SECONDS = 3600  # 1 hour
 
     # Input validation
-    MAX_USER_INPUT_TOKENS = 60
-    MAX_SYSTEM_PROMPT_TOKENS = 2000
+    MAX_USER_INPUT_CHARS = 240  # ~60 tokens with a buffer
+    MAX_SYSTEM_PROMPT_CHARS = 16000
+    MAX_TOOL_ARGUMENT_CHARS = 4000
 
     # AI processing
-    CHAT_MODEL_NAME = "grok-3-mini"  # Azure AI model
+    CHAT_MODEL_NAME = "grok-4-fast-non-reasoning"  # Azure AI model
     MAX_CONVERSATION_HISTORY = 10  # Number of previous messages to include
-    MAX_RESPONSE_TOKENS = 500  # Max tokens for LLM response
+    MAX_RESPONSE_TOKENS = 500  # Keep token limit to control Azure response size
 
     # Storage
     CHAT_COLLECTION_NAME = "portfolio_chats"

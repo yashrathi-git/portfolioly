@@ -215,98 +215,38 @@ async def increment_portfolio_owner_usage(
     return 1
 
 
-def validate_chat_input_tokens(message: str) -> None:
-    """
-    Validate that user input doesn't exceed token limit.
+def validate_chat_input_length(message: str) -> None:
+    """Ensure the user's message stays within the configured character limit."""
 
-    Uses tiktoken to count tokens in the user's message and ensures it's
-    within the configured limit.
-
-    Args:
-        message: User's chat message
-
-    Raises:
-        HTTPException with 400 status if token limit exceeded
-    """
-    import tiktoken
-
-    try:
-        # Use cl100k_base encoding (used by GPT-4 and similar models)
-        encoding = tiktoken.get_encoding("cl100k_base")
-        token_count = len(encoding.encode(message))
-
-        if token_count > ChatConfig.MAX_USER_INPUT_TOKENS:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "message": f"Message too long. Maximum {ChatConfig.MAX_USER_INPUT_TOKENS} tokens allowed.",
-                    "error_code": "INPUT_TOKEN_LIMIT_EXCEEDED",
-                    "token_count": token_count,
-                    "limit": ChatConfig.MAX_USER_INPUT_TOKENS,
-                },
-            )
-    except Exception as e:
-        # If tiktoken fails, fall back to character-based estimation
-        # Rough estimate: 1 token ≈ 4 characters
-        estimated_tokens = len(message) // 4
-        if estimated_tokens > ChatConfig.MAX_USER_INPUT_TOKENS:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "message": f"Message too long. Please keep it under {ChatConfig.MAX_USER_INPUT_TOKENS * 4} characters.",
-                    "error_code": "INPUT_LENGTH_EXCEEDED",
-                },
-            )
+    if len(message) > ChatConfig.MAX_USER_INPUT_CHARS:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": (
+                    f"Message too long. Maximum {ChatConfig.MAX_USER_INPUT_CHARS} characters allowed."
+                ),
+                "error_code": "INPUT_LENGTH_EXCEEDED",
+                "char_count": len(message),
+                "limit": ChatConfig.MAX_USER_INPUT_CHARS,
+            },
+        )
 
 
-def validate_system_prompt_tokens(prompt: str) -> None:
-    """
-    Validate that system prompt doesn't exceed token limit.
+def validate_system_prompt_length(prompt: str) -> None:
+    """Ensure the generated system prompt stays within the character limit."""
 
-    Uses tiktoken to count tokens in the system prompt and ensures it's
-    within the configured limit.
-
-    Args:
-        prompt: System prompt text
-
-    Raises:
-        ValueError if token limit exceeded
-    """
-    import tiktoken
-
-    try:
-        # Use cl100k_base encoding (used by GPT-4 and similar models)
-        encoding = tiktoken.get_encoding("cl100k_base")
-        token_count = len(encoding.encode(prompt))
-
-        if token_count > ChatConfig.MAX_SYSTEM_PROMPT_TOKENS:
-            raise ValueError(
-                f"System prompt exceeds token limit. "
-                f"Current: {token_count}, Limit: {ChatConfig.MAX_SYSTEM_PROMPT_TOKENS}"
-            )
-    except Exception as e:
-        # If tiktoken fails, log warning but don't block
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.warning(f"Failed to validate system prompt tokens: {e}")
+    if len(prompt) > ChatConfig.MAX_SYSTEM_PROMPT_CHARS:
+        raise ValueError(
+            "System prompt exceeds character limit. "
+            f"Current: {len(prompt)}, Limit: {ChatConfig.MAX_SYSTEM_PROMPT_CHARS}"
+        )
 
 
-def count_tokens(text: str) -> int:
-    """
-    Count the number of tokens in a text string.
+def validate_tool_arguments_length(arguments: str) -> None:
+    """Lightweight guard to avoid excessively large tool argument payloads."""
 
-    Args:
-        text: Text to count tokens for
-
-    Returns:
-        Number of tokens
-    """
-    import tiktoken
-
-    try:
-        encoding = tiktoken.get_encoding("cl100k_base")
-        return len(encoding.encode(text))
-    except Exception:
-        # Fall back to character-based estimation
-        return len(text) // 4
+    if len(arguments) > ChatConfig.MAX_TOOL_ARGUMENT_CHARS:
+        raise ValueError(
+            "Tool arguments exceed character limit. "
+            f"Current: {len(arguments)}, Limit: {ChatConfig.MAX_TOOL_ARGUMENT_CHARS}"
+        )

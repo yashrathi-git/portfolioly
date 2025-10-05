@@ -485,101 +485,140 @@ const ChatPortfolioComponent = ({
       let contentBuffer = "";
       let toolCallsBuffer: ToolCall[] = [];
       let currentMessageId = crypto.randomUUID();
+      let pending = "";
+      let assistantMessageCreated = false;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        pending += decoder.decode(value, { stream: true });
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            try {
-              const parsed = JSON.parse(data);
+        let newlineIdx: number;
+        while ((newlineIdx = pending.indexOf("\n\n")) >= 0) {
+          const rawEvent = pending.slice(0, newlineIdx).trim();
+          pending = pending.slice(newlineIdx + 2);
 
-              if (parsed.type === "content") {
-                // Append content chunk
-                contentBuffer += parsed.data;
+          if (!rawEvent.startsWith("data: ")) continue;
+          const payload = rawEvent.slice(6);
 
-                // Update or create message with accumulated content
-                setMessages((m) => {
-                  const existingIndex = m.findIndex(
-                    (msg) => msg.id === currentMessageId
-                  );
-                  if (existingIndex >= 0) {
-                    const updated = [...m];
-                    updated[existingIndex] = {
-                      ...updated[existingIndex],
-                      content: contentBuffer,
-                    };
-                    return updated;
-                  } else {
-                    return [
-                      ...m,
-                      {
-                        id: currentMessageId,
-                        role: "assistant" as const,
-                        content: contentBuffer,
-                        toolCalls: undefined,
-                      },
-                    ];
-                  }
-                });
-              } else if (parsed.type === "tool_call") {
-                // Collect tool call
-                const toolCall: ToolCall = {
-                  type: parsed.data.type,
-                  widget: parsed.data.widget,
-                  indices: parsed.data.indices,
-                  explanation: parsed.data.explanation,
+          let parsed: any;
+          try {
+            parsed = JSON.parse(payload);
+          } catch (e) {
+            console.error("Error parsing SSE data:", e);
+            continue;
+          }
+
+          if (parsed.type === "content") {
+            contentBuffer += parsed.data;
+            assistantMessageCreated = true;
+
+            // Strip widget markers from displayed content
+            const displayContent = contentBuffer
+              .replace(/\[WIDGET:\w+(?::[0-9,]+)?\]/g, "")
+              .trim();
+
+            setMessages((m) => {
+              const existingIndex = m.findIndex(
+                (msg) => msg.id === currentMessageId
+              );
+              if (existingIndex >= 0) {
+                const updated = [...m];
+                updated[existingIndex] = {
+                  ...updated[existingIndex],
+                  content: displayContent,
                 };
-                toolCallsBuffer.push(toolCall);
-              } else if (parsed.type === "done") {
-                // Finalize message with tool calls
-                if (toolCallsBuffer.length > 0) {
-                  setMessages((m) => {
-                    const existingIndex = m.findIndex(
-                      (msg) => msg.id === currentMessageId
-                    );
-                    if (existingIndex >= 0) {
-                      const updated = [...m];
-                      updated[existingIndex] = {
-                        ...updated[existingIndex],
-                        toolCalls: toolCallsBuffer,
-                      };
-                      return updated;
-                    }
-                    return m;
-                  });
-                }
-
-                // Update conversation ID
-                if (parsed.data.conversation_id) {
-                  setConversationId(parsed.data.conversation_id);
-                }
-
-                setIsThinking(false);
-              } else if (parsed.type === "error") {
-                const errorMessage =
-                  typeof parsed.data === "string"
-                    ? parsed.data
-                    : "An error occurred while processing your message.";
-                setApiError(errorMessage);
-                setIsThinking(false);
-                throw new Error(errorMessage);
+                return updated;
               }
-            } catch (e) {
-              // Only log parsing errors, don't throw
-              if (
-                !(e instanceof Error && e.message.includes("error occurred"))
-              ) {
-                console.error("Error parsing SSE data:", e);
-              } else {
-                throw e;
+              return [
+                ...m,
+                {
+                  id: currentMessageId,
+                  role: "assistant" as const,
+                  content: displayContent,
+                },
+              ];
+            });
+          } else if (parsed.type === "tool_call") {
+            toolCallsBuffer.push({
+              type: "widget_render",
+              widget: parsed.data.widget,
+              indices: parsed.data.indices,
+              explanation: parsed.data.explanation,
+            });
+            assistantMessageCreated = true;
+            setMessages((m) => {
+              const existingIndex = m.findIndex(
+                (msg) => msg.id === currentMessageId
+              );
+              if (existingIndex >= 0) {
+                const updated = [...m];
+                updated[existingIndex] = {
+                  ...updated[existingIndex],
+                  toolCalls: [...toolCallsBuffer],
+                };
+                return updated;
               }
+              return [
+                ...m,
+                {
+                  id: currentMessageId,
+                  role: "assistant" as const,
+                  content: contentBuffer,
+                  toolCalls: [...toolCallsBuffer],
+                },
+              ];
+            });
+          } else if (parsed.type === "done") {
+            if (parsed.data?.conversation_id) {
+              setConversationId(parsed.data.conversation_id);
             }
+
+            // Strip widget markers from final content
+            const finalContent = contentBuffer
+              .replace(/\[WIDGET:\w+(?::[0-9,]+)?\]/g, "")
+              .trim();
+
+            if (!assistantMessageCreated) {
+              setMessages((m) => [
+                ...m,
+                {
+                  id: currentMessageId,
+                  role: "assistant",
+                  content: finalContent,
+                  toolCalls: toolCallsBuffer.length
+                    ? toolCallsBuffer
+                    : undefined,
+                },
+              ]);
+            } else {
+              // Update the final content to ensure markers are stripped
+              setMessages((m) => {
+                const existingIndex = m.findIndex(
+                  (msg) => msg.id === currentMessageId
+                );
+                if (existingIndex >= 0) {
+                  const updated = [...m];
+                  updated[existingIndex] = {
+                    ...updated[existingIndex],
+                    content: finalContent,
+                  };
+                  return updated;
+                }
+                return m;
+              });
+            }
+
+            setIsThinking(false);
+          } else if (parsed.type === "error") {
+            const errorMessage =
+              typeof parsed.data === "string"
+                ? parsed.data
+                : "An error occurred while processing your message.";
+            setApiError(errorMessage);
+            setIsThinking(false);
+            throw new Error(errorMessage);
           }
         }
       }

@@ -11,9 +11,9 @@ from app.dependencies.chat_rate_limiting import (
     check_chat_ip_rate_limit,
     check_portfolio_owner_usage_limit,
     increment_portfolio_owner_usage,
-    validate_chat_input_tokens,
-    validate_system_prompt_tokens,
-    count_tokens,
+    validate_chat_input_length,
+    validate_system_prompt_length,
+    validate_tool_arguments_length,
 )
 from app.constants.chat_config import ChatConfig
 
@@ -245,51 +245,38 @@ class TestInputValidation:
     def test_validate_short_message(self):
         """Test that short messages pass validation."""
         message = "Hello, how are you?"
-        # Should not raise exception
-        validate_chat_input_tokens(message)
+        validate_chat_input_length(message)
 
     def test_validate_long_message(self):
         """Test that very long messages are rejected."""
-        # Create a message that's definitely over 60 tokens
-        message = " ".join(["word"] * 100)
+        message = "a" * (ChatConfig.MAX_USER_INPUT_CHARS + 1)
 
         with pytest.raises(HTTPException) as exc_info:
-            validate_chat_input_tokens(message)
+            validate_chat_input_length(message)
 
         assert exc_info.value.status_code == 400
-        # Accept either error code since fallback may be used
-        assert "INPUT_TOKEN_LIMIT_EXCEEDED" in str(
-            exc_info.value.detail
-        ) or "INPUT_LENGTH_EXCEEDED" in str(exc_info.value.detail)
+        assert "INPUT_LENGTH_EXCEEDED" in str(exc_info.value.detail)
 
     def test_validate_system_prompt_valid(self):
         """Test that valid system prompts pass validation."""
         prompt = "You are a helpful assistant."
-        # Should not raise exception
-        validate_system_prompt_tokens(prompt)
+        validate_system_prompt_length(prompt)
 
     def test_validate_system_prompt_too_long(self):
         """Test that very long system prompts are rejected."""
-        # Create a prompt that's definitely over 2000 tokens
-        prompt = " ".join(["word"] * 3000)
+        prompt = "a" * (ChatConfig.MAX_SYSTEM_PROMPT_CHARS + 1)
 
-        # This should raise ValueError, but if tiktoken fails it logs a warning instead
-        # So we'll just verify it doesn't crash
-        try:
-            validate_system_prompt_tokens(prompt)
-            # If no exception, that's okay - it means fallback was used
-        except ValueError:
-            # This is the expected behavior
-            pass
+        with pytest.raises(ValueError):
+            validate_system_prompt_length(prompt)
 
-    def test_count_tokens(self):
-        """Test token counting."""
-        text = "Hello, world!"
-        count = count_tokens(text)
-        assert count > 0
-        assert isinstance(count, int)
+    def test_validate_tool_arguments_valid(self):
+        """Test that moderate tool argument payloads pass validation."""
+        arguments = "{" + '"data": "x"' + "}" * 1
+        validate_tool_arguments_length(arguments)
 
-    def test_count_tokens_empty(self):
-        """Test token counting with empty string."""
-        count = count_tokens("")
-        assert count == 0
+    def test_validate_tool_arguments_too_long(self):
+        """Test that very large tool argument payloads are rejected."""
+        arguments = "a" * (ChatConfig.MAX_TOOL_ARGUMENT_CHARS + 1)
+
+        with pytest.raises(ValueError):
+            validate_tool_arguments_length(arguments)
