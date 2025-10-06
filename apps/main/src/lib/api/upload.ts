@@ -32,7 +32,6 @@ export interface PDFUploadResponse {
     size: number;
     checksum: string;
     processed_at: string;
-    blob_url?: string;
   };
   user_id: string;
   success: boolean;
@@ -77,7 +76,6 @@ export interface UploadSubmissionRequest {
     size: number;
     checksum: string;
     processed_at: string;
-    blob_url?: string;
   };
   resume_pdf?: {
     text: string;
@@ -87,7 +85,6 @@ export interface UploadSubmissionRequest {
     size: number;
     checksum: string;
     processed_at: string;
-    blob_url?: string;
   };
   github_repos: GitHubRepo[];
 }

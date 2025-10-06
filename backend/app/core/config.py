@@ -22,7 +22,9 @@ class UploadSettings(BaseModel):
     GITHUB_API_TIMEOUT: int = 30
 
     # Storage configuration
-    ENABLE_AZURE_STORAGE: bool = False
+    ENABLE_AZURE_STORAGE: bool = True
+    AZURE_STORAGE_CONTAINER: str = "user-uploaded-pdfs"
+    AZURE_STORAGE_BLOB_PREFIX: str = "user-files"
 
     # Rate limiting configuration
     RATE_LIMIT_PDF_UPLOADS_PER_HOUR: int = 10
@@ -64,6 +66,11 @@ class Settings(BaseSettings):
     # Azure AI settings
     azure_ai_endpoint: Optional[str] = None
     azure_ai_api_key: Optional[str] = None
+
+    # Azure Blob Storage settings
+    azure_storage_connection_string: Optional[str] = None
+    azure_storage_account_url: Optional[str] = None
+    azure_storage_account_key: Optional[str] = None
 
     # Nested groups
     upload: UploadSettings = UploadSettings()

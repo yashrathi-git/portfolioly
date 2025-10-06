@@ -96,6 +96,42 @@ class PortfolioService:
             logger.error(f"Failed to store portfolio data for user {user_id}: {str(e)}")
             raise FirebaseError(f"Failed to store portfolio data: {str(e)}")
 
+    def record_user_pdf_reference(
+        self,
+        user_id: str,
+        *,
+        source: str,
+        blob_url: str,
+        filename: Optional[str],
+        checksum: Optional[str] = None,
+    ) -> None:
+        """Persist Azure Blob metadata for a user's uploaded PDF."""
+
+        try:
+            doc_ref = self.db.collection("user_pdf_uploads").document(user_id)
+
+            payload: Dict[str, Any] = {
+                source: {
+                    "blob_url": blob_url,
+                    "filename": filename,
+                    "checksum": checksum,
+                    "updated_at": datetime.utcnow(),
+                },
+                "last_updated": datetime.utcnow(),
+            }
+
+            doc_ref.set(payload, merge=True)
+
+            logger.info("Stored PDF reference for user %s (source=%s)", user_id, source)
+
+        except Exception as exc:
+            logger.warning(
+                "Failed to store PDF reference for user %s (source=%s): %s",
+                user_id,
+                source,
+                exc,
+            )
+
     def get_portfolio_data(self, user_id: str) -> Optional[PortfolioData]:
         """
         Retrieve portfolio data from Firestore.

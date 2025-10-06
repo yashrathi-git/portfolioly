@@ -411,7 +411,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
           size: linkedin.result.meta.size,
           checksum: linkedin.result.meta.checksum,
           processed_at: linkedin.result.meta.processed_at,
-          blob_url: linkedin.result.meta.blob_url,
         };
       }
 
@@ -425,7 +424,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
           size: resume.result.meta.size,
           checksum: resume.result.meta.checksum,
           processed_at: resume.result.meta.processed_at,
-          blob_url: resume.result.meta.blob_url,
         };
       }
 

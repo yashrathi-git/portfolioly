@@ -34,10 +34,12 @@ class TestPDFUploadEndpoint:
 
     @patch("app.routes.upload.require_verified_email")
     @patch("app.routes.upload.check_pdf_upload_rate_limit")
+    @patch("app.routes.upload.get_azure_blob_storage_service")
     @patch("app.routes.upload.get_pdf_processor")
     def test_upload_pdf_success(
         self,
         mock_get_processor,
+        mock_get_azure_service,
         mock_rate_limit,
         mock_auth,
         client,
@@ -74,6 +76,10 @@ class TestPDFUploadEndpoint:
 
         mock_processor.parse_pdf = AsyncMock(return_value=mock_result)
         mock_get_processor.return_value = mock_processor
+
+        mock_storage_service = AsyncMock()
+        mock_storage_service.upload_user_pdf.return_value = "https://example.blob/pdf"
+        mock_get_azure_service.return_value = mock_storage_service
 
         # Make request
         response = client.post(
@@ -139,10 +145,12 @@ class TestPDFUploadEndpoint:
 
     @patch("app.routes.upload.require_verified_email")
     @patch("app.routes.upload.check_pdf_upload_rate_limit")
+    @patch("app.routes.upload.get_azure_blob_storage_service")
     @patch("app.routes.upload.get_pdf_processor")
     def test_upload_pdf_processing_failure(
         self,
         mock_get_processor,
+        mock_get_azure_service,
         mock_rate_limit,
         mock_auth,
         client,
@@ -176,6 +184,10 @@ class TestPDFUploadEndpoint:
 
         mock_processor.parse_pdf = AsyncMock(return_value=mock_result)
         mock_get_processor.return_value = mock_processor
+
+        mock_storage_service = AsyncMock()
+        mock_storage_service.upload_user_pdf.return_value = None
+        mock_get_azure_service.return_value = mock_storage_service
 
         response = client.post(
             "/api/ingest/pdf?source=linkedin",

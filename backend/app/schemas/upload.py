@@ -29,7 +29,6 @@ class PDFData(BaseModel):
     size: int
     checksum: str
     processed_at: str
-    blob_url: Optional[str]
 
 
 class UploadSubmissionRequest(BaseModel):

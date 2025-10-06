@@ -65,7 +65,6 @@ class TestAIWorkflowIntegration:
             size=2048,
             checksum="resume123",
             processed_at="2023-01-01T00:00:00Z",
-            blob_url=None,
         )
 
     @pytest.fixture
@@ -93,7 +92,6 @@ class TestAIWorkflowIntegration:
             size=1024,
             checksum="linkedin123",
             processed_at="2023-01-01T00:00:00Z",
-            blob_url=None,
         )
 
     @pytest.fixture

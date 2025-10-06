@@ -60,7 +60,6 @@ class TestAIProcessor:
             size=1024,
             checksum="abc123",
             processed_at="2023-01-01T00:00:00Z",
-            blob_url=None,
         )
 
     @pytest.fixture

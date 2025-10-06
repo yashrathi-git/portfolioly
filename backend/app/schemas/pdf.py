@@ -14,7 +14,6 @@ class PDFMetadata(BaseModel):
     size: int
     checksum: str
     processed_at: datetime
-    blob_url: Optional[str] = None
 
 
 class PDFParseResult(BaseModel):

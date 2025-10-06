@@ -23,6 +23,7 @@ from ..schemas.upload import (
 from ..services.pdf_processor import get_pdf_processor
 from ..services.github_service import get_github_service
 from ..services.portfolio_service import get_portfolio_service
+from ..services.azure_blob_storage import get_azure_blob_storage_service
 from ..services.ai_processor import (
     get_ai_processor,
     AIProcessingError,
@@ -111,11 +112,30 @@ async def upload_pdf(
                 "size": result.metadata.size,
                 "checksum": result.metadata.checksum,
                 "processed_at": result.metadata.processed_at.isoformat(),
-                "blob_url": result.metadata.blob_url,
             },
             "user_id": user.uid,
             "success": True,
         }
+
+        try:
+            azure_storage = get_azure_blob_storage_service()
+            blob_url = await azure_storage.upload_user_pdf(
+                user_id=user.uid,
+                source=source,
+                upload_file=file,
+            )
+
+            if blob_url:
+                portfolio_service = get_portfolio_service()
+                portfolio_service.record_user_pdf_reference(
+                    user.uid,
+                    source=source,
+                    blob_url=blob_url,
+                    filename=result.metadata.filename,
+                    checksum=result.metadata.checksum,
+                )
+        except Exception:
+            pass
 
         return JSONResponse(status_code=200, content=response_data)
 

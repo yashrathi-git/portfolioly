@@ -167,6 +167,21 @@ wheels = [
 ]
 
 [[package]]
+name = "azure-storage-blob"
+version = "12.26.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-core" },
+    { name = "cryptography" },
+    { name = "isodate" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/96/95/3e3414491ce45025a1cde107b6ae72bf72049e6021597c201cd6a3029b9a/azure_storage_blob-12.26.0.tar.gz", hash = "sha256:5dd7d7824224f7de00bfeb032753601c982655173061e242f13be6e26d78d71f", size = 583332 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/64/63dbfdd83b31200ac58820a7951ddfdeed1fbee9285b0f3eae12d1357155/azure_storage_blob-12.26.0-py3-none-any.whl", hash = "sha256:8c5631b8b22b4f53ec5fff2f3bededf34cfef111e2af613ad42c9e6de00a77fe", size = 412907 },
+]
+
+[[package]]
 name = "backend"
 version = "0.1.0"
 source = { virtual = "." }
@@ -174,6 +189,7 @@ dependencies = [
     { name = "aiofiles" },
     { name = "aiohttp" },
     { name = "azure-ai-inference" },
+    { name = "azure-storage-blob" },
     { name = "fastapi", extra = ["standard"] },
     { name = "firebase-admin" },
     { name = "openai" },
@@ -198,6 +214,7 @@ requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
     { name = "aiohttp", specifier = ">=3.12.15" },
     { name = "azure-ai-inference", specifier = ">=1.0.0b9" },
+    { name = "azure-storage-blob", specifier = ">=12.26.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.116.2" },
     { name = "firebase-admin", specifier = ">=7.1.0" },
     { name = "openai", specifier = ">=2.1.0" },
