@@ -6,7 +6,7 @@ AI processing, rate limiting, and error handling.
 """
 
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 from fastapi.testclient import TestClient
 from datetime import datetime
 
@@ -143,8 +143,8 @@ class TestSubmitEndpoint:
 
         # Mock AI processor
         mock_processor = Mock()
-        mock_processor.process_portfolio_data.return_value = PortfolioData(
-            personal_info=PersonalInfo(full_name="John Doe")
+        mock_processor.process_portfolio_data = AsyncMock(
+            return_value=PortfolioData(personal_info=PersonalInfo(full_name="John Doe"))
         )
         mock_ai_processor.return_value = mock_processor
 
@@ -206,8 +206,8 @@ class TestSubmitEndpoint:
         from app.services.ai_processor import AIProcessingError
 
         mock_processor = Mock()
-        mock_processor.process_portfolio_data.side_effect = AIProcessingError(
-            "AI processing failed"
+        mock_processor.process_portfolio_data = AsyncMock(
+            side_effect=AIProcessingError("AI processing failed")
         )
         mock_ai_processor.return_value = mock_processor
 

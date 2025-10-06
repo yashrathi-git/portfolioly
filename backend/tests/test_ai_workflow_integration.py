@@ -6,7 +6,7 @@ error handling, and data prioritization rules.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from datetime import datetime, timezone, timedelta
 import json
 
@@ -157,7 +157,7 @@ class TestAIWorkflowIntegration:
         mock_doc_ref.set.assert_called_once()
 
     @patch("app.services.ai_processor.tiktoken")
-    @patch("app.services.ai_processor.OpenAI")
+    @patch("app.services.ai_processor.AsyncOpenAI")
     @pytest.mark.asyncio
     async def test_ai_processing_workflow_success(
         self,
@@ -223,7 +223,7 @@ class TestAIWorkflowIntegration:
                 },
             }
         )
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client
 
         # Setup AI processor
