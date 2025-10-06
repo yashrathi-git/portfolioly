@@ -4,6 +4,7 @@ import { Github, ExternalLink } from "lucide-react";
 import type { PortfolioProject as SchemaProject } from "../../types/portfolio";
 import { typography } from "../../lib/typography";
 import { cn } from "../../lib/cn";
+import { MarkdownContent } from "../../utils/markdown";
 
 export type ProjectsWidgetProject = SchemaProject;
 
@@ -37,7 +38,9 @@ export const ProjectsWidget = ({
       {/* Glow */}
       <div className="pointer-events-none absolute -top-24 -right-20 h-64 w-64 rounded-full blur-3xl opacity-30 dark:opacity-20 bg-[oklch(0.828_0.189_84.429)]" />
       <div className="p-5 sm:p-6">
-        <h3 className={cn("font-semibold mb-4", typography.heading.secondary)}>{heading}</h3>
+        <h3 className={cn("font-semibold mb-4", typography.heading.secondary)}>
+          {heading}
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {visibleProjects.map((p, idx) => (
             <div
@@ -48,12 +51,22 @@ export const ProjectsWidget = ({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     {p.name ? (
-                      <h4 className={cn("font-semibold leading-tight", typography.heading.tertiary)}>
+                      <h4
+                        className={cn(
+                          "font-semibold leading-tight",
+                          typography.heading.tertiary
+                        )}
+                      >
                         {p.name}
                       </h4>
                     ) : null}
                     {p.role && (
-                      <p className={cn("text-[color:var(--muted-foreground)] mt-1", typography.label.small)}>
+                      <p
+                        className={cn(
+                          "text-[color:var(--muted-foreground)] mt-1",
+                          typography.label.small
+                        )}
+                      >
                         {p.role}
                       </p>
                     )}
@@ -61,17 +74,21 @@ export const ProjectsWidget = ({
                 </div>
 
                 {p.one_line_description && (
-                  <p className={cn("text-[color:var(--muted-foreground)]", typography.label.base)}>
+                  <p
+                    className={cn(
+                      "text-[color:var(--muted-foreground)]",
+                      typography.label.base
+                    )}
+                  >
                     {p.one_line_description}
                   </p>
                 )}
 
                 {p.highlights?.length ? (
-                  <ul className={cn("mt-1 list-disc list-inside text-[color:var(--muted-foreground)] space-y-1", typography.label.small)}>
-                    {p.highlights.slice(0, 3).map((h, i) => (
-                      <li key={i}>{h}</li>
-                    ))}
-                  </ul>
+                  <MarkdownContent
+                    content={p.highlights.slice(0, 3)}
+                    className="mt-1 text-[color:var(--muted-foreground)]"
+                  />
                 ) : null}
 
                 {p.technologies?.length ? (
@@ -79,7 +96,10 @@ export const ProjectsWidget = ({
                     {p.technologies.map((t) => (
                       <span
                         key={t}
-                        className={cn("px-2 py-0.5 rounded-full bg-[var(--input)]/70 text-foreground/80", typography.label.tiny)}
+                        className={cn(
+                          "px-2 py-0.5 rounded-full bg-[var(--input)]/70 text-foreground/80",
+                          typography.label.tiny
+                        )}
                       >
                         {t}
                       </span>
@@ -93,7 +113,10 @@ export const ProjectsWidget = ({
                       href={p.github}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className={cn("inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 hover:bg-[var(--input)]/60 transition-colors", typography.label.base)}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 hover:bg-[var(--input)]/60 transition-colors",
+                        typography.label.base
+                      )}
                     >
                       <Github className="size-4" />
                       <span>GitHub</span>
@@ -104,7 +127,10 @@ export const ProjectsWidget = ({
                       href={p.live_link}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className={cn("inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 hover:bg-[var(--input)]/60 transition-colors", typography.label.base)}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 hover:bg-[var(--input)]/60 transition-colors",
+                        typography.label.base
+                      )}
                     >
                       <ExternalLink className="size-4" />
                       <span>Live</span>

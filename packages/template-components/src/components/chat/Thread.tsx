@@ -11,6 +11,7 @@ import { WorkExperienceWidget } from "../widgets/WorkExperienceWidget";
 import { EducationWidget } from "../widgets/EducationWidget";
 import { typography } from "../../lib/typography";
 import { cn } from "../../lib/cn";
+import { MarkdownContent } from "../../utils/markdown";
 
 type ThreadProps = {
   messages: Message[];
@@ -215,11 +216,19 @@ export const Thread = ({
               {/* Render text content if present */}
               {m.content && (
                 <div className="rounded-2xl rounded-tl-none px-5 py-3.5 md:py-4 bg-[var(--secondary)] text-[color:var(--secondary-foreground)] shadow-sm">
-                  {m.content.split("\n").map((line, i) => (
-                    <p key={i} className="whitespace-pre-wrap">
-                      {line}
-                    </p>
-                  ))}
+                  <MarkdownContent
+                    content={m.content}
+                    overrides={{
+                      p: {
+                        component: ({ className, ...props }) => (
+                          <p
+                            {...props}
+                            className={cn("m-0 whitespace-pre-wrap", className)}
+                          />
+                        ),
+                      },
+                    }}
+                  />
                 </div>
               )}
 
@@ -271,11 +280,19 @@ export const Thread = ({
                   : "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] rounded-tr-none"
               )}
             >
-              {m.content.split("\n").map((line, i) => (
-                <p key={i} className="whitespace-pre-wrap">
-                  {line}
-                </p>
-              ))}
+              <MarkdownContent
+                content={m.content}
+                overrides={{
+                  p: {
+                    component: ({ className, ...props }) => (
+                      <p
+                        {...props}
+                        className={cn("m-0 whitespace-pre-wrap", className)}
+                      />
+                    ),
+                  },
+                }}
+              />
             </div>
           )}
         </div>

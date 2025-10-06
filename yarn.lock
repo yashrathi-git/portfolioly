@@ -1533,6 +1533,7 @@ __metadata:
     "@types/react-dom": "npm:^19"
     "@vitejs/plugin-react-swc": "npm:^3"
     clsx: "npm:^2.1.1"
+    markdown-to-jsx: "npm:^7.7.14"
     tailwind-merge: "npm:^3.3.1"
     typescript: "npm:^5"
     vite: "npm:^5"
@@ -5995,6 +5996,15 @@ __metadata:
     promise-retry: "npm:^2.0.1"
     ssri: "npm:^12.0.0"
   checksum: 10c0/c40efb5e5296e7feb8e37155bde8eb70bc57d731b1f7d90e35a092fde403d7697c56fb49334d92d330d6f1ca29a98142036d6480a12681133a0a1453164cb2f0
+  languageName: node
+  linkType: hard
+
+"markdown-to-jsx@npm:^7.7.14":
+  version: 7.7.14
+  resolution: "markdown-to-jsx@npm:7.7.14"
+  peerDependencies:
+    react: ">= 0.14.0"
+  checksum: 10c0/4fc7e6e215e032975b176ffc4c4cf8f6a371011b6af9854e176d5df352ec94f70453adb31b04e4e62fe4274e4816bca7ffbe64ec775bd33e612e8e8e877ed771
   languageName: node
   linkType: hard
 

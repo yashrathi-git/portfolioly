@@ -1,6 +1,6 @@
 import type { PortfolioProject } from "../../types/portfolio";
 import { Github, ExternalLink } from "lucide-react";
-import { MarkdownContent } from "../../utils/markdown-parser";
+import { MarkdownContent } from "../../utils/markdown";
 
 export type ProjectsProps = {
   items?: PortfolioProject[];
@@ -58,7 +58,10 @@ export const Projects = ({ items = [] }: ProjectsProps) => {
 
               {p.highlights?.length ? (
                 <div className="mb-3">
-                  <MarkdownContent content={p.highlights} />
+                  <MarkdownContent
+                    content={p.highlights}
+                    className="text-muted-foreground"
+                  />
                 </div>
               ) : null}
 

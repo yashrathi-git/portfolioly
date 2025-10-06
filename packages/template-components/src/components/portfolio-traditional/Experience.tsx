@@ -1,5 +1,5 @@
 import type { ExperienceItem } from "../../types/portfolio";
-import { MarkdownContent } from "../../utils/markdown-parser";
+import { MarkdownContent } from "../../utils/markdown";
 
 export type ExperienceProps = {
   items?: ExperienceItem[];
@@ -63,7 +63,10 @@ export const Experience = ({ items = [] }: ExperienceProps) => {
 
               {e.points?.length ? (
                 <div className="mb-3">
-                  <MarkdownContent content={e.points} />
+                  <MarkdownContent
+                    content={e.points}
+                    className="text-muted-foreground"
+                  />
                 </div>
               ) : null}
             </div>

@@ -3,6 +3,7 @@
 import { Briefcase, MapPin, CalendarDays } from "lucide-react";
 import { typography } from "../../lib/typography";
 import { cn } from "../../lib/cn";
+import { MarkdownContent } from "../../utils/markdown";
 
 export type WorkExperienceItem = {
   companyName?: string;
@@ -47,7 +48,12 @@ export const WorkExperienceWidget = ({
           <div className="size-9 rounded-lg bg-[var(--secondary)] text-[color:var(--secondary-foreground)] grid place-items-center">
             <Briefcase className="size-4.5" />
           </div>
-          <h3 className={cn("font-semibold leading-tight", typography.heading.secondary)}>
+          <h3
+            className={cn(
+              "font-semibold leading-tight",
+              typography.heading.secondary
+            )}
+          >
             {heading}
           </h3>
         </div>
@@ -75,18 +81,33 @@ export const WorkExperienceWidget = ({
                     <div className="flex flex-wrap items-start gap-2.5 justify-between">
                       <div className="min-w-0">
                         {item.companyName && (
-                          <div className={cn("font-semibold leading-tight truncate", typography.heading.tertiary)}>
+                          <div
+                            className={cn(
+                              "font-semibold leading-tight truncate",
+                              typography.heading.tertiary
+                            )}
+                          >
                             {item.companyName}
                           </div>
                         )}
                         {item.role && (
-                          <div className={cn("text-[color:var(--muted-foreground)] truncate", typography.label.base)}>
+                          <div
+                            className={cn(
+                              "text-[color:var(--muted-foreground)] truncate",
+                              typography.label.base
+                            )}
+                          >
                             {item.role}
                           </div>
                         )}
                       </div>
 
-                      <div className={cn("flex flex-col items-end text-right gap-1.5 text-[color:var(--muted-foreground)]", typography.label.small)}>
+                      <div
+                        className={cn(
+                          "flex flex-col items-end text-right gap-1.5 text-[color:var(--muted-foreground)]",
+                          typography.label.small
+                        )}
+                      >
                         {(item.start || item.end) && (
                           <div className="inline-flex items-center gap-1">
                             <CalendarDays className="size-3.5" />
@@ -108,19 +129,50 @@ export const WorkExperienceWidget = ({
 
                     {/* Points */}
                     {item.points && item.points.length > 0 && (
-                      <ul className="mt-3.5 space-y-2.5">
-                        {item.points.map((pt, i) => (
-                          <li
-                            key={i}
-                            className={cn("flex gap-2 leading-relaxed", typography.content.base)}
-                          >
-                            <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[oklch(0.74_0.15_310)]" />
-                            <span className="text-[color:var(--foreground)]/90">
-                              {pt}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                      <MarkdownContent
+                        content={item.points}
+                        className="mt-3.5"
+                        overrides={{
+                          ul: {
+                            component: ({ className, ...props }) => (
+                              <ul
+                                {...props}
+                                className={cn(
+                                  "space-y-2.5 text-[color:var(--foreground)]/90",
+                                  typography.content.base,
+                                  className
+                                )}
+                              />
+                            ),
+                          },
+                          li: {
+                            component: ({ className, ...props }) => (
+                              <li
+                                {...props}
+                                className={cn(
+                                  "flex gap-2 leading-relaxed",
+                                  className
+                                )}
+                              >
+                                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[oklch(0.74_0.15_310)]" />
+                                <span className="flex-1">{props.children}</span>
+                              </li>
+                            ),
+                          },
+                          p: {
+                            component: ({ className, ...props }) => (
+                              <p
+                                {...props}
+                                className={cn(
+                                  "m-0 text-[color:var(--foreground)]/90",
+                                  typography.content.base,
+                                  className
+                                )}
+                              />
+                            ),
+                          },
+                        }}
+                      />
                     )}
                   </div>
                 </div>
