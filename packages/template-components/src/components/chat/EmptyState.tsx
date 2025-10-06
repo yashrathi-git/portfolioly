@@ -1,6 +1,7 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 import { Suggestions } from "./Suggestions";
 import { Composer } from "./Composer";
 import type { Suggestion } from "./types";
@@ -8,6 +9,7 @@ import type { Suggestion } from "./types";
 type EmptyStateProps = {
   title?: string;
   subtitle?: string;
+  description?: string;
   suggestions?: Suggestion[];
   inputValue: string;
   onInputChange: (v: string) => void;
@@ -18,6 +20,7 @@ type EmptyStateProps = {
 export const EmptyState = ({
   title,
   subtitle,
+  description,
   suggestions,
   inputValue,
   onInputChange,
@@ -27,58 +30,105 @@ export const EmptyState = ({
   return (
     <div className="absolute inset-0 grid place-items-center">
       {/* Use outer container padding from ChatPortfolio; avoid double padding here */}
-      <div className="text-center mx-auto w-full max-w-screen-2xl">
-        <div className="mx-auto size-20 md:size-24 rounded-2xl bg-[var(--secondary)] grid place-items-center text-[color:var(--secondary-foreground)] shadow-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="text-center mx-auto w-full max-w-screen-2xl"
+      >
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="mx-auto size-20 md:size-24 rounded-2xl bg-gradient-to-br from-[oklch(0.84_0.07_250)] to-[oklch(0.74_0.15_310)] grid place-items-center text-white shadow-lg shadow-[oklch(0.74_0.15_310)]/20"
+        >
           <Sparkles className="size-8 md:size-9" />
-        </div>
+        </motion.div>
         {title ? (
-          <h1 className="mt-6 text-3xl md:text-5xl font-semibold tracking-tight">
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-6 text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-br from-[var(--foreground)] to-[var(--foreground)]/70 bg-clip-text"
+          >
             {title}
-          </h1>
+          </motion.h1>
         ) : null}
         {subtitle ? (
-          <p className="mt-3 text-base md:text-lg text-[color:var(--muted-foreground)]">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-4 text-lg md:text-xl font-medium text-[color:var(--muted-foreground)]"
+          >
             {subtitle}
-          </p>
+          </motion.p>
+        ) : null}
+        {description ? (
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
+            className="mt-2 text-sm md:text-base text-[color:var(--muted-foreground)]/80"
+          >
+            {description}
+          </motion.p>
         ) : null}
 
-        <Composer
-          layoutId="composer"
-          value={inputValue}
-          onChange={onInputChange}
-          onSubmit={onSubmit}
-          className="mt-6 mx-auto w-full max-w-screen-2xl"
-          autoFocus
-        />
-
-        {suggestions?.length ? (
-          <Suggestions
-            items={suggestions}
-            onPick={
-              onPick
-                ? onPick
-                : (s) =>
-                    onSubmitFromSuggestion(
-                      s,
-                      inputValue,
-                      onInputChange,
-                      onSubmit
-                    )
-            }
-            variant="initial"
-            className="mt-6"
-            // ensure only first five are shown initially
-            maxVisible={5}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <Composer
+            layoutId="composer"
+            value={inputValue}
+            onChange={onInputChange}
+            onSubmit={onSubmit}
+            className="mt-8 mx-auto w-full max-w-screen-2xl"
+            autoFocus
           />
+        </motion.div>
+
+        {suggestions?.length ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <Suggestions
+              items={suggestions}
+              onPick={
+                onPick
+                  ? onPick
+                  : (s) =>
+                      onSubmitFromSuggestion(
+                        s,
+                        inputValue,
+                        onInputChange,
+                        onSubmit
+                      )
+              }
+              variant="initial"
+              className="mt-6"
+              // ensure only first five are shown initially
+              maxVisible={5}
+            />
+          </motion.div>
         ) : null}
 
         {suggestions?.length ? (
-          <div className="mt-8 text-[11px] md:text-xs text-[color:var(--muted-foreground)]">
-            Ask anything about this portfolio. If something is missing, I’ll tap
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            className="mt-8 text-[11px] md:text-xs text-[color:var(--muted-foreground)]"
+          >
+            Ask anything about this portfolio. If something is missing, I'll tap
             our AI assistant to help.
-          </div>
+          </motion.div>
         ) : null}
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -68,6 +68,7 @@ const ChatPortfolioComponent = ({
   );
   const [apiError, setApiError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const rafIdRef = useRef<number | null>(null);
 
   const hasStarted = messages.length > 0;
 
@@ -482,10 +483,11 @@ const ChatPortfolioComponent = ({
         throw new Error("No response body");
       }
 
+      // Streaming state management
       let currentContentBuffer = "";
-      let currentMessageId = crypto.randomUUID();
+      let currentMessageId: string | null = null; // null until we create the first message
       let pending = "";
-      let messageCreated = false;
+      let hasStartedResponse = false; // Track if we've dismissed loading indicator
 
       const ALLOWED_WIDGETS = new Set([
         "about",
@@ -496,31 +498,85 @@ const ChatPortfolioComponent = ({
         "education",
       ]);
 
-      // Helper to finalize current message
-      const finalizeCurrentMessage = () => {
-        if (!currentContentBuffer.trim() && !messageCreated) return;
+      // Helper: Dismiss loading indicator on first response
+      const dismissLoadingIndicator = () => {
+        if (!hasStartedResponse) {
+          hasStartedResponse = true;
+          setIsThinking(false);
+        }
+      };
+
+      // Helper: Create or update text message with current buffer
+      const updateTextMessage = () => {
+        const content = currentContentBuffer.trim();
+        if (!content) return;
+
+        // Create message ID on first update
+        if (currentMessageId === null) {
+          currentMessageId = crypto.randomUUID();
+        }
 
         setMessages((m) => {
           const existingIndex = m.findIndex(
             (msg) => msg.id === currentMessageId
           );
+
           if (existingIndex >= 0) {
+            // Update existing message
             const updated = [...m];
             updated[existingIndex] = {
               ...updated[existingIndex],
-              content: currentContentBuffer.trim(),
+              content: content,
             };
             return updated;
           }
+
+          // Create new message
           return [
             ...m,
             {
-              id: currentMessageId,
+              id: currentMessageId!,
               role: "assistant" as const,
-              content: currentContentBuffer.trim(),
+              content: content,
             },
           ];
         });
+      };
+
+      // Helper: Finalize current text message and reset for next one
+      const finalizeTextMessage = () => {
+        // Cancel any pending RAF update
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = null;
+        }
+
+        // Only finalize if we have content
+        if (currentContentBuffer.trim()) {
+          updateTextMessage();
+        }
+
+        // Reset buffer and ID for next message
+        currentContentBuffer = "";
+        currentMessageId = null;
+      };
+
+      // Helper: Create widget message
+      const createWidgetMessage = (widgetName: string, indices?: number[]) => {
+        const widgetMessage: Message = {
+          id: crypto.randomUUID(),
+          role: "assistant" as const,
+          content: "",
+          toolCalls: [
+            {
+              type: "widget_render",
+              widget: widgetName as any,
+              indices,
+              explanation: undefined,
+            },
+          ],
+        };
+        setMessages((m) => [...m, widgetMessage]);
       };
 
       while (true) {
@@ -546,46 +602,39 @@ const ChatPortfolioComponent = ({
           }
 
           if (parsed.type === "content") {
+            // Accumulate content in buffer
             currentContentBuffer += parsed.data;
-            messageCreated = true;
 
-            setMessages((m) => {
-              const existingIndex = m.findIndex(
-                (msg) => msg.id === currentMessageId
-              );
-              if (existingIndex >= 0) {
-                const updated = [...m];
-                updated[existingIndex] = {
-                  ...updated[existingIndex],
-                  content: currentContentBuffer,
-                };
-                return updated;
-              }
-              return [
-                ...m,
-                {
-                  id: currentMessageId,
-                  role: "assistant" as const,
-                  content: currentContentBuffer,
-                },
-              ];
-            });
+            // Dismiss loading indicator on first content
+            dismissLoadingIndicator();
+
+            // Throttle UI updates using RAF for smooth streaming
+            if (rafIdRef.current === null) {
+              rafIdRef.current = requestAnimationFrame(() => {
+                rafIdRef.current = null;
+                updateTextMessage();
+              });
+            }
           } else if (parsed.type === "cmd") {
             const command = parsed.data as string;
 
             if (command === "MSG_BREAK") {
-              // Finalize current message and start a new one
-              finalizeCurrentMessage();
-              currentContentBuffer = "";
-              currentMessageId = crypto.randomUUID();
-              messageCreated = false;
+              // Dismiss loading indicator
+              dismissLoadingIndicator();
+
+              // Finalize current text message and prepare for next one
+              finalizeTextMessage();
             } else if (command.startsWith("WIDGET:")) {
+              // Dismiss loading indicator immediately for widgets
+              dismissLoadingIndicator();
+
               // Parse widget command: WIDGET:name or WIDGET:name:0,1
               const parts = command.slice(7).split(":");
               const widgetName = parts[0];
               const indicesStr = parts[1];
 
               if (ALLOWED_WIDGETS.has(widgetName)) {
+                // Parse indices if provided
                 let indices: number[] | undefined = undefined;
                 if (indicesStr) {
                   const nums = indicesStr
@@ -595,29 +644,11 @@ const ChatPortfolioComponent = ({
                   if (nums.length) indices = nums;
                 }
 
-                // Finalize current text message
-                finalizeCurrentMessage();
+                // Finalize any pending text message before showing widget
+                finalizeTextMessage();
 
-                // Create widget message
-                const widgetMessage: Message = {
-                  id: crypto.randomUUID(),
-                  role: "assistant" as const,
-                  content: "",
-                  toolCalls: [
-                    {
-                      type: "widget_render",
-                      widget: widgetName as any,
-                      indices,
-                      explanation: undefined,
-                    },
-                  ],
-                };
-                setMessages((m) => [...m, widgetMessage]);
-
-                // Reset for next message
-                currentContentBuffer = "";
-                currentMessageId = crypto.randomUUID();
-                messageCreated = false;
+                // Create and display widget message
+                createWidgetMessage(widgetName, indices);
               }
             }
           } else if (parsed.type === "done") {
@@ -625,10 +656,11 @@ const ChatPortfolioComponent = ({
               setConversationId(parsed.data.conversation_id);
             }
 
-            // Finalize any remaining content
-            finalizeCurrentMessage();
+            // Finalize any remaining text message
+            finalizeTextMessage();
 
-            setIsThinking(false);
+            // Ensure loading indicator is dismissed
+            dismissLoadingIndicator();
           } else if (parsed.type === "error") {
             const errorMessage =
               typeof parsed.data === "string"
@@ -679,14 +711,9 @@ const ChatPortfolioComponent = ({
           <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 relative flex-1">
             {!hasStarted ? (
               <EmptyState
-                title={
-                  effectivePortfolioData?.profile?.headline ||
-                  effectivePortfolioData?.profile?.summary ||
-                  ""
-                }
-                subtitle={
-                  "Ask about projects, skills, or anything you're curious about."
-                }
+                title={effectivePortfolioData?.profile?.name || "Portfolio"}
+                subtitle={effectivePortfolioData?.profile?.headline || ""}
+                description="Ask about projects, skills, or anything you're curious about."
                 suggestions={suggestions}
                 inputValue={input}
                 onInputChange={setInput}
