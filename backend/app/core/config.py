@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     # Azure AI settings
     azure_ai_endpoint: Optional[str] = None
     azure_ai_api_key: Optional[str] = None
+    azure_ai_processor_model: Optional[str] = None
 
     # Azure Blob Storage settings
     azure_storage_connection_string: Optional[str] = None

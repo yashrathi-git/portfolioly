@@ -133,7 +133,7 @@ class AIRateLimiter:
                 doc_ref.set(
                     {
                         "user_id": user_id,
-                        "usage_count": 0,
+                        "usage_count": usage_count,
                         "reset_date": next_month_start,
                         "created_at": datetime.now(timezone.utc),
                         "last_updated": datetime.now(timezone.utc),

@@ -14,13 +14,12 @@ from datetime import datetime
 from pathlib import Path
 
 import tiktoken
-from azure.ai.inference import ChatCompletionsClient
-from azure.ai.inference.models import SystemMessage, UserMessage, JsonSchemaFormat
-from azure.core.credentials import AzureKeyCredential
+from openai import AsyncOpenAI
 
 from ..core.config import settings
 from ..schemas.portfolio import PortfolioData
 from ..schemas.upload import GitHubRepoData, PDFData
+from ..constants.chat_config import ChatConfig
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +52,7 @@ class AIProcessor:
         self,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
-        model_name: str = "grok-3-mini",
+        model_name: Optional[str] = None,
         max_tokens: Optional[int] = None,
     ):
         """
@@ -67,7 +66,10 @@ class AIProcessor:
         """
         self.endpoint = endpoint or settings.azure_ai_endpoint
         self.api_key = api_key or settings.azure_ai_api_key
-        self.model_name = model_name
+        default_model = (
+            settings.azure_ai_processor_model or ChatConfig.PROCESSOR_MODEL_NAME
+        )
+        self.model_name = model_name or default_model
         self.max_tokens = max_tokens or self.MAX_TOKENS_PER_REQUEST
 
         # Initialize prompt cache directory
@@ -81,12 +83,11 @@ class AIProcessor:
             logger.warning(f"Failed to load tiktoken encoder: {e}, using fallback")
             self.encoder = None
 
-        # Initialize Azure AI client
-        logging.warning(self.endpoint)
-        logging.warning(self.api_key)
+        # Initialize OpenAI-compatible client
         if self.endpoint and self.api_key:
-            self.client = ChatCompletionsClient(
-                endpoint=self.endpoint, credential=AzureKeyCredential(self.api_key)
+            self.client = AsyncOpenAI(
+                base_url=self.endpoint,
+                api_key=self.api_key,
             )
         else:
             logger.warning("Azure AI credentials not provided, client not initialized")
@@ -208,7 +209,7 @@ class AIProcessor:
         result = " ".join(words[:left])
         return result + "..." if left < len(words) else result
 
-    def process_portfolio_data(
+    async def process_portfolio_data(
         self,
         resume_pdf: Optional[PDFData] = None,
         linkedin_pdf: Optional[PDFData] = None,
@@ -249,39 +250,44 @@ class AIProcessor:
 
             # Create structured response format
             schema = PortfolioData.model_json_schema()
-            response_format = JsonSchemaFormat(
-                name="portfolio_extraction",
-                schema=schema,
-                description="Structured portfolio data extraction from PDF and GitHub sources",
-                strict=True,
-            )
+            response_format = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "portfolio_extraction",
+                    "schema": schema,
+                    "strict": True,
+                },
+            }
 
             # Load extraction prompt
             from ..constants.extraction_prompts import PORTFOLIO_EXTRACTION_PROMPT
 
             # Create messages
             messages = [
-                SystemMessage(content=PORTFOLIO_EXTRACTION_PROMPT),
-                UserMessage(content=input_text),
+                {"role": "system", "content": PORTFOLIO_EXTRACTION_PROMPT.strip()},
+                {"role": "user", "content": input_text.strip()},
             ]
 
             # Cache the final prompt for debugging
             self._cache_final_prompt(PORTFOLIO_EXTRACTION_PROMPT, input_text)
 
             # Call Azure AI with structured output
-            response = self.client.complete(
+            response = await self.client.chat.completions.create(
+                model=self.model_name,
                 messages=messages,
                 response_format=response_format,
-                model=self.model_name,
+                temperature=0,
             )
 
             # Extract and validate response
-            response_content = response.choices[0].message.content
+            response_content = response.choices[0].message.content or ""
             portfolio_data = self.validate_response(response_content)
 
             logger.info("Successfully processed portfolio data with AI")
             return portfolio_data
 
+        except TokenLimitExceededError:
+            raise
         except Exception as e:
             logger.error(f"AI processing failed: {str(e)}")
             raise AIProcessingError(f"AI processing failed: {str(e)}")
@@ -369,9 +375,8 @@ class AIProcessor:
             )
             cache_dir.mkdir(exist_ok=True)
 
-            # Generate timestamp for filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            cache_file = cache_dir / f"ai_prompt_{timestamp}.txt"
+            # Always overwrite the latest cache file
+            cache_file = cache_dir / "ai_prompt_latest.txt"
 
             # Format the complete prompt
             prompt_content = f"""
@@ -396,13 +401,15 @@ Input Token Count: {self.count_tokens(user_input)}
 
             logger.info(f"Cached AI prompt to: {cache_file}")
 
-            # Keep only the last 10 cache files to prevent disk bloat
-            self._cleanup_old_cache_files(cache_dir)
+            # Remove any stale cache files to keep only the latest entry
+            self._cleanup_old_cache_files(cache_dir, cache_file)
 
         except Exception as e:
             logger.warning(f"Failed to cache AI prompt: {str(e)}")
 
-    def _cleanup_old_cache_files(self, cache_dir: Path, keep_count: int = 10) -> None:
+    def _cleanup_old_cache_files(
+        self, cache_dir: Path, latest_file: Optional[Path] = None
+    ) -> None:
         """
         Clean up old cache files, keeping only the most recent ones.
 
@@ -411,17 +418,10 @@ Input Token Count: {self.count_tokens(user_input)}
             keep_count: Number of recent files to keep
         """
         try:
-            # Get all cache files sorted by modification time (newest first)
-            cache_files = sorted(
-                cache_dir.glob("ai_prompt_*.txt"),
-                key=lambda f: f.stat().st_mtime,
-                reverse=True,
-            )
-
-            # Remove old files beyond the keep count
-            for old_file in cache_files[keep_count:]:
-                old_file.unlink()
-                logger.debug(f"Removed old cache file: {old_file}")
+            for cache_file in cache_dir.glob("*.txt"):
+                if latest_file is None or cache_file.resolve() != latest_file.resolve():
+                    cache_file.unlink()
+                    logger.debug(f"Removed stale cache file: {cache_file}")
 
         except Exception as e:
             logger.warning(f"Failed to cleanup old cache files: {str(e)}")

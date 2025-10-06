@@ -7,7 +7,7 @@ with cost controls and text truncation.
 
 import pytest
 import json
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock, AsyncMock
 
 from app.services.ai_processor import (
     AIProcessor,
@@ -32,17 +32,16 @@ class TestAIProcessor:
             yield mock_encoder
 
     @pytest.fixture
-    def mock_azure_client(self):
-        """Mock Azure AI client."""
-        with patch(
-            "app.services.ai_processor.ChatCompletionsClient"
-        ) as mock_client_class:
+    def mock_openai_client(self):
+        """Mock OpenAI-compatible client."""
+        with patch("app.services.ai_processor.AsyncOpenAI") as mock_client_class:
             mock_client = Mock()
+            mock_client.chat.completions.create = AsyncMock()
             mock_client_class.return_value = mock_client
             yield mock_client
 
     @pytest.fixture
-    def ai_processor(self, mock_tiktoken, mock_azure_client):
+    def ai_processor(self, mock_tiktoken, mock_openai_client):
         """Create AIProcessor instance with mocked dependencies."""
         processor = AIProcessor(
             endpoint="https://test.endpoint.com", api_key="test-key", max_tokens=1000
@@ -80,7 +79,7 @@ class TestAIProcessor:
             )
         ]
 
-    def test_initialization_with_credentials(self, mock_tiktoken, mock_azure_client):
+    def test_initialization_with_credentials(self, mock_tiktoken, mock_openai_client):
         """Test AIProcessor initialization with credentials."""
         processor = AIProcessor(
             endpoint="https://test.endpoint.com", api_key="test-key"
@@ -108,7 +107,7 @@ class TestAIProcessor:
         assert result == 5  # Mock encoder returns 5 tokens
         ai_processor.encoder.encode.assert_called_once_with("test text")
 
-    def test_count_tokens_fallback(self, mock_azure_client):
+    def test_count_tokens_fallback(self, mock_openai_client):
         """Test token counting fallback when encoder fails."""
         with patch("app.services.ai_processor.tiktoken") as mock_tiktoken:
             mock_tiktoken.get_encoding.side_effect = Exception("Encoder failed")
@@ -205,12 +204,11 @@ class TestAIProcessor:
 
         assert result is False
 
-    @patch("app.services.ai_processor.JsonSchemaFormat")
-    def test_process_portfolio_data_success(
-        self, mock_response_format, ai_processor, sample_pdf_data
+    @pytest.mark.asyncio
+    async def test_process_portfolio_data_success(
+        self, ai_processor, sample_pdf_data, mock_openai_client
     ):
         """Test successful portfolio data processing."""
-        # Mock Azure AI response
         mock_response = Mock()
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = json.dumps(
@@ -225,25 +223,24 @@ class TestAIProcessor:
             }
         )
 
-        ai_processor.client.complete.return_value = mock_response
+        mock_openai_client.chat.completions.create.return_value = mock_response
 
-        # Mock token counting to be within limits
         ai_processor.count_tokens = lambda x: 100
 
-        result = ai_processor.process_portfolio_data(resume_pdf=sample_pdf_data)
+        result = await ai_processor.process_portfolio_data(resume_pdf=sample_pdf_data)
 
         assert isinstance(result, PortfolioData)
         assert result.personal_info.full_name == "John Doe"
 
-    def test_process_portfolio_data_token_limit_exceeded(
-        self, ai_processor, sample_pdf_data
+    @pytest.mark.asyncio
+    async def test_process_portfolio_data_token_limit_exceeded(
+        self, ai_processor, sample_pdf_data, mock_openai_client
     ):
         """Test processing with token limit exceeded."""
-        # Mock token counting to exceed limits
         ai_processor.count_tokens = lambda x: ai_processor.max_tokens + 1
 
-        with pytest.raises(AIProcessingError, match="Input still exceeds token limit"):
-            ai_processor.process_portfolio_data(resume_pdf=sample_pdf_data)
+        with pytest.raises(TokenLimitExceededError):
+            await ai_processor.process_portfolio_data(resume_pdf=sample_pdf_data)
 
     def test_get_ai_processor_singleton(self):
         """Test that get_ai_processor returns the same instance."""

@@ -7,7 +7,7 @@ error handling, and data prioritization rules.
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
 
 from app.services.ai_processor import (
@@ -157,8 +157,9 @@ class TestAIWorkflowIntegration:
         mock_doc_ref.set.assert_called_once()
 
     @patch("app.services.ai_processor.tiktoken")
-    @patch("app.services.ai_processor.ChatCompletionsClient")
-    def test_ai_processing_workflow_success(
+    @patch("app.services.ai_processor.OpenAI")
+    @pytest.mark.asyncio
+    async def test_ai_processing_workflow_success(
         self,
         mock_client_class,
         mock_tiktoken,
@@ -222,7 +223,7 @@ class TestAIWorkflowIntegration:
                 },
             }
         )
-        mock_client.complete.return_value = mock_response
+        mock_client.chat.completions.create.return_value = mock_response
         mock_client_class.return_value = mock_client
 
         # Setup AI processor
@@ -231,7 +232,7 @@ class TestAIWorkflowIntegration:
         )
 
         # Process data
-        portfolio_data = ai_processor.process_portfolio_data(
+        portfolio_data = await ai_processor.process_portfolio_data(
             resume_pdf=sample_resume_pdf,
             linkedin_pdf=sample_linkedin_pdf,
             github_repos=sample_github_repos,
@@ -264,9 +265,10 @@ class TestAIWorkflowIntegration:
         mock_doc_ref = Mock()
         mock_doc = Mock()
         mock_doc.exists = True
+        future_reset = datetime.now(timezone.utc) + timedelta(days=30)
         mock_doc.to_dict.return_value = {
             "usage_count": 9,  # Close to limit
-            "reset_date": datetime(2025, 2, 1, tzinfo=timezone.utc),  # Future date
+            "reset_date": future_reset,
         }
         mock_doc_ref.get.return_value = mock_doc
         rate_limiter._db.collection.return_value.document.return_value = mock_doc_ref
@@ -286,14 +288,15 @@ class TestAIWorkflowIntegration:
         ):
             rate_limiter.check_rate_limit("user123")
 
-    def test_ai_processing_error_handling(self, mock_firebase):
+    @pytest.mark.asyncio
+    async def test_ai_processing_error_handling(self, mock_firebase):
         """Test AI processing error scenarios."""
         # Test token limit exceeded
         ai_processor = AIProcessor(max_tokens=10)
         ai_processor.count_tokens = lambda x: 20  # Always exceeds limit
 
         with pytest.raises(TokenLimitExceededError):
-            ai_processor.process_portfolio_data(
+            await ai_processor.process_portfolio_data(
                 resume_pdf=PDFData(
                     text="Very long text that exceeds token limit",
                     source="resume",
@@ -312,7 +315,7 @@ class TestAIWorkflowIntegration:
         ai_processor.client = None  # Simulate no client
 
         with pytest.raises(AIProcessingError, match="Azure AI client not initialized"):
-            ai_processor.process_portfolio_data()
+            await ai_processor.process_portfolio_data()
 
     @patch("app.services.ai_processor.tiktoken")
     def test_text_truncation_prioritization(self, mock_tiktoken, mock_firebase):

@@ -250,7 +250,7 @@ async def submit_upload_data(
                 ai_processor = get_ai_processor()
 
                 # Process with AI
-                portfolio_data = ai_processor.process_portfolio_data(
+                portfolio_data = await ai_processor.process_portfolio_data(
                     resume_pdf=request.resume_pdf,
                     linkedin_pdf=request.linkedin_pdf,
                     github_repos=request.github_repos,
