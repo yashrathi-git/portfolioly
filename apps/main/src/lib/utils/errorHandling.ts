@@ -322,6 +322,23 @@ export function parseError(error: unknown): StructuredError {
     } as StructuredError;
   }
 
+  // Handle AI processing failures from upload endpoint
+  if (
+    typeof message === "string" &&
+    message.includes("AI services unavailable")
+  ) {
+    return {
+      code: ErrorCode.INTERNAL_ERROR,
+      message: message,
+      severity: ErrorSeverity.MEDIUM,
+      retryable: true,
+      userMessage: "AI services currently unavailable, please try again later",
+      actionable: true,
+      suggestedAction: "Try again later",
+      details: error,
+    };
+  }
+
   // Handle generic JavaScript errors
   return {
     code: ErrorCode.INTERNAL_ERROR,

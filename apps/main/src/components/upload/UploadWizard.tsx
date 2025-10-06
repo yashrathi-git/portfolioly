@@ -41,10 +41,16 @@ export function UploadWizard({
 
       console.log("[UploadWizard] complete", result);
 
-      // Show success message
-      handleSuccess("Portfolio data processed successfully!");
+      // Check if the submission was successful
+      if (result.success) {
+        // Show success message
+        handleSuccess("Portfolio data processed successfully!");
+      } else {
+        // Handle failure case - show error message but still allow user to proceed
+        handleError(new Error(result.message), "upload wizard completion");
+      }
 
-      // Redirect to edit page
+      // Always redirect to edit page so user can manually fill data
       router.push("/edit");
     } catch (error) {
       setIsProcessing(false);

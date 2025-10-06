@@ -281,8 +281,8 @@ async def submit_upload_data(
                 # AI processing failed - proceed to placeholder screen
                 print(f"[AI PROCESSING FAILED] {str(e)}")
                 return UploadSubmissionResponse(
-                    success=True,  # Still success, but with placeholder
-                    message="Upload received. AI processing will be available soon.",
+                    success=False,  # Still success, but with placeholder
+                    message="AI services unavailable, please try again later.",
                     data={
                         "user_id": user.uid,
                         "processing_type": "placeholder",
