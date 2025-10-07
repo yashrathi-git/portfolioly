@@ -39,9 +39,6 @@ class Profile(BaseModel):
     type: Optional[ProfileType] = None
     url: Optional[str] = None
     label: Optional[str] = None
-    profile_photo_url: Optional[str] = None
-    tags: Optional[List[str]] = Field(default_factory=list)
-    more_context: Optional[str] = None
 
 
 class PersonalInfo(BaseModel):
@@ -53,6 +50,7 @@ class PersonalInfo(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     location: Optional[str] = None
+    profile_photo_url: Optional[str] = None
     profiles: Optional[List[Profile]] = Field(default_factory=list)
 
 
@@ -65,21 +63,39 @@ class WorkExperience(BaseModel):
     start_date: Optional[DateInfo] = None
     end_date: Optional[DateInfo] = None
     is_current: Optional[bool] = None
-    highlights: Optional[List[str]] = Field(default_factory=list)
+    highlights: Optional[str] = None
     technologies: Optional[List[str]] = Field(default_factory=list)
     more_context: Optional[str] = None
+
+
+class ProjectImage(BaseModel):
+    """Project image with optional caption."""
+
+    url: str = Field(..., description="Image URL from Azure Blob Storage")
+    caption: Optional[str] = Field(
+        None, max_length=100, description="Optional caption (max 100 chars)"
+    )
+    order: int = Field(..., description="Display order (0-indexed)")
 
 
 class Project(BaseModel):
     """Project information with links and technologies."""
 
     name: Optional[str] = None
-    role: Optional[str] = None
-    highlights: Optional[List[str]] = Field(default_factory=list)
+    highlights: Optional[str] = None
     technologies: Optional[List[str]] = Field(default_factory=list)
     github: Optional[str] = None
     live_link: Optional[str] = None
-    more_context: Optional[str] = None
+    demo_video: Optional[str] = Field(
+        None, description="YouTube link for project demo video"
+    )
+    more_context: Optional[str] = Field(
+        None, description="Markdown-supported detailed description"
+    )
+    images: Optional[List[ProjectImage]] = Field(
+        default_factory=list,
+        description="Ordered list of images with captions (max 5)",
+    )
 
 
 class Education(BaseModel):
@@ -99,13 +115,19 @@ class Certification(BaseModel):
     """Certification information."""
 
     name: Optional[str] = None
+    issuer: Optional[str] = Field(
+        None, description="Issuing organization (e.g., Coursera, Udemy)"
+    )
     link: Optional[str] = None
 
 
 class TextBlobs(BaseModel):
     """Unstructured text information that couldn't be categorized."""
 
-    achievements: Optional[str] = None
+    achievements: Optional[str] = Field(
+        None,
+        description="Markdown-formatted achievements, one per line with bullet points",
+    )
     additional_context: Optional[str] = None
 
 
@@ -163,6 +185,7 @@ class PortfolioData(BaseModel):
                     "summary": "Experienced developer with 5+ years in web development",
                     "email": "john.doe@example.com",
                     "location": "San Francisco, CA",
+                    "profile_photo_url": "https://storage.azure.com/user123/profile-photo.webp",
                     "profiles": [
                         {
                             "type": "linkedin",
@@ -179,21 +202,31 @@ class PortfolioData(BaseModel):
                         "start_date": {"month": 1, "year": 2020},
                         "end_date": {"month": 12, "year": 2023},
                         "is_current": False,
-                        "highlights": [
-                            "Led team of 5 developers",
-                            "Increased performance by 40%",
-                        ],
+                        "highlights": "- Led team of 5 developers\n- Increased performance by 40%\n- Implemented CI/CD pipeline",
                         "technologies": ["Python", "React", "PostgreSQL"],
                     }
                 ],
                 "projects": [
                     {
                         "name": "Portfolio Website",
-                        "role": "Full Stack Developer",
-                        "highlights": ["Built responsive design", "Implemented CI/CD"],
+                        "highlights": "- Built responsive design\n- Implemented CI/CD\n- Optimized for performance",
                         "technologies": ["Next.js", "TypeScript", "Tailwind CSS"],
                         "github": "https://github.com/johndoe/portfolio",
                         "live_link": "https://johndoe.dev",
+                        "demo_video": "https://youtube.com/watch?v=abc123",
+                        "more_context": "A modern portfolio website built with Next.js and TypeScript. Features include dark mode, responsive design, and optimized performance.",
+                        "images": [
+                            {
+                                "url": "https://storage.azure.com/user123/projects/1234_screenshot1.webp",
+                                "caption": "Homepage design",
+                                "order": 0,
+                            },
+                            {
+                                "url": "https://storage.azure.com/user123/projects/1235_screenshot2.webp",
+                                "caption": "Project gallery",
+                                "order": 1,
+                            },
+                        ],
                     }
                 ],
                 "education": [
@@ -207,6 +240,17 @@ class PortfolioData(BaseModel):
                         "grade": "3.8 GPA",
                     }
                 ],
+                "certifications": [
+                    {
+                        "name": "AWS Certified Solutions Architect",
+                        "issuer": "Amazon Web Services",
+                        "link": "https://aws.amazon.com/certification/",
+                    }
+                ],
+                "text_blobs": {
+                    "achievements": "- Won first place in hackathon\n- Published research paper\n- Contributed to open source projects",
+                    "additional_context": "Additional information about the candidate",
+                },
                 "metadata": {
                     "source_type": "resume_pdf",
                     "extracted_at": "2024-01-15T10:30:00Z",

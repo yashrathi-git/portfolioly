@@ -1,14 +1,15 @@
-"""Azure Blob Storage service helpers for persisting user-uploaded PDFs."""
+"""Azure Blob Storage service helpers for persisting user-uploaded PDFs and images."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
 import os
+import time
 from dataclasses import dataclass
 from typing import Optional
 
-from azure.core.exceptions import AzureError, ResourceExistsError
+from azure.core.exceptions import AzureError, ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import ContentSettings
 from azure.storage.blob.aio import BlobServiceClient, ContainerClient
 from fastapi import UploadFile
@@ -116,6 +117,193 @@ class AzureBlobStorageService:
             )
             return None
 
+    async def upload_profile_photo(
+        self,
+        *,
+        user_id: str,
+        upload_file: UploadFile,
+    ) -> Optional[str]:
+        """
+        Upload profile photo, replacing existing if present.
+        Returns public URL on success.
+        """
+        if not self._config.enabled:
+            return None
+
+        try:
+            # Delete existing profile photo first
+            await self.delete_user_profile_photo(user_id)
+
+            # Determine file extension
+            ext = self._get_file_extension(upload_file.filename)
+            blob_name = f"{user_id}/profile-photo{ext}"
+
+            # Upload with public access
+            return await self._upload_blob(
+                blob_name=blob_name,
+                upload_file=upload_file,
+                content_type=upload_file.content_type or "image/jpeg",
+                metadata={
+                    "user_id": user_id,
+                    "type": "profile_photo",
+                },
+            )
+        except Exception:
+            logger.exception(
+                "Unexpected error during profile photo upload for user %s", user_id
+            )
+            return None
+
+    async def upload_project_image(
+        self,
+        *,
+        user_id: str,
+        upload_file: UploadFile,
+    ) -> Optional[str]:
+        """
+        Upload project image with unique timestamp-based naming.
+        Returns public URL on success.
+        """
+        if not self._config.enabled:
+            return None
+
+        try:
+            timestamp = int(time.time() * 1000)
+            ext = self._get_file_extension(upload_file.filename)
+            safe_filename = self._sanitize_filename(upload_file.filename or "image")
+            # Remove extension from safe_filename if present
+            safe_filename = os.path.splitext(safe_filename)[0]
+            blob_name = f"{user_id}/projects/{timestamp}_{safe_filename}{ext}"
+
+            return await self._upload_blob(
+                blob_name=blob_name,
+                upload_file=upload_file,
+                content_type=upload_file.content_type or "image/jpeg",
+                metadata={
+                    "user_id": user_id,
+                    "type": "project_image",
+                },
+            )
+        except Exception:
+            logger.exception(
+                "Unexpected error during project image upload for user %s", user_id
+            )
+            return None
+
+    async def delete_user_profile_photo(self, user_id: str) -> None:
+        """Delete existing profile photo for user if it exists."""
+        if not self._config.enabled:
+            return
+
+        try:
+            container_client = await self._get_or_create_container_client()
+        except Exception:
+            logger.exception("Failed to initialize Azure container client for deletion")
+            return
+
+        # Try all possible extensions
+        for ext in [".jpg", ".jpeg", ".png", ".webp", ".gif"]:
+            blob_name = f"{user_id}/profile-photo{ext}"
+            try:
+                blob_client = container_client.get_blob_client(blob_name)
+                await blob_client.delete_blob()
+                logger.info(f"Deleted existing profile photo: {blob_name}")
+                return  # Successfully deleted, exit
+            except ResourceNotFoundError:
+                continue  # Blob doesn't exist, try next extension
+            except AzureError as exc:
+                logger.warning("Failed to delete profile photo %s: %s", blob_name, exc)
+                continue
+            except Exception:
+                logger.exception(
+                    "Unexpected error deleting profile photo %s", blob_name
+                )
+                continue
+
+    async def delete_blob_by_url(self, blob_url: str) -> None:
+        """Delete a specific blob by its URL."""
+        if not self._config.enabled:
+            return
+
+        try:
+            container_client = await self._get_or_create_container_client()
+        except Exception:
+            logger.exception("Failed to initialize Azure container client for deletion")
+            return
+
+        try:
+            # Extract blob name from URL
+            # URL format: https://<account>.blob.core.windows.net/<container>/<blob_name>
+            blob_name = self._extract_blob_name_from_url(blob_url)
+            if not blob_name:
+                logger.warning("Could not extract blob name from URL: %s", blob_url)
+                return
+
+            blob_client = container_client.get_blob_client(blob_name)
+            await blob_client.delete_blob()
+            logger.info(f"Deleted blob: {blob_name}")
+        except ResourceNotFoundError:
+            logger.warning("Blob not found for deletion: %s", blob_url)
+        except AzureError as exc:
+            logger.warning("Failed to delete blob %s: %s", blob_url, exc)
+        except Exception:
+            logger.exception("Unexpected error deleting blob %s", blob_url)
+
+    async def _upload_blob(
+        self,
+        *,
+        blob_name: str,
+        upload_file: UploadFile,
+        content_type: str,
+        metadata: dict,
+    ) -> Optional[str]:
+        """
+        Internal helper to upload a blob with the given parameters.
+        Returns the public URL on success.
+        """
+        try:
+            container_client = await self._get_or_create_container_client()
+        except Exception:
+            logger.exception("Failed to initialize Azure container client")
+            return None
+
+        try:
+            file_bytes = await upload_file.read()
+            await upload_file.seek(0)
+        except Exception:
+            logger.exception(
+                "Failed to read uploaded file stream for Azure persistence"
+            )
+            return None
+
+        if not file_bytes:
+            logger.warning("Skipping Azure upload - file stream empty")
+            return None
+
+        content_settings = ContentSettings(
+            content_type=content_type,
+            content_disposition=self._format_content_disposition(upload_file.filename),
+        )
+
+        try:
+            blob_client = container_client.get_blob_client(blob_name)
+            await blob_client.upload_blob(
+                data=file_bytes,
+                overwrite=True,
+                metadata=metadata,
+                content_settings=content_settings,
+            )
+            logger.info(f"Successfully uploaded blob: {blob_name}")
+            return blob_client.url
+        except AzureError as exc:
+            logger.warning("Azure Blob upload failed for %s: %s", blob_name, exc)
+            return None
+        except Exception:
+            logger.exception(
+                "Unexpected error during Azure Blob upload for %s", blob_name
+            )
+            return None
+
     async def _get_or_create_container_client(self) -> ContainerClient:
         """Lazily initialize and memoize the container client."""
 
@@ -188,7 +376,7 @@ class AzureBlobStorageService:
             return ""
 
         safe = os.path.basename(filename)
-        return safe.replace("\r", "").replace("\n", "")
+        return safe.replace("\r", "").replace("\n", "").replace(" ", "_")
 
     @staticmethod
     def _format_content_disposition(filename: Optional[str]) -> Optional[str]:
@@ -199,6 +387,37 @@ class AzureBlobStorageService:
 
         safe_name = filename.replace('"', "")
         return f'attachment; filename="{safe_name}"'
+
+    @staticmethod
+    def _get_file_extension(filename: Optional[str]) -> str:
+        """Extract file extension from filename, defaulting to .jpg if not found."""
+        if not filename:
+            return ".jpg"
+
+        _, ext = os.path.splitext(filename)
+        if not ext:
+            return ".jpg"
+
+        return ext.lower()
+
+    def _extract_blob_name_from_url(self, blob_url: str) -> Optional[str]:
+        """
+        Extract blob name from Azure Blob Storage URL.
+        URL format: https://<account>.blob.core.windows.net/<container>/<blob_name>
+        """
+        try:
+            # Split by container name
+            container_name = self._config.container_name
+            parts = blob_url.split(f"/{container_name}/")
+            if len(parts) < 2:
+                return None
+
+            # The blob name is everything after the container name
+            blob_name = parts[1]
+            return blob_name
+        except Exception:
+            logger.exception("Failed to extract blob name from URL: %s", blob_url)
+            return None
 
 
 _azure_blob_service: Optional[AzureBlobStorageService] = None

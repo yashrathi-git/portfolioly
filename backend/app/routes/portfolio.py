@@ -2,14 +2,23 @@
 Portfolio API routes for managing user portfolio data.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from typing import Optional
 import logging
+from typing import Optional, List
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
 from ..auth.middleware import require_verified_email
 from ..schemas.auth import UserToken
 from ..schemas.portfolio import PortfolioData
 from ..services.portfolio_service import get_portfolio_service, FirebaseError
+from ..services.image_upload_service import (
+    upload_profile_photo_to_storage,
+    upload_project_images_to_storage,
+    update_portfolio_with_photo,
+    delete_profile_photo_from_storage,
+    remove_photo_from_portfolio,
+    delete_project_image_from_storage,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
@@ -97,3 +106,105 @@ def check_portfolio_exists(
             f"Unexpected error checking portfolio existence for user {user.uid}: {e}"
         )
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post("/profile-photo", response_model=dict)
+async def upload_profile_photo(
+    file: UploadFile = File(...),
+    user: UserToken = Depends(require_verified_email),
+):
+    """
+    Upload or replace user's profile photo.
+
+    The image will be validated, optimized for web use, and stored in Azure Blob Storage.
+    The portfolio data will be updated with the new photo URL.
+    """
+    try:
+        # Upload to storage
+        photo_url = await upload_profile_photo_to_storage(user.uid, file)
+
+        # Update portfolio data
+        update_portfolio_with_photo(user.uid, photo_url)
+
+        logger.info(f"Profile photo uploaded successfully for user {user.uid}")
+        return {"photo_url": photo_url}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to upload profile photo for user {user.uid}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to upload profile photo")
+
+
+@router.post("/project-images", response_model=dict)
+async def upload_project_images(
+    files: List[UploadFile] = File(...),
+    user: UserToken = Depends(require_verified_email),
+):
+    """
+    Upload multiple project images (max 5).
+
+    Images will be validated, optimized, and uploaded concurrently for better performance.
+    """
+    try:
+        # Upload all images
+        successful_urls = await upload_project_images_to_storage(user.uid, files)
+
+        logger.info(
+            f"Uploaded {len(successful_urls)} project images for user {user.uid}"
+        )
+        return {"image_urls": successful_urls}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to upload project images for user {user.uid}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to upload project images")
+
+
+@router.delete("/profile-photo", response_model=dict)
+async def delete_profile_photo(
+    user: UserToken = Depends(require_verified_email),
+):
+    """
+    Delete user's profile photo from storage and portfolio data.
+    """
+    try:
+        # Delete from storage
+        await delete_profile_photo_from_storage(user.uid)
+
+        # Remove from portfolio data
+        remove_photo_from_portfolio(user.uid)
+
+        logger.info(f"Profile photo deleted successfully for user {user.uid}")
+        return {"success": True, "message": "Profile photo deleted successfully"}
+
+    except Exception as e:
+        logger.error(f"Failed to delete profile photo for user {user.uid}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete profile photo")
+
+
+@router.delete("/project-images/{image_url:path}", response_model=dict)
+async def delete_project_image(
+    image_url: str,
+    user: UserToken = Depends(require_verified_email),
+):
+    """
+    Delete a specific project image from storage.
+
+    Verifies that the image belongs to the requesting user before deletion.
+    """
+    try:
+        # Delete with ownership verification
+        await delete_project_image_from_storage(user.uid, image_url)
+
+        logger.info(
+            f"Project image deleted successfully for user {user.uid}: {image_url}"
+        )
+        return {"success": True, "message": "Project image deleted successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete project image for user {user.uid}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete project image")

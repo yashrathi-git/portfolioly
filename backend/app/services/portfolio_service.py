@@ -244,17 +244,23 @@ class PortfolioService:
                 # Add to all technologies set
                 all_technologies.update(technologies)
 
-                # Create highlights list, filtering out None values
-                highlights = []
+                # Create highlights as markdown string
+                highlights_list = []
                 if repo.stars > 0:
-                    highlights.append(f"⭐ {repo.stars} stars")
+                    highlights_list.append(f"⭐ {repo.stars} stars")
                 if repo.description:
-                    highlights.append(repo.description)
+                    highlights_list.append(repo.description)
+
+                # Convert list to markdown string
+                highlights = (
+                    "\n".join(f"- {h}" for h in highlights_list)
+                    if highlights_list
+                    else None
+                )
 
                 # Create project entry
                 project = Project(
                     name=repo.name,
-                    role="Developer",  # Default role
                     highlights=highlights,
                     technologies=technologies,
                     github=repo.url,

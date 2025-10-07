@@ -16,6 +16,22 @@ class UploadSettings(BaseModel):
     MAX_FILE_SIZE_MB: int = 1.5
     ALLOWED_FILE_TYPES: List[str] = ["application/pdf"]
 
+    # Image upload configuration
+    MAX_IMAGE_SIZE_BYTES: int = 800 * 1024  # 800KB
+    MAX_PROJECT_IMAGES: int = 5  # Maximum images per project
+    MAX_IMAGE_CAPTION_LENGTH: int = 100  # Maximum characters for image captions
+    ALLOWED_IMAGE_TYPES: List[str] = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+    ]
+    ALLOWED_IMAGE_EXTENSIONS: List[str] = [".jpg", ".jpeg", ".png", ".webp", ".gif"]
+    IMAGE_QUALITY: int = 85  # JPEG/WebP quality for optimization (not applied to GIFs)
+    MAX_IMAGE_DIMENSION: int = (
+        1920  # Max width/height for web optimization (not applied to GIFs)
+    )
+
     # GitHub integration
     MAX_GITHUB_REPOS: int = 10
     GITHUB_REPOS_PER_PAGE: int = 20
