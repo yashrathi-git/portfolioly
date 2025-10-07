@@ -28,8 +28,6 @@ export interface Profile {
   type?: ProfileType;
   url?: string;
   label?: string;
-  tags?: string[];
-  more_context?: string;
 }
 
 export interface PersonalInfo {
@@ -39,6 +37,7 @@ export interface PersonalInfo {
   email?: string;
   phone?: string;
   location?: string;
+  profile_photo_url?: string;
   profiles?: Profile[];
 }
 
@@ -49,19 +48,26 @@ export interface WorkExperience {
   start_date?: DateInfo;
   end_date?: DateInfo;
   is_current?: boolean;
-  highlights?: string[];
+  highlights?: string;
   technologies?: string[];
   more_context?: string;
 }
 
+export interface ProjectImage {
+  url: string;
+  caption?: string;
+  order: number;
+}
+
 export interface Project {
   name?: string;
-  role?: string;
-  highlights?: string[];
+  highlights?: string;
   technologies?: string[];
   github?: string;
   live_link?: string;
+  demo_video?: string;
   more_context?: string;
+  images?: ProjectImage[];
 }
 
 export interface Education {
@@ -77,6 +83,7 @@ export interface Education {
 
 export interface Certification {
   name?: string;
+  issuer?: string;
   link?: string;
 }
 

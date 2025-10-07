@@ -37,9 +37,6 @@ export type Profile = {
   type?: ProfileType;
   url?: string;
   label?: string;
-  profile_photo_url?: string;
-  tags?: string[];
-  more_context?: string;
 };
 
 export type PersonalInfo = {
@@ -49,6 +46,7 @@ export type PersonalInfo = {
   email?: string;
   phone?: string;
   location?: string;
+  profile_photo_url?: string;
   profiles?: Profile[];
 };
 
@@ -59,19 +57,26 @@ export type WorkExperience = {
   start_date?: DateInfo;
   end_date?: DateInfo;
   is_current?: boolean;
-  highlights?: string[];
+  highlights?: string;
   technologies?: string[];
   more_context?: string;
 };
 
+export type ProjectImage = {
+  url: string;
+  caption?: string;
+  order: number;
+};
+
 export type Project = {
   name?: string;
-  role?: string;
-  highlights?: string[];
+  highlights?: string;
   technologies?: string[];
   github?: string;
   live_link?: string;
+  demo_video?: string;
   more_context?: string;
+  images?: ProjectImage[];
 };
 
 export type Education = {
@@ -87,6 +92,7 @@ export type Education = {
 
 export type Certification = {
   name?: string;
+  issuer?: string;
   link?: string;
 };
 
