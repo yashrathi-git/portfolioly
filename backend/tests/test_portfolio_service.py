@@ -265,11 +265,11 @@ class TestPortfolioService:
         # Check first project
         project1 = result.projects[0]
         assert project1.name == "awesome-project"
-        assert project1.role == "Developer"
         assert "Python" in project1.technologies
         # Only language is included, not topics
         assert project1.github == "https://github.com/user/awesome-project"
-        assert "150 stars" in str(project1.highlights)
+        assert "150 stars" in project1.highlights
+        assert isinstance(project1.highlights, str)  # highlights is now a string
 
         # Check second project
         project2 = result.projects[1]
@@ -454,7 +454,7 @@ class TestGitHubRepoMapping:
 
         project = result.projects[0]
         # Should not include "0 stars" in highlights
-        highlights_text = " ".join(project.highlights or [])
+        highlights_text = project.highlights or ""
         assert "0 stars" not in highlights_text
         assert (
             "A new repository" in highlights_text

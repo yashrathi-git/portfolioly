@@ -14,6 +14,7 @@ from app.schemas.portfolio import (
     PersonalInfo,
     WorkExperience,
     Project,
+    ProjectImage,
     Education,
     Certification,
     TextBlobs,
@@ -74,14 +75,10 @@ class TestProfile:
             type=ProfileType.LINKEDIN,
             url="https://linkedin.com/in/johndoe",
             label="LinkedIn Profile",
-            tags=["professional", "networking"],
-            more_context="Primary professional profile",
         )
         assert profile.type == ProfileType.LINKEDIN
         assert profile.url == "https://linkedin.com/in/johndoe"
         assert profile.label == "LinkedIn Profile"
-        assert profile.tags == ["professional", "networking"]
-        assert profile.more_context == "Primary professional profile"
 
     def test_optional_fields(self):
         """Test that all fields are optional."""
@@ -89,8 +86,6 @@ class TestProfile:
         assert profile.type is None
         assert profile.url is None
         assert profile.label is None
-        assert profile.tags == []
-        assert profile.more_context is None
 
     def test_profile_type_enum(self):
         """Test ProfileType enum values."""
@@ -151,22 +146,67 @@ class TestWorkExperience:
             start_date=DateInfo(month=1, year=2020),
             end_date=DateInfo(month=12, year=2023),
             is_current=False,
-            highlights=["Led team", "Improved performance"],
+            highlights="- Led team\n- Improved performance",
             technologies=["Python", "React"],
             more_context="Great experience",
         )
         assert work_exp.organization == "Tech Corp"
         assert work_exp.start_date.month == 1
         assert work_exp.start_date.year == 2020
-        assert len(work_exp.highlights) == 2
+        assert work_exp.highlights == "- Led team\n- Improved performance"
         assert len(work_exp.technologies) == 2
 
     def test_optional_fields(self):
         """Test that all fields are optional."""
         work_exp = WorkExperience()
         assert work_exp.organization is None
-        assert work_exp.highlights == []
+        assert work_exp.highlights is None
         assert work_exp.technologies == []
+
+
+class TestProjectImage:
+    """Test ProjectImage model validation."""
+
+    def test_valid_project_image(self):
+        """Test valid project image creation."""
+        image = ProjectImage(
+            url="https://storage.azure.com/user123/projects/1234_screenshot.webp",
+            caption="Homepage design",
+            order=0,
+        )
+        assert (
+            image.url
+            == "https://storage.azure.com/user123/projects/1234_screenshot.webp"
+        )
+        assert image.caption == "Homepage design"
+        assert image.order == 0
+
+    def test_caption_max_length(self):
+        """Test caption max length validation."""
+        # Valid caption (100 chars)
+        valid_caption = "a" * 100
+        image = ProjectImage(
+            url="https://storage.azure.com/test.webp",
+            caption=valid_caption,
+            order=0,
+        )
+        assert len(image.caption) == 100
+
+        # Invalid caption (101 chars)
+        with pytest.raises(ValidationError):
+            ProjectImage(
+                url="https://storage.azure.com/test.webp",
+                caption="a" * 101,
+                order=0,
+            )
+
+    def test_optional_caption(self):
+        """Test that caption is optional."""
+        image = ProjectImage(
+            url="https://storage.azure.com/test.webp",
+            order=0,
+        )
+        assert image.caption is None
 
 
 class TestProject:
@@ -176,24 +216,35 @@ class TestProject:
         """Test valid project creation."""
         project = Project(
             name="Portfolio Website",
-            role="Full Stack Developer",
-            highlights=["Responsive design", "CI/CD pipeline"],
+            highlights="- Responsive design\n- CI/CD pipeline",
             technologies=["Next.js", "TypeScript"],
             github="https://github.com/user/project",
             live_link="https://project.com",
-            more_context="Personal project",
+            demo_video="https://youtube.com/watch?v=abc123",
+            more_context="Personal project with modern stack",
+            images=[
+                ProjectImage(
+                    url="https://storage.azure.com/user123/projects/1234_screenshot.webp",
+                    caption="Homepage design",
+                    order=0,
+                )
+            ],
         )
         assert project.name == "Portfolio Website"
-        assert project.role == "Full Stack Developer"
-        assert len(project.highlights) == 2
+        assert project.highlights == "- Responsive design\n- CI/CD pipeline"
         assert len(project.technologies) == 2
+        assert project.demo_video == "https://youtube.com/watch?v=abc123"
+        assert len(project.images) == 1
+        assert project.images[0].caption == "Homepage design"
 
     def test_optional_fields(self):
         """Test that all fields are optional."""
         project = Project()
         assert project.name is None
-        assert project.highlights == []
+        assert project.highlights is None
         assert project.technologies == []
+        assert project.demo_video is None
+        assert project.images == []
 
 
 class TestEducation:
@@ -229,15 +280,19 @@ class TestCertification:
     def test_valid_certification(self):
         """Test valid certification creation."""
         cert = Certification(
-            name="AWS Solutions Architect", link="https://aws.amazon.com/certification/"
+            name="AWS Solutions Architect",
+            issuer="Amazon Web Services",
+            link="https://aws.amazon.com/certification/",
         )
         assert cert.name == "AWS Solutions Architect"
+        assert cert.issuer == "Amazon Web Services"
         assert cert.link == "https://aws.amazon.com/certification/"
 
     def test_optional_fields(self):
         """Test that all fields are optional."""
         cert = Certification()
         assert cert.name is None
+        assert cert.issuer is None
         assert cert.link is None
 
 
