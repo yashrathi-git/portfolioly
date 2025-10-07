@@ -3619,6 +3619,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"blueimp-canvas-to-blob@npm:^3.29.0":
+  version: 3.29.0
+  resolution: "blueimp-canvas-to-blob@npm:3.29.0"
+  checksum: 10c0/6c44cf20aa8287d4b31b2a6133074add338e4b8de092d2f7072a48cd5e04dead04814ffd34607f71dd7b3a285b5c8322c2e8c17776cfa20a1357df395862d646
+  languageName: node
+  linkType: hard
+
 "brace-expansion@npm:^1.1.7":
   version: 1.1.12
   resolution: "brace-expansion@npm:1.1.12"
@@ -3807,6 +3814,16 @@ __metadata:
   version: 6.1.1
   resolution: "compare-versions@npm:6.1.1"
   checksum: 10c0/415205c7627f9e4f358f571266422980c9fe2d99086be0c9a48008ef7c771f32b0fbe8e97a441ffedc3910872f917a0675fe0fe3c3b6d331cda6d8690be06338
+  languageName: node
+  linkType: hard
+
+"compressorjs@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "compressorjs@npm:1.2.1"
+  dependencies:
+    blueimp-canvas-to-blob: "npm:^3.29.0"
+    is-blob: "npm:^2.1.0"
+  checksum: 10c0/811eb37b7211af94da6e87df4986f1f8d07524bd762e913927469cede270a705c56de91000b0c190f4bdf059d601c81e259c4ff19efbf5cb34d97b87367b7c92
   languageName: node
   linkType: hard
 
@@ -5298,6 +5315,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-blob@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "is-blob@npm:2.1.0"
+  checksum: 10c0/324eb4dc16a359acf14c56c0f65a031c9ddb6ec8ca651894783abe3f3252688facd9e02edeb756eddca0c8ddb5b1efd0af97ea7d3c7b8567fc29fa75f9b1a159
+  languageName: node
+  linkType: hard
+
 "is-boolean-object@npm:^1.2.1":
   version: 1.2.2
   resolution: "is-boolean-object@npm:1.2.2"
@@ -5962,6 +5986,7 @@ __metadata:
     "@types/react-dom": "npm:^19"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
+    compressorjs: "npm:^1.2.1"
     eslint: "npm:^9"
     eslint-config-next: "npm:15.5.3"
     firebase: "npm:^12.3.0"

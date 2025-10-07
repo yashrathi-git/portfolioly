@@ -20,6 +20,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "compressorjs": "^1.2.1",
     "firebase": "^12.3.0",
     "framer-motion": "^12.23.21",
     "lucide-react": "^0.544.0",

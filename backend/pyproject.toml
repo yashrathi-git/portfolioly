@@ -20,6 +20,7 @@ dependencies = [
     "aiohttp>=3.12.15",
     "openai>=2.1.0",
     "azure-storage-blob>=12.26.0",
+    "pillow>=11.3.0",
 ]
 
 [dependency-groups]
