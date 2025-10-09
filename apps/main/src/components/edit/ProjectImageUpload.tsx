@@ -11,12 +11,11 @@ import {
 } from "@/lib/utils/imageValidation";
 import { optimizeImage } from "@/lib/utils/imageOptimization";
 import { UPLOAD_CONFIG } from "@/config/uploadConfig";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { parseError, isRetryableError } from "@/lib/utils/errorHandling";
 import {
-  parseError,
-  isRetryableError,
-  getRetryDelay,
-} from "@/lib/utils/errorHandling";
+  uploadProjectImages as uploadProjectImagesApi,
+  deleteProjectImage as deleteProjectImageApi,
+} from "@/lib/api/portfolio";
 import {
   Upload,
   X,
@@ -45,14 +44,12 @@ interface ImageUploadState {
   error?: string;
   uploading: boolean;
   retryable?: boolean;
-  retryAttempt?: number;
 }
 
 export function ProjectImageUpload({
   value = [],
   onChange,
 }: ProjectImageUploadProps) {
-  const { user } = useAuth();
   const [uploadingImages, setUploadingImages] = useState<
     Map<string, ImageUploadState>
   >(new Map());
@@ -61,6 +58,11 @@ export function ProjectImageUpload({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const latestImagesRef = useRef<ProjectImage[]>(value);
+
+  useEffect(() => {
+    latestImagesRef.current = value;
+  }, [value]);
 
   // Monitor online/offline status
   useEffect(() => {
@@ -91,18 +93,33 @@ export function ProjectImageUpload({
       }
 
       const fileArray = Array.from(files);
-
-      // Check if adding these files would exceed the limit
-      const totalImages = value.length + fileArray.length;
-      if (totalImages > UPLOAD_CONFIG.MAX_PROJECT_IMAGES) {
-        setError(
-          `Maximum ${
-            UPLOAD_CONFIG.MAX_PROJECT_IMAGES
-          } images allowed per project. You can add ${
-            UPLOAD_CONFIG.MAX_PROJECT_IMAGES - value.length
-          } more.`
-        );
+      if (fileArray.length === 0) {
         return;
+      }
+
+      const maxImages = UPLOAD_CONFIG.MAX_PROJECT_IMAGES;
+      const currentImages = latestImagesRef.current;
+      const overflow = currentImages.length + fileArray.length - maxImages;
+
+      if (overflow > 0) {
+        const imagesToRemove = currentImages.slice(0, overflow);
+
+        try {
+          await Promise.all(
+            imagesToRemove.map((image) => deleteProjectImageApi(image.url))
+          );
+        } catch (err) {
+          const structuredError = parseError(err);
+          setError(structuredError.userMessage);
+          return;
+        }
+
+        const remainingImages = currentImages
+          .slice(overflow)
+          .map((img, index) => ({ ...img, order: index }));
+
+        latestImagesRef.current = remainingImages;
+        onChange(remainingImages);
       }
 
       setError(null);
@@ -127,7 +144,6 @@ export function ProjectImageUpload({
             preview: previewUrl,
             progress: 0,
             uploading: true,
-            retryAttempt: 0,
           });
           return next;
         });
@@ -136,7 +152,7 @@ export function ProjectImageUpload({
         uploadImage(file, fileId, previewUrl);
       }
     },
-    [value.length]
+    [onChange]
   );
 
   const uploadImage = async (
@@ -151,13 +167,6 @@ export function ProjectImageUpload({
           "You are offline. Please check your internet connection."
         );
       }
-
-      // Get auth token
-      if (!user) {
-        throw new Error("You must be signed in to upload images");
-      }
-
-      const token = await user.getIdToken();
 
       // Update progress
       setUploadingImages((prev) => {
@@ -182,16 +191,7 @@ export function ProjectImageUpload({
       });
 
       // Upload to backend
-      const formData = new FormData();
-      formData.append("files", optimizedFile);
-
-      const response = await fetch("/api/portfolio/project-images", {
-        method: "POST",
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const [imageUrl] = await uploadProjectImagesApi([optimizedFile]);
 
       setUploadingImages((prev) => {
         const next = new Map(prev);
@@ -202,16 +202,6 @@ export function ProjectImageUpload({
         return next;
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.detail || errorData.error || "Upload failed";
-        throw new Error(errorMessage);
-      }
-
-      const { image_urls } = await response.json();
-      const imageUrl = image_urls[0];
-
       if (!imageUrl) {
         throw new Error("No image URL returned from server");
       }
@@ -220,10 +210,13 @@ export function ProjectImageUpload({
       const newImage: ProjectImage = {
         url: imageUrl,
         caption: "",
-        order: value.length,
+        order: latestImagesRef.current.length,
       };
 
-      onChange([...value, newImage]);
+      const updatedImages = [...latestImagesRef.current, newImage].map(
+        (img, index) => ({ ...img, order: index })
+      );
+      onChange(updatedImages);
 
       // Remove from uploading state
       setUploadingImages((prev) => {
@@ -246,37 +239,12 @@ export function ProjectImageUpload({
         const next = new Map(prev);
         const state = next.get(fileId);
         if (state) {
-          const currentRetryAttempt = state.retryAttempt || 0;
-
           next.set(fileId, {
             ...state,
             error: structuredError.userMessage,
             uploading: false,
             retryable,
-            retryAttempt: currentRetryAttempt,
           });
-
-          // Auto-retry for retryable errors (with exponential backoff)
-          if (retryable && currentRetryAttempt < 3) {
-            const delay = getRetryDelay(err, currentRetryAttempt + 1);
-            setTimeout(() => {
-              setUploadingImages((prev) => {
-                const next = new Map(prev);
-                const state = next.get(fileId);
-                if (state) {
-                  next.set(fileId, {
-                    ...state,
-                    error: undefined,
-                    uploading: true,
-                    progress: 0,
-                    retryAttempt: currentRetryAttempt + 1,
-                  });
-                }
-                return next;
-              });
-              uploadImage(file, fileId, previewUrl);
-            }, delay);
-          }
         }
         return next;
       });
@@ -354,30 +322,7 @@ export function ProjectImageUpload({
       const imageToDelete = value[index];
 
       try {
-        if (!user) {
-          throw new Error("You must be signed in to delete images");
-        }
-
-        const token = await user.getIdToken();
-
-        // Delete from backend
-        const encodedUrl = encodeURIComponent(imageToDelete.url);
-        const response = await fetch(
-          `/api/portfolio/project-images/${encodedUrl}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMessage =
-            errorData.detail || errorData.error || "Delete failed";
-          throw new Error(errorMessage);
-        }
+        await deleteProjectImageApi(imageToDelete.url);
 
         // Remove from value and reorder
         const updatedImages = value
@@ -394,7 +339,7 @@ export function ProjectImageUpload({
         setError(structuredError.userMessage);
       }
     },
-    [value, onChange, user]
+    [value, onChange]
   );
 
   const handleRetryUpload = useCallback(
@@ -580,11 +525,6 @@ export function ProjectImageUpload({
                       <AlertCircle className="h-3 w-3" />
                       <span>{state.error}</span>
                     </div>
-                  )}
-                  {state.retryAttempt && state.retryAttempt > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Retry attempt {state.retryAttempt}/3
-                    </p>
                   )}
                 </div>
                 <div className="flex gap-1">

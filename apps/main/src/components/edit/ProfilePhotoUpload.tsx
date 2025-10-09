@@ -7,12 +7,11 @@ import { Progress } from "@/components/ui/progress";
 import { validateImageFile } from "@/lib/utils/imageValidation";
 import { optimizeImage } from "@/lib/utils/imageOptimization";
 import { UPLOAD_CONFIG } from "@/config/uploadConfig";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { parseError, isRetryableError } from "@/lib/utils/errorHandling";
 import {
-  parseError,
-  isRetryableError,
-  getRetryDelay,
-} from "@/lib/utils/errorHandling";
+  uploadProfilePhoto as uploadProfilePhotoApi,
+  deleteProfilePhoto as deleteProfilePhotoApi,
+} from "@/lib/api/portfolio";
 import { Upload, X, User, AlertCircle, WifiOff, RefreshCw } from "lucide-react";
 
 export interface ProfilePhotoUploadProps {
@@ -24,7 +23,6 @@ export function ProfilePhotoUpload({
   value,
   onChange,
 }: ProfilePhotoUploadProps) {
-  const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +30,6 @@ export function ProfilePhotoUpload({
   const [isDragging, setIsDragging] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [retryable, setRetryable] = useState(false);
-  const [retryAttempt, setRetryAttempt] = useState(0);
   const [lastFile, setLastFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,7 +54,7 @@ export function ProfilePhotoUpload({
   }, []);
 
   const handleFileSelect = useCallback(
-    async (file: File, isRetry = false) => {
+    async (file: File) => {
       // Check online status first
       if (!navigator.onLine) {
         setError("You are offline. Please check your internet connection.");
@@ -91,45 +88,17 @@ export function ProfilePhotoUpload({
         const optimizedFile = await optimizeImage(file);
         setProgress(50);
 
-        // Get auth token
-        if (!user) {
-          throw new Error("You must be signed in to upload photos");
-        }
-
-        const token = await user.getIdToken();
-
-        // Upload to backend
-        const formData = new FormData();
-        formData.append("file", optimizedFile);
-
         setProgress(70);
 
-        const response = await fetch("/api/portfolio/profile-photo", {
-          method: "POST",
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const photoUrl = await uploadProfilePhotoApi(optimizedFile);
 
-        setProgress(90);
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMessage =
-            errorData.detail || errorData.error || "Upload failed";
-          throw new Error(errorMessage);
-        }
-
-        const { photo_url } = await response.json();
         setProgress(100);
 
         // Update parent component
-        onChange(photo_url);
-        setPreview(photo_url);
+        onChange(photoUrl);
+        setPreview(photoUrl);
 
         // Reset retry state on success
-        setRetryAttempt(0);
         setLastFile(null);
       } catch (err) {
         console.error("Upload error:", err);
@@ -141,21 +110,12 @@ export function ProfilePhotoUpload({
 
         // Revert preview on error
         setPreview(value || null);
-
-        // Auto-retry for retryable errors (with exponential backoff)
-        if (isRetryableError(err) && retryAttempt < 3) {
-          const delay = getRetryDelay(err, retryAttempt + 1);
-          setTimeout(() => {
-            setRetryAttempt((prev) => prev + 1);
-            handleFileSelect(file, true);
-          }, delay);
-        }
       } finally {
         setUploading(false);
         setProgress(0);
       }
     },
-    [user, value, onChange, retryAttempt]
+    [value, onChange]
   );
 
   const handleDelete = useCallback(async () => {
@@ -166,32 +126,12 @@ export function ProfilePhotoUpload({
       return;
     }
 
-    if (!user) {
-      setError("You must be signed in to delete photos");
-      setRetryable(false);
-      return;
-    }
-
     setUploading(true);
     setError(null);
     setRetryable(false);
 
     try {
-      const token = await user.getIdToken();
-
-      const response = await fetch("/api/portfolio/profile-photo", {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.detail || errorData.error || "Delete failed";
-        throw new Error(errorMessage);
-      }
+      await deleteProfilePhotoApi();
 
       // Update parent component and preview
       onChange(null);
@@ -206,12 +146,11 @@ export function ProfilePhotoUpload({
     } finally {
       setUploading(false);
     }
-  }, [user, onChange]);
+  }, [onChange]);
 
   const handleRetry = useCallback(() => {
     if (lastFile) {
-      setRetryAttempt(0);
-      handleFileSelect(lastFile, true);
+      handleFileSelect(lastFile);
     }
   }, [lastFile, handleFileSelect]);
 

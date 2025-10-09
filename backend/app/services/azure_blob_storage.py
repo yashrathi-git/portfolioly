@@ -7,7 +7,8 @@ import logging
 import os
 import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Optional, Tuple
+from urllib.parse import urlparse
 
 from azure.core.exceptions import AzureError, ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import ContentSettings
@@ -25,7 +26,6 @@ class AzureBlobConfig:
     """Runtime configuration for Azure Blob interactions."""
 
     enabled: bool
-    container_name: str
     blob_prefix: str
     connection_string: Optional[str] = None
     account_url: Optional[str] = None
@@ -39,7 +39,7 @@ class AzureBlobStorageService:
         self._config = config
         self._client_lock = asyncio.Lock()
         self._blob_service_client: Optional[BlobServiceClient] = None
-        self._container_client: Optional[ContainerClient] = None
+        self._container_clients: Dict[str, ContainerClient] = {}
 
         if not self._config.enabled:
             logger.info(
@@ -59,7 +59,9 @@ class AzureBlobStorageService:
             return None
 
         try:
-            container_client = await self._get_or_create_container_client()
+            container_client = await self._get_or_create_container_client(
+                settings.upload.CONTAINERS.resumes
+            )
         except Exception:
             logger.exception("Failed to initialize Azure container client")
             return None
@@ -147,6 +149,7 @@ class AzureBlobStorageService:
                     "user_id": user_id,
                     "type": "profile_photo",
                 },
+                container_name=settings.upload.CONTAINERS.images,
             )
         except Exception:
             logger.exception(
@@ -183,6 +186,7 @@ class AzureBlobStorageService:
                     "user_id": user_id,
                     "type": "project_image",
                 },
+                container_name=settings.upload.CONTAINERS.images,
             )
         except Exception:
             logger.exception(
@@ -196,7 +200,9 @@ class AzureBlobStorageService:
             return
 
         try:
-            container_client = await self._get_or_create_container_client()
+            container_client = await self._get_or_create_container_client(
+                settings.upload.CONTAINERS.images
+            )
         except Exception:
             logger.exception("Failed to initialize Azure container client for deletion")
             return
@@ -226,18 +232,15 @@ class AzureBlobStorageService:
             return
 
         try:
-            container_client = await self._get_or_create_container_client()
-        except Exception:
-            logger.exception("Failed to initialize Azure container client for deletion")
-            return
-
-        try:
-            # Extract blob name from URL
-            # URL format: https://<account>.blob.core.windows.net/<container>/<blob_name>
-            blob_name = self._extract_blob_name_from_url(blob_url)
-            if not blob_name:
-                logger.warning("Could not extract blob name from URL: %s", blob_url)
+            location = self._extract_container_and_blob(blob_url)
+            if not location:
+                logger.warning("Could not extract blob location from URL: %s", blob_url)
                 return
+            container_name, blob_name = location
+
+            container_client = await self._get_or_create_container_client(
+                container_name
+            )
 
             blob_client = container_client.get_blob_client(blob_name)
             await blob_client.delete_blob()
@@ -256,13 +259,16 @@ class AzureBlobStorageService:
         upload_file: UploadFile,
         content_type: str,
         metadata: dict,
+        container_name: str,
     ) -> Optional[str]:
         """
         Internal helper to upload a blob with the given parameters.
         Returns the public URL on success.
         """
         try:
-            container_client = await self._get_or_create_container_client()
+            container_client = await self._get_or_create_container_client(
+                container_name
+            )
         except Exception:
             logger.exception("Failed to initialize Azure container client")
             return None
@@ -304,36 +310,34 @@ class AzureBlobStorageService:
             )
             return None
 
-    async def _get_or_create_container_client(self) -> ContainerClient:
-        """Lazily initialize and memoize the container client."""
+    async def _get_or_create_container_client(
+        self, container_name: str
+    ) -> ContainerClient:
+        """Lazily initialize and memoize container clients per name."""
 
-        if self._container_client is not None:
-            return self._container_client
+        if container_name in self._container_clients:
+            return self._container_clients[container_name]
 
         async with self._client_lock:
-            if self._container_client is not None:
-                return self._container_client
+            if container_name in self._container_clients:
+                return self._container_clients[container_name]
 
-            blob_service_client = self._build_blob_service_client()
-            container_client = blob_service_client.get_container_client(
-                self._config.container_name
+            if self._blob_service_client is None:
+                self._blob_service_client = self._build_blob_service_client()
+
+            container_client = self._blob_service_client.get_container_client(
+                container_name
             )
 
             try:
                 await container_client.create_container()
-                logger.info(
-                    "Created Azure Blob container '%s'", self._config.container_name
-                )
+                logger.info("Created Azure Blob container '%s'", container_name)
             except ResourceExistsError:
-                logger.debug(
-                    "Azure Blob container '%s' already exists",
-                    self._config.container_name,
-                )
+                logger.debug("Azure Blob container '%s' already exists", container_name)
 
-            self._blob_service_client = blob_service_client
-            self._container_client = container_client
+            self._container_clients[container_name] = container_client
 
-        return self._container_client
+        return self._container_clients[container_name]
 
     def _build_blob_service_client(self) -> BlobServiceClient:
         """Construct a BlobServiceClient using preferred credentials."""
@@ -400,23 +404,24 @@ class AzureBlobStorageService:
 
         return ext.lower()
 
-    def _extract_blob_name_from_url(self, blob_url: str) -> Optional[str]:
+    def _extract_container_and_blob(self, blob_url: str) -> Optional[Tuple[str, str]]:
         """
-        Extract blob name from Azure Blob Storage URL.
+        Extract container and blob name from Azure Blob Storage URL.
         URL format: https://<account>.blob.core.windows.net/<container>/<blob_name>
         """
         try:
-            # Split by container name
-            container_name = self._config.container_name
-            parts = blob_url.split(f"/{container_name}/")
-            if len(parts) < 2:
+            parsed = urlparse(blob_url)
+            path = parsed.path.lstrip("/")
+            if not path:
                 return None
 
-            # The blob name is everything after the container name
-            blob_name = parts[1]
-            return blob_name
+            parts = path.split("/", 1)
+            if len(parts) != 2:
+                return None
+
+            return parts[0], parts[1]
         except Exception:
-            logger.exception("Failed to extract blob name from URL: %s", blob_url)
+            logger.exception("Failed to extract container/blob from URL: %s", blob_url)
             return None
 
 
@@ -431,7 +436,6 @@ def get_azure_blob_storage_service() -> AzureBlobStorageService:
     if _azure_blob_service is None:
         config = AzureBlobConfig(
             enabled=_is_storage_enabled(),
-            container_name=settings.upload.AZURE_STORAGE_CONTAINER,
             blob_prefix=settings.upload.AZURE_STORAGE_BLOB_PREFIX,
             connection_string=settings.azure_storage_connection_string,
             account_url=settings.azure_storage_account_url,

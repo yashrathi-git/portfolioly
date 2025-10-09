@@ -9,8 +9,15 @@ import dotenv
 dotenv.load_dotenv()
 
 
+class StorageContainerNames(BaseModel):
+    """Azure Blob Storage container names used across the application."""
+
+    resumes: str = "user-uploaded-pdfs"
+    images: str = "images"
+
+
 class UploadSettings(BaseModel):
-    """Configuration for upload, GitHub, and rate limiting."""
+    """Configuration for upload, GitHub, storage, and rate limiting."""
 
     # File upload limits
     MAX_FILE_SIZE_MB: int = 1.5
@@ -39,7 +46,7 @@ class UploadSettings(BaseModel):
 
     # Storage configuration
     ENABLE_AZURE_STORAGE: bool = True
-    AZURE_STORAGE_CONTAINER: str = "user-uploaded-pdfs"
+    CONTAINERS: StorageContainerNames = StorageContainerNames()
     AZURE_STORAGE_BLOB_PREFIX: str = "user-files"
 
     # Rate limiting configuration
