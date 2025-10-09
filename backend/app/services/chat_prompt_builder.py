@@ -113,8 +113,7 @@ def _work_experience_section(
 
         if exp.highlights:
             lines.append("Highlights:")
-            for highlight in exp.highlights:
-                lines.append(f"  - {highlight}")
+            lines.append(textwrap.indent(exp.highlights.strip(), "  "))
 
         lines.append("")
 
@@ -129,9 +128,6 @@ def _projects_section(projects: Optional[List[Project]]) -> Optional[str]:
     for i, proj in enumerate(projects, start=1):
         lines.append(f"{i}. {proj.name or 'Project name not specified'}")
 
-        if proj.role:
-            lines.append(f"Role: {proj.role}")
-
         if proj.more_context:
             lines.append(f"Description: {proj.more_context}")
 
@@ -140,13 +136,14 @@ def _projects_section(projects: Optional[List[Project]]) -> Optional[str]:
 
         if proj.highlights:
             lines.append("Highlights:")
-            for highlight in proj.highlights:
-                lines.append(f"  - {highlight}")
+            lines.append(textwrap.indent(proj.highlights.strip(), "  "))
 
         if proj.github:
             lines.append(f"GitHub: {proj.github}")
         if proj.live_link:
             lines.append(f"Live Link: {proj.live_link}")
+        if proj.demo_video:
+            lines.append(f"Demo Video: {proj.demo_video}")
 
         lines.append("")
 
