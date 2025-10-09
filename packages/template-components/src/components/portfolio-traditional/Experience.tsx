@@ -61,7 +61,8 @@ export const Experience = ({ items = [] }: ExperienceProps) => {
                 </p>
               )}
 
-              {e.points?.length ? (
+              {e.points &&
+              (typeof e.points === "string" || e.points.length > 0) ? (
                 <div className="mb-3">
                   <MarkdownContent
                     content={e.points}

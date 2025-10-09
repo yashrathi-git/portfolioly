@@ -5,7 +5,8 @@ import { typography } from "../../lib/typography";
 import { cn } from "../../lib/cn";
 
 export type AboutWidgetProps = {
-  avatarUrl?: string;
+  avatarUrl?: string; // deprecated, use profile_photo_url
+  profile_photo_url?: string;
   name?: string;
   title?: string;
   summary?: string;
@@ -19,6 +20,7 @@ export type AboutWidgetProps = {
 
 export const AboutWidget = ({
   avatarUrl,
+  profile_photo_url,
   name,
   title,
   summary,
@@ -39,6 +41,9 @@ export const AboutWidget = ({
         .toUpperCase()
     : "";
 
+  // Prioritize profile_photo_url over avatarUrl for backward compatibility
+  const photoUrl = profile_photo_url || avatarUrl;
+
   const avatarSize = largeImage
     ? "size-44 sm:size-52 md:size-60"
     : "size-32 sm:size-40";
@@ -58,9 +63,9 @@ export const AboutWidget = ({
             <div
               className={`${avatarSize} rounded-2xl overflow-hidden ring-1 ring-border bg-[var(--secondary)] grid place-items-center`}
             >
-              {avatarUrl ? (
+              {photoUrl ? (
                 <Image
-                  src={avatarUrl}
+                  src={photoUrl}
                   alt={fallbackName || "User avatar"}
                   width={240}
                   height={240}
@@ -80,24 +85,44 @@ export const AboutWidget = ({
 
           <div>
             {fallbackName ? (
-              <h3 className={cn("font-semibold leading-tight", typography.heading.primary)}>
+              <h3
+                className={cn(
+                  "font-semibold leading-tight",
+                  typography.heading.primary
+                )}
+              >
                 {fallbackName}
               </h3>
             ) : null}
             {title ? (
-              <p className={cn("text-[color:var(--muted-foreground)]", typography.label.base)}>
+              <p
+                className={cn(
+                  "text-[color:var(--muted-foreground)]",
+                  typography.label.base
+                )}
+              >
                 {title}
               </p>
             ) : null}
             {location && (
-              <p className={cn("mt-0.5 text-[color:var(--muted-foreground)]/90", typography.label.small)}>
+              <p
+                className={cn(
+                  "mt-0.5 text-[color:var(--muted-foreground)]/90",
+                  typography.label.small
+                )}
+              >
                 {location}
               </p>
             )}
           </div>
 
           {combinedText ? (
-            <p className={cn("sm:col-span-2 mt-2 sm:mt-0 leading-relaxed whitespace-pre-wrap", typography.content.responsive)}>
+            <p
+              className={cn(
+                "sm:col-span-2 mt-2 sm:mt-0 leading-relaxed whitespace-pre-wrap",
+                typography.content.responsive
+              )}
+            >
               {combinedText}
             </p>
           ) : null}

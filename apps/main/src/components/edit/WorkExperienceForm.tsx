@@ -23,7 +23,7 @@ const emptyWE: WorkExperience = {
   start_date: { month: 1, year: new Date().getFullYear() },
   end_date: { month: 12, year: new Date().getFullYear() },
   is_current: false,
-  highlights: [],
+  highlights: "",
   technologies: [],
 };
 
@@ -129,10 +129,14 @@ export function WorkExperienceForm({
               <Label>Highlights</Label>
               <Textarea
                 rows={4}
-                value={exp.highlights?.[0] ?? ""}
-                onChange={(e) => update(idx, { highlights: [e.target.value] })}
-                placeholder="Summarize key achievements, responsibilities, and impact."
+                value={exp.highlights ?? ""}
+                onChange={(e) => update(idx, { highlights: e.target.value })}
+                placeholder="- Led development of key features&#10;- Improved performance by 40%&#10;- Mentored junior developers"
               />
+              <p className="text-xs text-muted-foreground">
+                Supports markdown formatting (e.g., - Bullet points, **bold**,
+                *italic*)
+              </p>
             </div>
 
             <div className="grid gap-2">

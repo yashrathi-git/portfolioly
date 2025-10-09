@@ -92,7 +92,8 @@ function mapWorkExperiences(
     location: exp.location,
     start: formatDateInfo(exp.start_date) || undefined,
     end: exp.is_current ? "Present" : formatDateInfo(exp.end_date) || undefined,
-    points: exp.highlights?.filter((highlight) => Boolean(highlight?.trim())),
+    // highlights is now a markdown string in the new schema
+    points: exp.highlights || undefined,
   }));
 }
 
@@ -102,20 +103,28 @@ function mapWorkExperiences(
 function mapProjects(
   projects: MainPortfolioData["projects"] = []
 ): PortfolioProject[] {
+  // Helper to extract first line from markdown string
+  const getFirstLine = (text?: string): string | undefined => {
+    if (!text) return undefined;
+    const lines = text.split("\n").filter((line) => line.trim());
+    return lines[0]?.replace(/^[-*+]\s+/, "").trim() || undefined;
+  };
+
   return projects.map((project) => ({
     name: project.name,
-    role: project.role,
-    one_line_description: project.highlights?.find((highlight) =>
-      Boolean(highlight?.trim())
-    ),
-    highlights: project.highlights?.filter((highlight) =>
-      Boolean(highlight?.trim())
-    ),
+    role: undefined, // role field removed from new schema
+    one_line_description: getFirstLine(project.highlights),
+    // highlights is now a markdown string in the new schema
+    highlights: project.highlights || undefined,
     technologies: project.technologies?.filter((technology) =>
       Boolean(technology?.trim())
     ),
     github: project.github,
     live_link: project.live_link,
+    // New schema fields
+    demo_video: project.demo_video,
+    more_context: project.more_context,
+    images: project.images, // ProjectImage[] with url, caption, order
   }));
 }
 
@@ -176,21 +185,24 @@ export function mapPortfolioDataToTemplate(
       location: personalInfo.location,
       email: personalInfo.email,
       summary: personalInfo.summary,
-      // Prefer explicit profile photo URLs if provided
-      avatarUrl: personalInfo.profiles?.find(
-        (profile) => profile.profile_photo_url
-      )?.profile_photo_url,
+      // Use profile_photo_url from personal_info
+      avatarUrl: personalInfo.profile_photo_url,
       socials: mapProfilesToSocials(personalInfo.profiles),
     },
     projects: mapProjects(data.projects),
     education: mapEducation(data.education),
     experience: mapWorkExperiences(data.work_experiences),
     skills: extractSkills(data),
+    // achievements is now a markdown string in the new schema
     achievements: data.text_blobs?.achievements
       ? [data.text_blobs.achievements].filter((item) => Boolean(item?.trim()))
       : [],
+    // certifications now include issuer field
     certificates: (data.certifications || [])
-      .map((cert) => cert.name || "")
+      .map((cert) => {
+        const parts = [cert.name, cert.issuer].filter(Boolean);
+        return parts.length > 0 ? parts.join(" - ") : "";
+      })
       .filter((name) => Boolean(name.trim())),
   };
 }

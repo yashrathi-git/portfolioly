@@ -77,7 +77,8 @@ export function mapWorkExperience(workExp: WorkExperience) {
     location: workExp.location || "",
     start: formatDateInfo(workExp.start_date),
     end: workExp.is_current ? "Present" : formatDateInfo(workExp.end_date),
-    points: workExp.highlights || [],
+    // highlights is now a markdown string in the new schema
+    points: workExp.highlights || "",
   };
 }
 
@@ -85,14 +86,26 @@ export function mapWorkExperience(workExp: WorkExperience) {
  * Maps backend Project to frontend PortfolioProject
  */
 export function mapProject(project: Project) {
+  // Extract first line from highlights string for one_line_description
+  const getFirstLine = (highlights?: string): string => {
+    if (!highlights) return "";
+    const lines = highlights.split("\n").filter((line) => line.trim());
+    return lines[0]?.replace(/^[-*+]\s+/, "").trim() || "";
+  };
+
   return {
     name: project.name || "",
-    role: project.role || "",
-    one_line_description: project.highlights?.[0] || "",
-    highlights: project.highlights || [],
+    role: "", // role field removed from new schema
+    one_line_description: getFirstLine(project.highlights),
+    // highlights is now a markdown string in the new schema
+    highlights: project.highlights || "",
     technologies: project.technologies || [],
     github: project.github || "",
     live_link: project.live_link || "",
+    // New schema fields
+    demo_video: project.demo_video || "",
+    more_context: project.more_context || "",
+    images: project.images || [], // ProjectImage[] with url, caption, order
   };
 }
 
@@ -112,21 +125,6 @@ export function mapEducation(education: Education) {
 }
 
 /**
- * Extracts profile photo URL from backend profiles
- */
-export function extractProfilePhotoUrl(
-  profiles: Profile[] = []
-): string | undefined {
-  // Look for profile_photo_url in any profile
-  for (const profile of profiles) {
-    if (profile.profile_photo_url) {
-      return profile.profile_photo_url;
-    }
-  }
-  return undefined;
-}
-
-/**
  * Main transformation function: maps backend portfolio data to frontend format
  */
 export function mapBackendToFrontend(
@@ -141,18 +139,23 @@ export function mapBackendToFrontend(
         name: personalInfo.full_name || "",
         headline: personalInfo.headline || "",
         location: personalInfo.location || "",
-        profile_photo_url: extractProfilePhotoUrl(profiles),
+        profile_photo_url: personalInfo.profile_photo_url,
         socials: mapProfilesToSocials(profiles),
       },
       projects: (backendData.projects || []).map(mapProject),
       education: (backendData.education || []).map(mapEducation),
       experience: (backendData.work_experiences || []).map(mapWorkExperience),
       skills: [], // Extract from technologies in projects/experience if needed
+      // achievements is now a markdown string in the new schema
       achievements: backendData.text_blobs?.achievements
         ? [backendData.text_blobs.achievements]
         : [],
+      // certifications now include issuer field
       certificates: (backendData.certifications || [])
-        .map((cert) => cert.name || "")
+        .map((cert) => {
+          const parts = [cert.name, cert.issuer].filter(Boolean);
+          return parts.length > 0 ? parts.join(" - ") : "";
+        })
         .filter(Boolean),
       layout_settings: backendData.layout_settings || {
         layout_mode: "both",

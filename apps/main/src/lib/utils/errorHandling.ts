@@ -23,6 +23,13 @@ export enum ErrorCode {
   CORRUPTED_PDF = "CORRUPTED_PDF",
   EMPTY_PDF = "EMPTY_PDF",
 
+  // Image upload errors
+  IMAGE_TOO_LARGE = "IMAGE_TOO_LARGE",
+  INVALID_IMAGE_TYPE = "INVALID_IMAGE_TYPE",
+  IMAGE_OPTIMIZATION_FAILED = "IMAGE_OPTIMIZATION_FAILED",
+  TOO_MANY_IMAGES = "TOO_MANY_IMAGES",
+  IMAGE_UPLOAD_FAILED = "IMAGE_UPLOAD_FAILED",
+
   // PDF processing errors
   PDF_PROCESSING_FAILED = "PDF_PROCESSING_FAILED",
   NO_TEXT_EXTRACTED = "NO_TEXT_EXTRACTED",
@@ -148,6 +155,44 @@ const ERROR_MESSAGES: Record<ErrorCode, Partial<StructuredError>> = {
     userMessage: "The PDF file contains no pages.",
     actionable: true,
     suggestedAction: "Choose a different PDF file",
+  },
+
+  // Image upload errors
+  [ErrorCode.IMAGE_TOO_LARGE]: {
+    severity: ErrorSeverity.LOW,
+    retryable: false,
+    userMessage:
+      "Image is too large. Please choose a smaller image (max 800KB).",
+    actionable: true,
+    suggestedAction: "Choose a smaller image",
+  },
+  [ErrorCode.INVALID_IMAGE_TYPE]: {
+    severity: ErrorSeverity.LOW,
+    retryable: false,
+    userMessage: "Invalid image format. Please upload JPEG, PNG, WebP, or GIF.",
+    actionable: true,
+    suggestedAction: "Choose a valid image format",
+  },
+  [ErrorCode.IMAGE_OPTIMIZATION_FAILED]: {
+    severity: ErrorSeverity.MEDIUM,
+    retryable: true,
+    userMessage: "Failed to optimize image. Please try again.",
+    actionable: true,
+    suggestedAction: "Try again or use a different image",
+  },
+  [ErrorCode.TOO_MANY_IMAGES]: {
+    severity: ErrorSeverity.LOW,
+    retryable: false,
+    userMessage: "Maximum number of images reached for this project.",
+    actionable: true,
+    suggestedAction: "Remove some images before adding more",
+  },
+  [ErrorCode.IMAGE_UPLOAD_FAILED]: {
+    severity: ErrorSeverity.MEDIUM,
+    retryable: true,
+    userMessage: "Failed to upload image. Please try again.",
+    actionable: true,
+    suggestedAction: "Try again",
   },
 
   // PDF processing errors

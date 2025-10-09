@@ -170,18 +170,15 @@ export class JsonFileLoader {
           start_date: { month: 1, year: 2020 },
           end_date: { month: 12, year: 2023 },
           is_current: false,
-          highlights: [
-            "Led development of key features",
-            "Improved system performance by 40%",
-          ],
+          highlights:
+            "- Led development of key features\n- Improved system performance by 40%",
           technologies: ["React", "Node.js", "PostgreSQL"],
         },
       ],
       projects: [
         {
           name: "Portfolio Website",
-          role: "Full Stack Developer",
-          highlights: ["Built responsive design", "Implemented modern UI/UX"],
+          highlights: "- Built responsive design\n- Implemented modern UI/UX",
           technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
           github: "https://github.com/johndoe/portfolio",
           live_link: "https://johndoe.dev",

@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { MessageSquare, FileText, Eye } from "lucide-react";
 import { cn } from "../lib/cn";
-import type { LayoutSettings } from "./PortfolioLayoutContainer";
+import type { PortfolioLayoutSettings } from "./PortfolioLayoutContainer";
 
 export interface LayoutSettingsPanelProps {
-  currentSettings: LayoutSettings;
-  onSettingsChange: (settings: LayoutSettings) => void;
+  currentSettings: PortfolioLayoutSettings;
+  onSettingsChange: (settings: PortfolioLayoutSettings) => void;
   onSave: () => Promise<void>;
   isLoading?: boolean;
   className?: string;
@@ -21,7 +21,7 @@ export const LayoutSettingsPanel = ({
   className,
 }: LayoutSettingsPanelProps) => {
   const [localSettings, setLocalSettings] =
-    useState<LayoutSettings>(currentSettings);
+    useState<PortfolioLayoutSettings>(currentSettings);
   const [isSaving, setIsSaving] = useState(false);
 
   const layoutModeOptions = [
@@ -58,7 +58,9 @@ export const LayoutSettingsPanel = ({
     },
   ];
 
-  const handleLayoutModeChange = (layoutMode: LayoutSettings["layoutMode"]) => {
+  const handleLayoutModeChange = (
+    layoutMode: PortfolioLayoutSettings["layoutMode"]
+  ) => {
     const newSettings = { ...localSettings, layoutMode };
 
     // If switching to single layout mode, update default accordingly
@@ -73,7 +75,7 @@ export const LayoutSettingsPanel = ({
   };
 
   const handleDefaultLayoutChange = (
-    defaultLayout: LayoutSettings["defaultLayout"]
+    defaultLayout: PortfolioLayoutSettings["defaultLayout"]
   ) => {
     const newSettings = { ...localSettings, defaultLayout };
     setLocalSettings(newSettings);

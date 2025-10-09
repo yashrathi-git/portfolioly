@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Project } from "@/types/portfolio";
 import { TagInput } from "./TagInput";
+import { ProjectImageUpload } from "./ProjectImageUpload";
 
 export interface ProjectsFormProps {
   value: Project[];
@@ -15,11 +16,13 @@ export interface ProjectsFormProps {
 
 const emptyProject: Project = {
   name: "",
-  role: "",
-  highlights: [],
+  highlights: "",
   technologies: [],
   github: "",
   live_link: "",
+  demo_video: "",
+  more_context: "",
+  images: [],
 };
 
 export function ProjectsForm({ value, onChange }: ProjectsFormProps) {
@@ -45,23 +48,13 @@ export function ProjectsForm({ value, onChange }: ProjectsFormProps) {
         )}
         {items.map((p, idx) => (
           <div key={idx} className="grid gap-4 p-4 rounded-md border">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Name</Label>
-                <Input
-                  value={p.name ?? ""}
-                  onChange={(e) => update(idx, { name: e.target.value })}
-                  placeholder="Portfolio Website"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Role</Label>
-                <Input
-                  value={p.role ?? ""}
-                  onChange={(e) => update(idx, { role: e.target.value })}
-                  placeholder="Full Stack Developer"
-                />
-              </div>
+            <div className="grid gap-2">
+              <Label>Name</Label>
+              <Input
+                value={p.name ?? ""}
+                onChange={(e) => update(idx, { name: e.target.value })}
+                placeholder="Portfolio Website"
+              />
             </div>
 
             {/* Highlights: long text, its own row */}
@@ -69,10 +62,14 @@ export function ProjectsForm({ value, onChange }: ProjectsFormProps) {
               <Label>Highlights</Label>
               <Textarea
                 rows={5}
-                value={p.highlights?.[0] ?? ""}
-                onChange={(e) => update(idx, { highlights: [e.target.value] })}
-                placeholder="Describe the project impact, features, and outcomes in detail."
+                value={p.highlights ?? ""}
+                onChange={(e) => update(idx, { highlights: e.target.value })}
+                placeholder="- Built responsive UI with React and TypeScript&#10;- Implemented real-time features&#10;- Deployed to production with 99.9% uptime"
               />
+              <p className="text-xs text-muted-foreground">
+                Supports markdown formatting (e.g., - Bullet points, **bold**,
+                *italic*)
+              </p>
             </div>
 
             {/* Technologies & Tags: single tag input */}
@@ -104,6 +101,18 @@ export function ProjectsForm({ value, onChange }: ProjectsFormProps) {
               </div>
             </div>
 
+            <div className="grid gap-2">
+              <Label>Demo video</Label>
+              <Input
+                value={p.demo_video ?? ""}
+                onChange={(e) => update(idx, { demo_video: e.target.value })}
+                placeholder="https://youtube.com/watch?v=..."
+              />
+              <p className="text-xs text-muted-foreground">
+                YouTube link for project demo video
+              </p>
+            </div>
+
             {/* More context: larger textbox */}
             <div className="grid gap-2">
               <Label>More context</Label>
@@ -112,6 +121,18 @@ export function ProjectsForm({ value, onChange }: ProjectsFormProps) {
                 value={p.more_context ?? ""}
                 onChange={(e) => update(idx, { more_context: e.target.value })}
                 placeholder="Architecture, design decisions, performance notes, collaboration, etc."
+              />
+              <p className="text-xs text-muted-foreground">
+                Supports markdown formatting for detailed project description
+              </p>
+            </div>
+
+            {/* Project Images */}
+            <div className="grid gap-2">
+              <Label>Project images</Label>
+              <ProjectImageUpload
+                value={p.images || []}
+                onChange={(images) => update(idx, { images })}
               />
             </div>
 

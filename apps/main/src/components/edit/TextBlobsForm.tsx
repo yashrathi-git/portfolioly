@@ -25,8 +25,12 @@ export function TextBlobsForm({ value, onChange }: TextBlobsFormProps) {
             rows={5}
             value={v.achievements ?? ""}
             onChange={(e) => onChange({ ...v, achievements: e.target.value })}
-            placeholder={"Recipient of XYZ award...\nTop speaker at JSConf..."}
+            placeholder="- Recipient of XYZ award&#10;- Top speaker at JSConf&#10;- Published research paper"
           />
+          <p className="text-xs text-muted-foreground">
+            Supports markdown formatting (e.g., - Bullet points, **bold**,
+            *italic*)
+          </p>
         </div>
         <div className="grid gap-2">
           <Label htmlFor="additional_context">

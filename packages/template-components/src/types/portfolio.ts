@@ -129,7 +129,7 @@ export type PortfolioProject = {
   name?: string;
   role?: string;
   one_line_description?: string;
-  highlights?: string[];
+  highlights?: string[] | string; // Support both array (legacy) and string (new schema)
   technologies?: string[];
   github?: string;
   live_link?: string;
@@ -149,7 +149,7 @@ export type ExperienceItem = {
   location?: string;
   start?: string;
   end?: string;
-  points?: string[];
+  points?: string[] | string; // Support both array (legacy) and string (new schema)
 };
 
 export type TemplatePortfolioProfile = {

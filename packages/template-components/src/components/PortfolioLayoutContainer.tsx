@@ -9,14 +9,14 @@ import type { PortfolioData } from "../types/portfolio";
 import type { ChatProfile, Suggestion } from "./chat/types";
 import PortfolioErrorBoundary from "./ErrorBoundary";
 
-export interface LayoutSettings {
+export interface PortfolioLayoutSettings {
   layoutMode: "chat-only" | "traditional-only" | "both";
   defaultLayout: "chat" | "traditional";
 }
 
 export interface PortfolioLayoutContainerProps {
   portfolioData?: PortfolioData | null;
-  layoutSettings?: LayoutSettings;
+  layoutSettings?: PortfolioLayoutSettings;
   isLoading?: boolean;
   error?: string;
   isOwner?: boolean;

@@ -38,6 +38,8 @@ const prepareWidgetData = (
               portfolioData.profile.headline ||
               "",
             location: portfolioData.profile.location,
+            profile_photo_url: portfolioData.profile.profile_photo_url,
+            avatarUrl: portfolioData.profile.avatarUrl, // Keep for backward compatibility
           }
         : null;
 

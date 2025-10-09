@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { PortfolioData } from "@/types/portfolio";
 import { PersonalInfoForm } from "./PersonalInfoForm";
+import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
 import { ProfilesForm } from "./ProfilesForm";
 import { WorkExperienceForm } from "./WorkExperienceForm";
 import { ProjectsForm } from "./ProjectsForm";
@@ -78,6 +79,28 @@ export function PortfolioEditor({ initial, onChange }: PortfolioEditorProps) {
               value={data.personal_info || {}}
               onChange={(v) => update({ personal_info: v })}
             />
+
+            <Card className="shadow-sm">
+              <CardContent className="p-6">
+                <div className="space-y-2 mb-4">
+                  <h3 className="text-base font-semibold">Profile Photo</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a professional photo to personalize your portfolio
+                  </p>
+                </div>
+                <ProfilePhotoUpload
+                  value={data.personal_info?.profile_photo_url}
+                  onChange={(url) =>
+                    update({
+                      personal_info: {
+                        ...(data.personal_info || {}),
+                        profile_photo_url: url || undefined,
+                      },
+                    })
+                  }
+                />
+              </CardContent>
+            </Card>
 
             <ProfilesForm
               value={data.personal_info || {}}

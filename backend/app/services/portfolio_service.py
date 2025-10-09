@@ -335,6 +335,61 @@ class PortfolioService:
             )
             return False
 
+    async def update_profile_photo(
+        self, user_id: str, photo_url: Optional[str]
+    ) -> bool:
+        """
+        Update the profile photo URL in the user's portfolio data.
+
+        This method updates the profile_photo_url field in the personal_info
+        section of the portfolio. If the portfolio doesn't exist, it creates
+        a minimal portfolio with just the photo URL.
+
+        Args:
+            user_id: User ID to update photo for
+            photo_url: New photo URL (or None to remove photo)
+
+        Returns:
+            bool: True if successful, False otherwise
+
+        Raises:
+            FirebaseError: If update operation fails
+        """
+        try:
+            doc_ref = self.db.collection("portfolios").document(user_id)
+
+            # Check if portfolio exists
+            doc = doc_ref.get()
+
+            if doc.exists:
+                # Update existing portfolio
+                doc_ref.update(
+                    {
+                        "personal_info.profile_photo_url": photo_url,
+                        "updated_at": datetime.utcnow(),
+                    }
+                )
+                logger.info(
+                    f"Profile photo URL updated for user {user_id}: {photo_url}"
+                )
+            else:
+                # Create minimal portfolio with photo URL
+                minimal_portfolio = PortfolioData(
+                    personal_info=PersonalInfo(profile_photo_url=photo_url)
+                )
+                data_dict = minimal_portfolio.model_dump()
+                data_dict["updated_at"] = datetime.utcnow()
+                doc_ref.set(data_dict)
+                logger.info(
+                    f"Created new portfolio with profile photo for user {user_id}"
+                )
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to update profile photo for user {user_id}: {str(e)}")
+            raise FirebaseError(f"Failed to update profile photo: {str(e)}")
+
 
 # Global service instance
 _portfolio_service: Optional[PortfolioService] = None

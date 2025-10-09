@@ -56,7 +56,8 @@ export const Projects = ({ items = [] }: ProjectsProps) => {
                 </p>
               )}
 
-              {p.highlights?.length ? (
+              {p.highlights &&
+              (typeof p.highlights === "string" || p.highlights.length > 0) ? (
                 <div className="mb-3">
                   <MarkdownContent
                     content={p.highlights}

@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import {
   PortfolioLayoutContainer,
-  type LayoutSettings,
+  type PortfolioLayoutSettings,
 } from "./PortfolioLayoutContainer";
 import type { PortfolioData } from "../types/portfolio";
 import type { ChatProfile, Suggestion } from "./chat/types";
@@ -46,14 +46,16 @@ export const Portfolio = ({
   publicToken,
 }: PortfolioProps) => {
   // Extract layout settings from portfolio data
-  const layoutSettings: LayoutSettings = useMemo(() => {
+  const layoutSettings: PortfolioLayoutSettings = useMemo(() => {
     const settings = portfolioData?.layout_settings;
 
     return {
       layoutMode:
-        (settings?.layout_mode as LayoutSettings["layoutMode"]) || "both",
+        (settings?.layout_mode as PortfolioLayoutSettings["layoutMode"]) ||
+        "both",
       defaultLayout:
-        (settings?.default_layout as LayoutSettings["defaultLayout"]) || "chat",
+        (settings?.default_layout as PortfolioLayoutSettings["defaultLayout"]) ||
+        "chat",
     };
   }, [portfolioData?.layout_settings]);
 

@@ -374,6 +374,98 @@ class TestPortfolioService:
             # Should only create once
             mock_service_class.assert_called_once()
 
+    @pytest.mark.asyncio
+    async def test_update_profile_photo_existing_portfolio(
+        self, portfolio_service, mock_firestore
+    ):
+        """Test updating profile photo for existing portfolio."""
+        # Mock existing portfolio document
+        mock_doc = Mock()
+        mock_doc.exists = True
+
+        mock_doc_ref = Mock()
+        mock_doc_ref.get.return_value = mock_doc
+        mock_firestore.collection.return_value.document.return_value = mock_doc_ref
+
+        # Test update
+        photo_url = "https://storage.azure.com/user123/profile-photo.webp"
+        result = await portfolio_service.update_profile_photo("user123", photo_url)
+
+        # Assertions
+        assert result is True
+        mock_firestore.collection.assert_called_with("portfolios")
+        mock_firestore.collection.return_value.document.assert_called_with("user123")
+        mock_doc_ref.update.assert_called_once()
+
+        # Check update call arguments
+        call_args = mock_doc_ref.update.call_args[0][0]
+        assert call_args["personal_info.profile_photo_url"] == photo_url
+        assert "updated_at" in call_args
+
+    @pytest.mark.asyncio
+    async def test_update_profile_photo_new_portfolio(
+        self, portfolio_service, mock_firestore
+    ):
+        """Test updating profile photo when portfolio doesn't exist."""
+        # Mock non-existing portfolio document
+        mock_doc = Mock()
+        mock_doc.exists = False
+
+        mock_doc_ref = Mock()
+        mock_doc_ref.get.return_value = mock_doc
+        mock_firestore.collection.return_value.document.return_value = mock_doc_ref
+
+        # Test update
+        photo_url = "https://storage.azure.com/user123/profile-photo.webp"
+        result = await portfolio_service.update_profile_photo("user123", photo_url)
+
+        # Assertions
+        assert result is True
+        mock_doc_ref.set.assert_called_once()
+
+        # Check set call arguments
+        call_args = mock_doc_ref.set.call_args[0][0]
+        assert call_args["personal_info"]["profile_photo_url"] == photo_url
+        assert "updated_at" in call_args
+
+    @pytest.mark.asyncio
+    async def test_update_profile_photo_remove_photo(
+        self, portfolio_service, mock_firestore
+    ):
+        """Test removing profile photo by setting it to None."""
+        # Mock existing portfolio document
+        mock_doc = Mock()
+        mock_doc.exists = True
+
+        mock_doc_ref = Mock()
+        mock_doc_ref.get.return_value = mock_doc
+        mock_firestore.collection.return_value.document.return_value = mock_doc_ref
+
+        # Test update with None
+        result = await portfolio_service.update_profile_photo("user123", None)
+
+        # Assertions
+        assert result is True
+        mock_doc_ref.update.assert_called_once()
+
+        # Check update call arguments
+        call_args = mock_doc_ref.update.call_args[0][0]
+        assert call_args["personal_info.profile_photo_url"] is None
+
+    @pytest.mark.asyncio
+    async def test_update_profile_photo_failure(
+        self, portfolio_service, mock_firestore
+    ):
+        """Test profile photo update failure."""
+        # Mock Firestore to raise exception
+        mock_firestore.collection.side_effect = Exception("Firestore error")
+
+        # Test update failure
+        with pytest.raises(FirebaseError, match="Failed to update profile photo"):
+            await portfolio_service.update_profile_photo(
+                "user123", "https://example.com/photo.jpg"
+            )
+
 
 class TestGitHubRepoMapping:
     """Test specific GitHub repository mapping scenarios."""

@@ -128,52 +128,57 @@ export const WorkExperienceWidget = ({
                     </div>
 
                     {/* Points */}
-                    {item.points && item.points.length > 0 && (
-                      <MarkdownContent
-                        content={item.points}
-                        className="mt-3.5"
-                        overrides={{
-                          ul: {
-                            component: ({ className, ...props }) => (
-                              <ul
-                                {...props}
-                                className={cn(
-                                  "space-y-2.5 text-[color:var(--foreground)]/90",
-                                  typography.content.base,
-                                  className
-                                )}
-                              />
-                            ),
-                          },
-                          li: {
-                            component: ({ className, ...props }) => (
-                              <li
-                                {...props}
-                                className={cn(
-                                  "flex gap-2 leading-relaxed",
-                                  className
-                                )}
-                              >
-                                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[oklch(0.74_0.15_310)]" />
-                                <span className="flex-1">{props.children}</span>
-                              </li>
-                            ),
-                          },
-                          p: {
-                            component: ({ className, ...props }) => (
-                              <p
-                                {...props}
-                                className={cn(
-                                  "m-0 text-[color:var(--foreground)]/90",
-                                  typography.content.base,
-                                  className
-                                )}
-                              />
-                            ),
-                          },
-                        }}
-                      />
-                    )}
+                    {item.points &&
+                      (typeof item.points === "string"
+                        ? item.points
+                        : item.points.length > 0) && (
+                        <MarkdownContent
+                          content={item.points}
+                          className="mt-3.5"
+                          overrides={{
+                            ul: {
+                              component: ({ className, ...props }) => (
+                                <ul
+                                  {...props}
+                                  className={cn(
+                                    "space-y-2.5 text-[color:var(--foreground)]/90",
+                                    typography.content.base,
+                                    className
+                                  )}
+                                />
+                              ),
+                            },
+                            li: {
+                              component: ({ className, ...props }) => (
+                                <li
+                                  {...props}
+                                  className={cn(
+                                    "flex gap-2 leading-relaxed",
+                                    className
+                                  )}
+                                >
+                                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[oklch(0.74_0.15_310)]" />
+                                  <span className="flex-1">
+                                    {props.children}
+                                  </span>
+                                </li>
+                              ),
+                            },
+                            p: {
+                              component: ({ className, ...props }) => (
+                                <p
+                                  {...props}
+                                  className={cn(
+                                    "m-0 text-[color:var(--foreground)]/90",
+                                    typography.content.base,
+                                    className
+                                  )}
+                                />
+                              ),
+                            },
+                          }}
+                        />
+                      )}
                   </div>
                 </div>
               </div>
