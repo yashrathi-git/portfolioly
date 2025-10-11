@@ -12,4 +12,4 @@ export * from "./components/chat/Suggestions";
 export * from "./components/chat/types";
 export * from "./types/portfolio";
 export * from "./config/portfolio-config";
-export { cn } from "./lib/cn";
+export { cn } from "./lib/utils";

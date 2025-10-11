@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { typography } from "../../lib/typography";
-import { cn } from "../../lib/cn";
+import { cn } from "../../lib/utils";
 
 export type AboutWidgetProps = {
   avatarUrl?: string; // deprecated, use profile_photo_url

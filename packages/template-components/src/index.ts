@@ -37,7 +37,7 @@ export * from "./clients/json-loader";
 export * from "./utils/data-mapper";
 export * from "./utils/component-flags";
 export * from "./utils/debug";
-export { cn } from "./lib/cn";
+export { cn } from "./lib/utils";
 export { typography } from "./lib/typography";
 
 import "./styles.css";

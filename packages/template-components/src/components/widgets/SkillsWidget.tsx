@@ -1,7 +1,7 @@
 "use client";
 
 import { typography } from "../../lib/typography";
-import { cn } from "../../lib/cn";
+import { cn } from "../../lib/utils";
 
 export type SkillItem = {
   name: string;
@@ -39,24 +39,38 @@ export const SkillsWidget = ({
       {/* Glow */}
       <div className="pointer-events-none absolute -bottom-24 -left-20 h-64 w-64 rounded-full blur-3xl opacity-30 dark:opacity-20 bg-[oklch(0.6_0.118_184.704)]" />
       <div className="p-5 sm:p-6">
-        <h3 className={cn("font-semibold mb-4", typography.heading.secondary)}>{heading}</h3>
+        <h3 className={cn("font-semibold mb-4", typography.heading.secondary)}>
+          {heading}
+        </h3>
         <div className="grid sm:grid-cols-2 gap-5">
           {visibleCategories.map((cat) => (
             <div
               key={cat.title}
               className="rounded-xl bg-[var(--secondary)] p-4"
             >
-              <div className={cn("font-medium mb-3", typography.label.base)}>{cat.title}</div>
+              <div className={cn("font-medium mb-3", typography.label.base)}>
+                {cat.title}
+              </div>
               <div className="space-y-2.5">
                 {cat.items.map((item, index) => (
                   <div
                     key={`${item.name}-${index}`}
                     className="flex flex-col gap-1"
                   >
-                    <div className={cn("flex items-center justify-between", typography.label.base)}>
+                    <div
+                      className={cn(
+                        "flex items-center justify-between",
+                        typography.label.base
+                      )}
+                    >
                       <span>{item.name}</span>
                       {typeof item.level === "number" && (
-                        <span className={cn("text-[color:var(--muted-foreground)]", typography.label.tiny)}>
+                        <span
+                          className={cn(
+                            "text-[color:var(--muted-foreground)]",
+                            typography.label.tiny
+                          )}
+                        >
                           {item.level}%
                         </span>
                       )}
@@ -72,7 +86,12 @@ export const SkillsWidget = ({
                       </div>
                     ) : (
                       <div className="flex flex-wrap gap-1.5">
-                        <span className={cn("px-2 py-0.5 rounded-full bg-[var(--input)]", typography.label.tiny)}>
+                        <span
+                          className={cn(
+                            "px-2 py-0.5 rounded-full bg-[var(--input)]",
+                            typography.label.tiny
+                          )}
+                        >
                           {item.name}
                         </span>
                       </div>

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { MessageSquare, FileText } from "lucide-react";
-import { cn } from "../lib/cn";
+import { cn } from "../lib/utils";
 
 export type LayoutMode = "chat" | "traditional";
 

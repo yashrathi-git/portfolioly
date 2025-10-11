@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MessageSquare, FileText, Eye } from "lucide-react";
-import { cn } from "../lib/cn";
+import { cn } from "../lib/utils";
 import type { PortfolioLayoutSettings } from "./PortfolioLayoutContainer";
 
 export interface LayoutSettingsPanelProps {

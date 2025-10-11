@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Markdown from "markdown-to-jsx";
-import { cn } from "../lib/cn";
+import { cn } from "../lib/utils";
 
 type MarkdownContentProps = {
   content: string | string[];

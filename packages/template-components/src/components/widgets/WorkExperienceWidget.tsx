@@ -2,7 +2,7 @@
 
 import { Briefcase, MapPin, CalendarDays } from "lucide-react";
 import { typography } from "../../lib/typography";
-import { cn } from "../../lib/cn";
+import { cn } from "../../lib/utils";
 import { MarkdownContent } from "../../utils/markdown";
 
 export type WorkExperienceItem = {

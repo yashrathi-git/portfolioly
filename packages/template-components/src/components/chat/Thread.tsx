@@ -10,7 +10,7 @@ import { ContactWidget } from "../widgets/ContactWidget";
 import { WorkExperienceWidget } from "../widgets/WorkExperienceWidget";
 import { EducationWidget } from "../widgets/EducationWidget";
 import { typography } from "../../lib/typography";
-import { cn } from "../../lib/cn";
+import { cn } from "../../lib/utils";
 import { MarkdownContent } from "../../utils/markdown";
 
 type ThreadProps = {

@@ -1,7 +1,7 @@
 "use client";
 
 import { type Suggestion } from "./types";
-import { cn } from "../../lib/cn";
+import { cn } from "../../lib/utils";
 import {
   type LucideIcon,
   User,
