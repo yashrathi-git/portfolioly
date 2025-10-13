@@ -1,9 +1,9 @@
 import type { PortfolioData } from "../types/portfolio";
 import { Hero } from "./portfolio-traditional/Hero";
 import { Projects } from "./portfolio-traditional/Projects";
-import { Experience } from "./portfolio-traditional/Experience";
 import { Education } from "./portfolio-traditional/Education";
 import { Skills } from "./portfolio-traditional/Skills";
+import { WorkExperience } from "./portfolio-traditional/WorkExperience";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
 import {
@@ -92,6 +92,9 @@ const TraditionalPortfolioComponent = ({
         className={`${styles.portfolioTheme} min-h-[100svh] w-full bg-[var(--background)] text-[var(--foreground)]`}
       >
         <Hero profile={effectiveData.profile} />
+        {effectiveData.experience && effectiveData.experience.length > 0 && (
+          <WorkExperience items={effectiveData.experience} />
+        )}
 
         <main className="mx-auto max-w-5xl px-6 py-10 pb-16 space-y-10">
           {effectiveData.skills && effectiveData.skills.length > 0 && (
@@ -103,12 +106,6 @@ const TraditionalPortfolioComponent = ({
           {effectiveData.projects && effectiveData.projects.length > 0 && (
             <section>
               <Projects items={effectiveData.projects} />
-            </section>
-          )}
-
-          {effectiveData.experience && effectiveData.experience.length > 0 && (
-            <section>
-              <Experience items={effectiveData.experience} />
             </section>
           )}
 

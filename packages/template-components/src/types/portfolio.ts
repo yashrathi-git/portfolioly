@@ -150,6 +150,8 @@ export type ExperienceItem = {
   start?: string;
   end?: string;
   points?: string[] | string; // Support both array (legacy) and string (new schema)
+  technologies?: string[];
+  logoUrl?: string;
 };
 
 export type TemplatePortfolioProfile = {

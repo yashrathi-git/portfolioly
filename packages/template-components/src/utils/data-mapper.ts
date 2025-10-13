@@ -79,6 +79,8 @@ export function mapWorkExperience(workExp: WorkExperience) {
     end: workExp.is_current ? "Present" : formatDateInfo(workExp.end_date),
     // highlights is now a markdown string in the new schema
     points: workExp.highlights || "",
+    technologies: workExp.technologies || [],
+    logoUrl: undefined,
   };
 }
 
