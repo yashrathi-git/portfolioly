@@ -6,19 +6,29 @@
 
 ## Architecture
 
-### No Style Isolation
+### Two Theming Modes
 
-- Template components use standard Tailwind classes (no prefix)
+The package supports **both shared and isolated theming**:
+
+#### 1. Shared Theme (Default)
+
 - Uses consuming app's CSS variables (`--primary`, `--foreground`, etc.)
-- No separate Tailwind config or build in the package
-- Single `.thin-scrollbar` utility is the only package-specific style
+- Components automatically match the parent app's design system
+- No style conflicts
 
-### Why This Approach?
+#### 2. Isolated Theme (Optional)
 
-1. **Zero conflicts** - No duplicate CSS rules or competing styles
-2. **Shared design system** - Components automatically match the app's theme
-3. **Smaller bundle** - No redundant Tailwind build
-4. **Flexible** - Works with any app that has Tailwind + shadcn setup
+- `portfolio-theme.module.css` provides scoped CSS variables
+- Portfolio components can use `.portfolioTheme` class for isolation
+- Custom color palette independent of parent app
+- Useful when portfolio needs different aesthetics than the main app
+
+### Why This Hybrid Approach?
+
+1. **Flexibility** - Use parent theme or custom theme per use case
+2. **Zero conflicts** - CSS modules scope prevents variable clashes
+3. **No Tailwind build** - No separate Tailwind config in package
+4. **Smaller bundle** - Only adds CSS when needed
 
 ## Consuming Apps Setup
 
@@ -144,21 +154,22 @@ Apps importing the package must have these installed.
 packages/template-components/
 ├── src/
 │   ├── components/
-│   │   ├── ui/              # Shadcn components go here
+│   │   ├── ui/                          # Shadcn components go here
 │   │   │   └── carousel.tsx
+│   │   ├── portfolio-theme.module.css   # Optional scoped theme
 │   │   ├── Portfolio.tsx
 │   │   └── ChatPortfolio.tsx
 │   ├── lib/
-│   │   └── cn.ts           # tailwind-merge utility
-│   ├── styles.css          # Only .thin-scrollbar utility
-│   └── index.ts            # Main export
-├── dist/                   # Build output
+│   │   └── cn.ts                        # tailwind-merge utility
+│   ├── styles.css                       # Only .thin-scrollbar utility
+│   └── index.ts                         # Main export
+├── dist/                                # Build output
 │   ├── index.mjs
 │   ├── index.cjs
 │   ├── index.d.ts
-│   └── style.css          # Contains .thin-scrollbar
-├── tsconfig.json          # Has @/* alias
-├── vite.config.ts         # Build config
+│   └── style.css                        # Contains .thin-scrollbar
+├── tsconfig.json                        # Has @/* alias
+├── vite.config.ts                       # Build config
 └── package.json
 ```
 
@@ -184,6 +195,92 @@ Configured in `tsconfig.json`:
   }
 }
 ```
+
+## Theme Isolation with CSS Modules
+
+### How Portfolio Theme is Applied
+
+**Both `TraditionalPortfolio` and `ChatPortfolio` components automatically apply `.portfolioTheme`** at their root:
+
+```tsx
+// In TraditionalPortfolio.tsx & ChatPortfolio.tsx
+import styles from "./portfolio-theme.module.css";
+
+export function TraditionalPortfolio() {
+  return (
+    <div className={styles.portfolioTheme}>
+      {/* All portfolio content uses isolated theme */}
+    </div>
+  );
+}
+```
+
+**What it affects:**
+
+- ✅ Hero, Experience, Education, Projects, Skills sections (Traditional)
+- ✅ Chat interface, composer, thread messages (Chat)
+- ✅ All child components and widgets
+- ❌ Does NOT affect: Standalone UI components (Button, Card, etc.) used outside portfolio
+
+### Using the Portfolio Theme
+
+The `portfolio-theme.module.css` file provides an **isolated design system** for portfolio components:
+
+```tsx
+// Portfolio component using isolated theme
+import styles from "./portfolio-theme.module.css";
+
+export function Portfolio() {
+  return (
+    <div className={styles.portfolioTheme}>
+      {/* All children use scoped CSS variables */}
+      <h1 className="text-foreground">Uses --foreground from portfolioTheme</h1>
+      <button className="bg-primary">Uses --primary from portfolioTheme</button>
+    </div>
+  );
+}
+```
+
+### Theme Scope
+
+**Inside `.portfolioTheme`:**
+
+```css
+:local(.portfolioTheme) {
+  --background: oklch(0.99 0 0); /* Custom light background */
+  --foreground: oklch(0.18 0 0); /* Custom text color */
+  --primary: oklch(0.28 0.02 260); /* Custom primary */
+  /* ... other variables */
+}
+```
+
+**Outside `.portfolioTheme`:**
+
+- Uses parent app's CSS variables
+- No conflict with portfolio theme
+
+### When to Use Each Mode
+
+| Use Case                       | Theme Mode                   | Example                                                |
+| ------------------------------ | ---------------------------- | ------------------------------------------------------ |
+| Portfolio preview in main app  | Isolated (`.portfolioTheme`) | Editing interface where portfolio needs different look |
+| Standalone portfolio viewer    | Shared (parent theme)        | `apps/template` displays portfolio with its own theme  |
+| Embedded portfolio widget      | Isolated (`.portfolioTheme`) | Portfolio embedded in another site                     |
+| Portfolio components in app UI | Shared (parent theme)        | Using portfolio cards in app's design system           |
+
+### Dark Mode Support
+
+The scoped theme automatically adapts:
+
+```css
+:global(.dark) :local(.portfolioTheme) {
+  --background: oklch(0.22 0.01 260); /* Dark mode override */
+  --foreground: oklch(0.96 0 0);
+  /* ... */
+}
+```
+
+The parent app's dark mode class (`.dark`) triggers the portfolio's dark theme.
 
 ## Examples
 
@@ -212,7 +309,7 @@ echo 'export * from "./components/ui/dialog";' >> src/index.ts
 yarn build
 ```
 
-### Example: Using in App
+### Example: Using in App (Shared Theme)
 
 ```tsx
 // apps/main/src/app/page.tsx
@@ -239,6 +336,27 @@ export default function Page() {
 ```
 
 The Dialog uses the app's theme automatically (no style config needed).
+
+### Example: Portfolio Already Has Isolated Theme
+
+```tsx
+// apps/main/src/components/PortfolioPreview.tsx
+import { TraditionalPortfolio } from "@portfolioly/template-components";
+
+export function PortfolioPreview() {
+  return (
+    <div className="p-4 bg-background">
+      {/* Parent app's theme (main app colors) */}
+      <h1 className="text-2xl mb-4">Portfolio Preview</h1>
+
+      {/* Portfolio automatically uses isolated theme - no wrapper needed! */}
+      <TraditionalPortfolio data={portfolioData} />
+    </div>
+  );
+}
+```
+
+**Why no wrapper?** `TraditionalPortfolio` and `ChatPortfolio` already apply `.portfolioTheme` internally, so they automatically have isolated styling.
 
 ## Troubleshooting
 
@@ -298,12 +416,18 @@ yarn dev:main
 4. **Export everything** - Add new components to `src/index.ts`
 5. **Rebuild after changes** - Run `yarn build` in the package
 6. **Test in both apps** - Verify in `apps/main` and `apps/template`
+7. **Understand theme scoping**:
+   - `TraditionalPortfolio` & `ChatPortfolio` always use isolated theme
+   - Individual UI components (Button, Card) use parent theme
+   - No need to wrap portfolio components - theme is built-in
+8. **Don't modify `portfolio-theme.module.css`** unless intentionally changing portfolio's design system
 
 ## Summary
 
-- ✅ Template components use consuming app's Tailwind & theme
-- ✅ No style isolation, no conflicts
+- ✅ `TraditionalPortfolio` & `ChatPortfolio` always use isolated theme (built-in)
+- ✅ Individual UI components use parent app's theme
+- ✅ Portfolio theme uses CSS modules for scoped variables
+- ✅ No Tailwind build in package, relies on consuming app
 - ✅ Add shadcn via main app, then copy
 - ✅ Install Radix primitives in the package
-- ✅ Keep peer dependencies minimal
 - ✅ Rebuild package after adding components
