@@ -141,6 +141,8 @@ export type EducationItem = {
   start?: string;
   end?: string;
   location?: string;
+  grade?: string;
+  logoUrl?: string;
 };
 
 export type ExperienceItem = {

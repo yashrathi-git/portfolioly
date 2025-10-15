@@ -79,6 +79,7 @@ export interface Education {
   is_current?: boolean;
   location?: string;
   grade?: string;
+  logo_url?: string;
 }
 
 export interface Certification {

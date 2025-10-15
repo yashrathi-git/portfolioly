@@ -95,6 +95,9 @@ const TraditionalPortfolioComponent = ({
         {effectiveData.experience && effectiveData.experience.length > 0 && (
           <WorkExperience items={effectiveData.experience} />
         )}
+        {effectiveData.education && effectiveData.education.length > 0 && (
+          <Education items={effectiveData.education} />
+        )}
 
         <main className="mx-auto max-w-5xl px-6 py-10 pb-16 space-y-10">
           {effectiveData.skills && effectiveData.skills.length > 0 && (
@@ -106,12 +109,6 @@ const TraditionalPortfolioComponent = ({
           {effectiveData.projects && effectiveData.projects.length > 0 && (
             <section>
               <Projects items={effectiveData.projects} />
-            </section>
-          )}
-
-          {effectiveData.education && effectiveData.education.length > 0 && (
-            <section>
-              <Education items={effectiveData.education} />
             </section>
           )}
 

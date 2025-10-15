@@ -76,6 +76,7 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
   }, [user]);
 
   // Generate dynamic profile for chat header based on actual data
+  // console.log(data.education);
   const profile = useMemo(() => {
     const personalInfo = data.personal_info;
     const socials = personalInfo?.profiles || [];

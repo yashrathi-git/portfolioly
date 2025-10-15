@@ -147,6 +147,8 @@ function mapEducation(
         ? "Present"
         : formatDateInfo(edu.end_date) || undefined,
       location: edu.location,
+      grade: edu.grade,
+      logoUrl: edu.logo_url,
     };
   });
 }

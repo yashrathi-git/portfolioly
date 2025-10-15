@@ -123,6 +123,8 @@ export function mapEducation(education: Education) {
     start: formatDateInfo(education.start_date),
     end: education.is_current ? "Present" : formatDateInfo(education.end_date),
     location: education.location || "",
+    grade: education.grade || undefined,
+    logoUrl: undefined,
   };
 }
 
