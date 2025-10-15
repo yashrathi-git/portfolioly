@@ -1,23 +1,31 @@
+import BlurFade from "../magicui/blur-fade";
+import { Badge } from "@/components/ui/badge";
+
+const BLUR_FADE_DELAY = 0.04;
+
 export type SkillsProps = {
   items: string[];
 };
 
 export const Skills = ({ items }: SkillsProps) => {
+  if (!items || items.length === 0) {
+    return null;
+  }
+
   return (
-    <div>
-      <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-8">
-        Skills
-      </h2>
-      <div className="flex flex-wrap gap-2">
-        {items.map((s) => (
-          <span
-            key={s}
-            className="inline-flex items-center rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-foreground/20"
-          >
-            {s}
-          </span>
-        ))}
+    <section id="skills">
+      <div className="flex min-h-0 flex-col gap-y-3">
+        <BlurFade delay={BLUR_FADE_DELAY * 9}>
+          <h2 className="text-xl font-bold">Skills</h2>
+        </BlurFade>
+        <div className="flex flex-wrap gap-1">
+          {items.map((skill, idx) => (
+            <BlurFade key={skill} delay={BLUR_FADE_DELAY * 10 + idx * 0.05}>
+              <Badge>{skill}</Badge>
+            </BlurFade>
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 };

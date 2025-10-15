@@ -98,14 +98,15 @@ const TraditionalPortfolioComponent = ({
         {effectiveData.education && effectiveData.education.length > 0 && (
           <Education items={effectiveData.education} />
         )}
-
-        <main className="mx-auto max-w-5xl px-6 py-10 pb-16 space-y-10">
-          {effectiveData.skills && effectiveData.skills.length > 0 && (
-            <section>
+        {effectiveData.skills && effectiveData.skills.length > 0 && (
+          <div className="px-6 pb-16">
+            <div className="mx-auto w-full max-w-2xl">
               <Skills items={effectiveData.skills} />
-            </section>
-          )}
+            </div>
+          </div>
+        )}
 
+        <main className="mx-auto w-full max-w-2xl px-6 pt-10 pb-16 space-y-10">
           {effectiveData.projects && effectiveData.projects.length > 0 && (
             <section>
               <Projects items={effectiveData.projects} />
@@ -114,8 +115,8 @@ const TraditionalPortfolioComponent = ({
 
           {effectiveData.achievements &&
             effectiveData.achievements.length > 0 && (
-              <section>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-8">
+              <section className="space-y-4">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
                   Achievements
                 </h2>
                 <ul className="grid gap-3 sm:grid-cols-2">
@@ -133,8 +134,8 @@ const TraditionalPortfolioComponent = ({
 
           {effectiveData.certificates &&
             effectiveData.certificates.length > 0 && (
-              <section>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-8">
+              <section className="space-y-4">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
                   Certificates
                 </h2>
                 <ul className="grid gap-3 sm:grid-cols-2">
