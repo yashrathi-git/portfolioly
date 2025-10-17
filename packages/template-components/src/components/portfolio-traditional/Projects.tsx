@@ -99,7 +99,7 @@ export const Projects = ({ items = [] }: ProjectsProps) => {
                 key={project.name || `project-${id}`}
                 delay={BLUR_FADE_DELAY * 12 + id * 0.05}
               >
-                <Card className="flex flex-col overflow-hidden border hover:shadow-lg transition-all duration-300 ease-out h-full">
+                <Card className="flex flex-col overflow-hidden border hover:shadow-lg hover:shadow-foreground/5 hover:border-foreground/30 hover:scale-[1.02] hover:bg-accent/50 transition-all duration-300 ease-out h-full group">
                   {project.primaryCardImage && (
                     <div className="block cursor-pointer">
                       <img
@@ -110,27 +110,33 @@ export const Projects = ({ items = [] }: ProjectsProps) => {
                     </div>
                   )}
                   <CardHeader
-                    className={project.primaryCardImage ? "px-2" : "px-2 pt-6"}
+                    className={
+                      project.primaryCardImage
+                        ? "px-4 pt-4 pb-3"
+                        : "px-4 pt-6 pb-3"
+                    }
                   >
-                    <div className="space-y-1">
-                      <CardTitle className="mt-1 text-base">
+                    <div className="space-y-2">
+                      <CardTitle className="text-lg font-semibold leading-tight">
                         {project.name}
                       </CardTitle>
                       {description && (
-                        <MarkdownContent
-                          content={description}
-                          className="prose max-w-full text-pretty font-sans text-xs text-muted-foreground dark:prose-invert"
-                        />
+                        <div className="pt-1">
+                          <MarkdownContent
+                            content={description}
+                            className="prose max-w-full text-pretty font-sans text-sm text-muted-foreground dark:prose-invert"
+                          />
+                        </div>
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="mt-auto flex flex-col px-2">
+                  <CardContent className="mt-auto flex flex-col px-4 pb-3">
                     {project.technologies &&
                       project.technologies.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {project.technologies.map((tag) => (
                             <Badge
-                              className="px-1 py-0 text-[10px]"
+                              className="px-2 py-0.5 text-[10px]"
                               variant="secondary"
                               key={tag}
                             >
@@ -140,9 +146,9 @@ export const Projects = ({ items = [] }: ProjectsProps) => {
                         </div>
                       )}
                   </CardContent>
-                  <CardFooter className="px-2 pb-2">
-                    {links.length > 0 && (
-                      <div className="flex flex-row flex-wrap items-start gap-1">
+                  {links.length > 0 && (
+                    <CardFooter className="px-4 pb-4 pt-0">
+                      <div className="flex flex-row flex-wrap items-start gap-2">
                         {links.map((link, idx) => (
                           <a
                             href={link.href}
@@ -150,18 +156,15 @@ export const Projects = ({ items = [] }: ProjectsProps) => {
                             target="_blank"
                             rel="noreferrer"
                           >
-                            <Badge
-                              key={idx}
-                              className="flex gap-2 px-2 py-1 text-[10px]"
-                            >
+                            <Badge className="flex gap-1.5 px-2.5 py-1 text-[10px] hover:bg-primary/90 transition-colors">
                               {link.icon}
                               {link.type}
                             </Badge>
                           </a>
                         ))}
                       </div>
-                    )}
-                  </CardFooter>
+                    </CardFooter>
+                  )}
                 </Card>
               </BlurFade>
             );
