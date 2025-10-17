@@ -106,13 +106,11 @@ const TraditionalPortfolioComponent = ({
           </div>
         )}
 
-        <main className="mx-auto w-full max-w-2xl px-6 pt-10 pb-16 space-y-10">
-          {effectiveData.projects && effectiveData.projects.length > 0 && (
-            <section>
-              <Projects items={effectiveData.projects} />
-            </section>
-          )}
+        {effectiveData.projects && effectiveData.projects.length > 0 && (
+          <Projects items={effectiveData.projects} />
+        )}
 
+        <main className="mx-auto w-full max-w-2xl px-6 pt-10 pb-16 space-y-10">
           {effectiveData.achievements &&
             effectiveData.achievements.length > 0 && (
               <section className="space-y-4">

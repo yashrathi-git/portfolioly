@@ -77,6 +77,7 @@ export type Project = {
   demo_video?: string;
   more_context?: string;
   images?: ProjectImage[];
+  primaryCardImage?: string;
 };
 
 export type Education = {
@@ -133,6 +134,7 @@ export type PortfolioProject = {
   technologies?: string[];
   github?: string;
   live_link?: string;
+  primaryCardImage?: string;
 };
 
 export type EducationItem = {

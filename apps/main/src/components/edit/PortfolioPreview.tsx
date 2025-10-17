@@ -114,6 +114,8 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
       links: headerLinks,
     };
   }, [data]);
+  // templateData.projects[0].primaryCardImage =
+  //   "https://user-images.githubusercontent.com/57002207/147270294-de0ec3f9-7bfa-4c63-84de-b4239fd4995e.gif";
 
   // Dynamic suggestions based on available data
   const suggestions = useMemo(() => {
