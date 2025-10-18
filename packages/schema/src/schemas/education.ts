@@ -10,14 +10,14 @@ import { DateInfoSchema } from "./core";
  * Includes institution details, degree, dates, and academic performance.
  */
 export const EducationSchema = z.object({
-  institution: z.string().optional(),
-  degree: z.string().optional(),
-  branch: z.string().optional(),
+  institution: z.string().nullable().optional(),
+  degree: z.string().nullable().optional(),
+  branch: z.string().nullable().optional(),
   start_date: DateInfoSchema,
   end_date: DateInfoSchema,
-  is_current: z.boolean().optional(),
-  location: z.string().optional(),
-  grade: z.string().optional(),
+  is_current: z.boolean().nullable().optional(),
+  location: z.string().nullable().optional(),
+  grade: z.string().nullable().optional(),
 });
 
 export type Education = z.infer<typeof EducationSchema>;

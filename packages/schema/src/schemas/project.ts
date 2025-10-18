@@ -24,16 +24,16 @@ export type ProjectImage = z.infer<typeof ProjectImageSchema>;
  * Includes project details, links, demo video, and images.
  */
 export const ProjectSchema = z.object({
-  name: z.string().optional(),
+  name: z.string().nullable().optional(),
   /** Markdown-formatted highlights/features */
-  highlights: z.string().optional(),
+  highlights: z.string().nullable().optional(),
   technologies: z.array(z.string()).optional().default([]),
-  github: z.string().url().optional(),
-  live_link: z.string().url().optional(),
+  github: z.string().nullable().optional(),
+  live_link: z.string().nullable().optional(),
   /** YouTube link for project demo video */
-  demo_video: z.string().url().optional(),
+  demo_video: z.string().nullable().optional(),
   /** Markdown-supported detailed description */
-  more_context: z.string().optional(),
+  more_context: z.string().nullable().optional(),
   /** Ordered list of images with captions (max 5) */
   images: z.array(ProjectImageSchema).optional().default([]),
 });

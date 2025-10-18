@@ -2,7 +2,7 @@
  * Portfolio API service for communicating with the backend
  */
 
-import type { PortfolioData } from "@/types/portfolio";
+import type { PortfolioData } from "@portfolioly/schema";
 import { getIdToken } from "../firebase";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";

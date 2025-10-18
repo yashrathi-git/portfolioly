@@ -9,10 +9,10 @@ import { z } from "zod";
  * Includes certification name, issuing organization, and verification link.
  */
 export const CertificationSchema = z.object({
-  name: z.string().optional(),
+  name: z.string().nullable().optional(),
   /** Issuing organization (e.g., Coursera, Udemy, AWS) */
-  issuer: z.string().optional(),
-  link: z.string().url().optional(),
+  issuer: z.string().nullable().optional(),
+  link: z.string().nullable().optional(),
 });
 
 export type Certification = z.infer<typeof CertificationSchema>;

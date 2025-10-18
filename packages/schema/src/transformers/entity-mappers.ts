@@ -40,12 +40,12 @@ import { formatDateInfo } from "./date-formatter";
  */
 export function mapWorkExperience(exp: WorkExperience): DisplayWorkExperience {
   return {
-    companyName: exp.organization,
-    role: exp.title,
-    location: exp.location,
+    companyName: exp.organization ?? undefined,
+    role: exp.title ?? undefined,
+    location: exp.location ?? undefined,
     start: formatDateInfo(exp.start_date),
     end: exp.is_current ? "Present" : formatDateInfo(exp.end_date),
-    points: exp.highlights,
+    points: exp.highlights ?? undefined,
     technologies: exp.technologies,
   };
 }
@@ -88,14 +88,14 @@ function getFirstLine(highlights?: string): string | undefined {
  */
 export function mapProject(project: Project): DisplayProject {
   return {
-    name: project.name,
-    one_line_description: getFirstLine(project.highlights),
-    highlights: project.highlights,
+    name: project.name ?? undefined,
+    one_line_description: getFirstLine(project.highlights ?? undefined),
+    highlights: project.highlights ?? undefined,
     technologies: project.technologies,
-    github: project.github,
-    live_link: project.live_link,
-    demo_video: project.demo_video,
-    more_context: project.more_context,
+    github: project.github ?? undefined,
+    live_link: project.live_link ?? undefined,
+    demo_video: project.demo_video ?? undefined,
+    more_context: project.more_context ?? undefined,
     images: project.images,
   };
 }
@@ -135,11 +135,11 @@ export function mapEducation(edu: Education): DisplayEducation {
       : degreeParts[0];
 
   return {
-    school: edu.institution,
-    degree,
+    school: edu.institution ?? undefined,
+    degree: degree ?? undefined,
     start: formatDateInfo(edu.start_date),
     end: edu.is_current ? "Present" : formatDateInfo(edu.end_date),
-    location: edu.location,
-    grade: edu.grade,
+    location: edu.location ?? undefined,
+    grade: edu.grade ?? undefined,
   };
 }

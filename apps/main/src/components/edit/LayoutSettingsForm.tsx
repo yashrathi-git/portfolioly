@@ -11,7 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MessageSquare, FileText, Eye } from "lucide-react";
-import type { LayoutSettings } from "@/types/portfolio";
+import type { LayoutSettings } from "@portfolioly/schema";
 
 export interface LayoutSettingsFormProps {
   value: LayoutSettings;
@@ -25,21 +25,27 @@ export function LayoutSettingsForm({
   const [localValue, setLocalValue] = useState<LayoutSettings>(value);
 
   const handleLayoutModeChange = (layoutMode: string) => {
-    let newValue = { ...localValue, layout_mode: layoutMode };
-
-    // Auto-adjust default layout based on mode
-    if (layoutMode === "chat-only") {
-      newValue.default_layout = "chat";
-    } else if (layoutMode === "traditional-only") {
-      newValue.default_layout = "traditional";
-    }
+    const newValue = {
+      ...localValue,
+      layout_mode: layoutMode as "chat-only" | "traditional-only" | "both",
+      // Auto-adjust default layout based on mode
+      default_layout:
+        layoutMode === "chat-only"
+          ? "chat"
+          : layoutMode === "traditional-only"
+          ? "traditional"
+          : localValue.default_layout,
+    };
 
     setLocalValue(newValue);
     onChange(newValue);
   };
 
   const handleDefaultLayoutChange = (defaultLayout: string) => {
-    const newValue = { ...localValue, default_layout: defaultLayout };
+    const newValue = {
+      ...localValue,
+      default_layout: defaultLayout as "chat" | "traditional",
+    };
     setLocalValue(newValue);
     onChange(newValue);
   };

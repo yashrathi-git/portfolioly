@@ -12,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { PersonalInfo, Profile } from "@/types/portfolio";
-import { ProfileType } from "@/types/portfolio";
+import type { PersonalInfo, Profile, ProfileType } from "@portfolioly/schema";
 
 export interface ProfilesFormProps {
   value: PersonalInfo;
@@ -21,14 +20,14 @@ export interface ProfilesFormProps {
 }
 
 const profileTypes: { label: string; value: ProfileType }[] = [
-  { label: "LinkedIn", value: ProfileType.LINKEDIN },
-  { label: "GitHub", value: ProfileType.GITHUB },
-  { label: "Twitter / X", value: ProfileType.TWITTER },
-  { label: "Personal Website", value: ProfileType.WEBSITE },
-  { label: "Portfolio", value: ProfileType.PORTFOLIO },
-  { label: "YouTube", value: ProfileType.YOUTUBE },
-  { label: "Google Scholar", value: ProfileType.SCHOLAR },
-  { label: "Other", value: ProfileType.OTHER },
+  { label: "LinkedIn", value: "linkedin" },
+  { label: "GitHub", value: "github" },
+  { label: "Twitter / X", value: "twitter" },
+  { label: "Personal Website", value: "website" },
+  { label: "Portfolio", value: "portfolio" },
+  { label: "YouTube", value: "youtube" },
+  { label: "Google Scholar", value: "scholar" },
+  { label: "Other", value: "other" },
 ];
 
 export function ProfilesForm({ value, onChange }: ProfilesFormProps) {
@@ -43,7 +42,7 @@ export function ProfilesForm({ value, onChange }: ProfilesFormProps) {
   }, [value?.profiles]);
 
   const addProfile = () => {
-    const next: Profile = { type: ProfileType.LINKEDIN, url: "", label: "" };
+    const next: Profile = { type: "linkedin", url: "", label: "" };
     onChange({ ...(value || {}), profiles: [...profiles, next] });
   };
 

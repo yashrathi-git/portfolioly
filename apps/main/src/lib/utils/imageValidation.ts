@@ -18,7 +18,11 @@ export interface ValidationResult {
  */
 export function validateImageFile(file: File): ValidationResult {
   // Check file type
-  if (!UPLOAD_CONFIG.ALLOWED_IMAGE_TYPES.includes(file.type as any)) {
+  if (
+    !UPLOAD_CONFIG.ALLOWED_IMAGE_TYPES.includes(
+      file.type as (typeof UPLOAD_CONFIG.ALLOWED_IMAGE_TYPES)[number]
+    )
+  ) {
     return {
       valid: false,
       error: "Invalid image type. Please upload JPEG, PNG, WebP, or GIF.",

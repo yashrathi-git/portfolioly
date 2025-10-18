@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { PortfolioData } from "@/types/portfolio";
+import type { PortfolioData } from "@portfolioly/schema";
 import { PersonalInfoForm } from "./PersonalInfoForm";
 import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
 import { ProfilesForm } from "./ProfilesForm";
@@ -21,12 +21,21 @@ export interface PortfolioEditorProps {
   onChange?: (next: PortfolioData) => void;
 }
 
+const emptyPortfolioData: PortfolioData = {
+  work_experiences: [],
+  projects: [],
+  education: [],
+  certifications: [],
+};
+
 export function PortfolioEditor({ initial, onChange }: PortfolioEditorProps) {
-  const [data, setData] = useState<PortfolioData>(() => initial || {});
+  const [data, setData] = useState<PortfolioData>(
+    () => initial || emptyPortfolioData
+  );
   const [tab, setTab] = useState<string>("edit");
 
   const update = (next: Partial<PortfolioData>) => {
-    const merged = { ...(data || {}), ...next } as PortfolioData;
+    const merged = { ...data, ...next };
     setData(merged);
     onChange?.(merged);
   };
@@ -43,7 +52,7 @@ export function PortfolioEditor({ initial, onChange }: PortfolioEditorProps) {
       return;
     }
 
-    setData({});
+    setData(emptyPortfolioData);
   };
 
   return (
@@ -76,7 +85,7 @@ export function PortfolioEditor({ initial, onChange }: PortfolioEditorProps) {
             </div>
 
             <PersonalInfoForm
-              value={data.personal_info || {}}
+              value={data.personal_info || { profiles: [] }}
               onChange={(v) => update({ personal_info: v })}
             />
 
@@ -93,7 +102,7 @@ export function PortfolioEditor({ initial, onChange }: PortfolioEditorProps) {
                   onChange={(url) =>
                     update({
                       personal_info: {
-                        ...(data.personal_info || {}),
+                        ...(data.personal_info || { profiles: [] }),
                         profile_photo_url: url || undefined,
                       },
                     })
@@ -103,7 +112,7 @@ export function PortfolioEditor({ initial, onChange }: PortfolioEditorProps) {
             </Card>
 
             <ProfilesForm
-              value={data.personal_info || {}}
+              value={data.personal_info || { profiles: [] }}
               onChange={(v) => update({ personal_info: v })}
             />
 

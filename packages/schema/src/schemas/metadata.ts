@@ -10,8 +10,8 @@ import { z } from "zod";
  */
 export const TextBlobsSchema = z.object({
   /** Markdown-formatted achievements, one per line with bullet points */
-  achievements: z.string().optional(),
-  additional_context: z.string().optional(),
+  achievements: z.string().nullable().optional(),
+  additional_context: z.string().nullable().optional(),
 });
 
 export type TextBlobs = z.infer<typeof TextBlobsSchema>;
@@ -38,10 +38,10 @@ export type LayoutSettings = z.infer<typeof LayoutSettingsSchema>;
  */
 export const PortfolioMetadataSchema = z.object({
   /** Source type (e.g., resume_pdf, linkedin_pdf, github_only) */
-  source_type: z.string().optional(),
+  source_type: z.string().nullable().optional(),
   /** ISO timestamp of when data was extracted */
-  extracted_at: z.string().datetime().optional(),
-  notes: z.string().optional(),
+  extracted_at: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 export type PortfolioMetadata = z.infer<typeof PortfolioMetadataSchema>;

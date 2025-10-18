@@ -81,12 +81,12 @@ export function mapBackendToDisplay(
 
   return {
     profile: {
-      name: personalInfo?.full_name,
-      headline: personalInfo?.headline,
-      location: personalInfo?.location,
-      email: personalInfo?.email,
-      summary: personalInfo?.summary,
-      avatarUrl: personalInfo?.profile_photo_url,
+      name: personalInfo?.full_name ?? undefined,
+      headline: personalInfo?.headline ?? undefined,
+      location: personalInfo?.location ?? undefined,
+      email: personalInfo?.email ?? undefined,
+      summary: personalInfo?.summary ?? undefined,
+      avatarUrl: personalInfo?.profile_photo_url ?? undefined,
       socials: mapProfilesToSocials(personalInfo?.profiles),
     },
     projects: (backendData.projects || []).map(mapProject),

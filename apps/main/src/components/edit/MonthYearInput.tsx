@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { DateInfo } from "@/types/portfolio";
+import type { DateInfo } from "@portfolioly/schema";
 import { useId } from "react";
 
 export interface MonthYearInputProps {

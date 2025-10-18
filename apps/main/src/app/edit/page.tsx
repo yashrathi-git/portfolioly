@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Save, AlertCircle } from "lucide-react";
-import type { PortfolioData } from "@/types/portfolio";
+import type { PortfolioData } from "@portfolioly/schema";
 import {
   getUserPortfolio,
   saveUserPortfolio,

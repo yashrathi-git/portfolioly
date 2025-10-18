@@ -12,9 +12,9 @@ import { z } from "zod";
 export const DateInfoSchema = z
   .object({
     /** Month (1-12) */
-    month: z.number().int().min(1).max(12).optional(),
+    month: z.number().int().min(1).max(12).nullable().optional(),
     /** 4-digit year (1900-2100) */
-    year: z.number().int().min(1900).max(2100).optional(),
+    year: z.number().int().min(1900).max(2100).nullable().optional(),
   })
   .optional();
 
@@ -40,9 +40,9 @@ export type ProfileType = z.infer<typeof ProfileTypeSchema>;
  * User profile/social media link information.
  */
 export const ProfileSchema = z.object({
-  type: ProfileTypeSchema.optional(),
-  url: z.string().url().optional(),
-  label: z.string().optional(),
+  type: ProfileTypeSchema.nullable().optional(),
+  url: z.string().nullable().optional(),
+  label: z.string().nullable().optional(),
 });
 
 export type Profile = z.infer<typeof ProfileSchema>;

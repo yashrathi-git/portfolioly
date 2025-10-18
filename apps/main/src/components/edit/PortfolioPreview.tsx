@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { Portfolio } from "@portfolioly/template-components";
-import type { PortfolioData as TemplatePortfolioData } from "@portfolioly/template-components";
-import type { PortfolioData as MainPortfolioData } from "@/types/portfolio";
+import type { DisplayPortfolioData as TemplatePortfolioData } from "@portfolioly/template-components";
+import type { PortfolioData as MainPortfolioData } from "@portfolioly/schema";
 import { mapPortfolioDataToTemplate } from "@/utils/portfolioDataMapper";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { env } from "@/lib/env";
