@@ -6,6 +6,8 @@ import { Skills } from "./portfolio-traditional/Skills";
 import { WorkExperience } from "./portfolio-traditional/WorkExperience";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
+import Markdown from "markdown-to-jsx";
+import BlurFade from "./magicui/blur-fade";
 import {
   requiresExternalData,
   useComponentDataTracking,
@@ -68,6 +70,7 @@ const TraditionalPortfolioComponent = ({
       </div>
     );
   }
+  console.log(effectiveData?.achievements);
 
   if (!effectiveData || !effectiveData.profile) {
     return (
@@ -110,45 +113,44 @@ const TraditionalPortfolioComponent = ({
           <Projects items={effectiveData.projects} />
         )}
 
-        <main className="mx-auto w-full max-w-2xl px-6 pt-10 pb-16 space-y-10">
-          {effectiveData.achievements &&
-            effectiveData.achievements.length > 0 && (
-              <section className="space-y-4">
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                  Achievements
-                </h2>
-                <ul className="grid gap-3 sm:grid-cols-2">
-                  {effectiveData.achievements.map((a) => (
-                    <li
-                      key={a}
-                      className="rounded-lg border border-border bg-card px-4 py-3 text-sm"
-                    >
-                      {a}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+        {effectiveData.achievements &&
+          effectiveData.achievements.length > 0 && (
+            <section id="achievements" className="px-6 pb-16">
+              <div className="mx-auto w-full max-w-2xl space-y-4">
+                <BlurFade delay={0.04 * 11}>
+                  <h2 className="text-xl font-bold">Achievements</h2>
+                </BlurFade>
+                <BlurFade delay={0.04 * 12}>
+                  <Markdown className="prose prose-sm max-w-full text-pretty font-sans text-muted-foreground dark:prose-invert prose-ul:list-disc prose-ul:pl-5 prose-li:text-muted-foreground">
+                    {effectiveData.achievements.join("\n")}
+                  </Markdown>
+                </BlurFade>
+              </div>
+            </section>
+          )}
 
-          {effectiveData.certificates &&
-            effectiveData.certificates.length > 0 && (
-              <section className="space-y-4">
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                  Certificates
-                </h2>
-                <ul className="grid gap-3 sm:grid-cols-2">
-                  {effectiveData.certificates.map((c) => (
-                    <li
-                      key={c}
-                      className="rounded-lg border border-border bg-card px-4 py-3 text-sm"
-                    >
-                      {c}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-        </main>
+        {effectiveData.certificates &&
+          effectiveData.certificates.length > 0 && (
+            <section id="certificates" className="px-6 pb-16">
+              <div className="mx-auto w-full max-w-2xl space-y-4">
+                <BlurFade delay={0.04 * 13}>
+                  <h2 className="text-xl font-bold">Certificates</h2>
+                </BlurFade>
+                <BlurFade delay={0.04 * 14}>
+                  <ul className="grid gap-3 sm:grid-cols-2">
+                    {effectiveData.certificates.map((c, idx) => (
+                      <li
+                        key={`${c}-${idx}`}
+                        className="rounded-lg border border-border bg-card px-4 py-3 text-sm"
+                      >
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                </BlurFade>
+              </div>
+            </section>
+          )}
       </div>
     </PortfolioErrorBoundary>
   );
