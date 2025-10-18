@@ -2,7 +2,7 @@
  * JSON file loader for local portfolio data
  */
 
-import { BackendPortfolioData } from "../types/portfolio";
+import type { PortfolioData } from "@portfolioly/schema";
 import { TemplateConfig } from "../config/template-config";
 import { DataProviderError } from "../providers/data-provider";
 import { validateApiResponse } from "../utils/data-mapper";
@@ -17,7 +17,7 @@ export class JsonFileLoader {
   /**
    * Load portfolio data from JSON file
    */
-  async loadPortfolioData(): Promise<BackendPortfolioData | null> {
+  async loadPortfolioData(): Promise<PortfolioData | null> {
     const jsonPath = this.config.jsonFiles?.portfolioData;
 
     if (!jsonPath) {
@@ -51,7 +51,7 @@ export class JsonFileLoader {
       }
 
       this.log("Successfully loaded portfolio data from JSON:", data);
-      return data as BackendPortfolioData;
+      return data as PortfolioData;
     } catch (error) {
       this.log("Error loading JSON file:", error);
 
@@ -113,7 +113,7 @@ export class JsonFileLoader {
    */
   async loadAndValidateJson(): Promise<{
     success: boolean;
-    data?: BackendPortfolioData;
+    data?: PortfolioData;
     error?: string;
   }> {
     try {
@@ -141,7 +141,7 @@ export class JsonFileLoader {
   /**
    * Create a sample JSON file structure for reference
    */
-  static getSampleJsonStructure(): BackendPortfolioData {
+  static getSampleJsonStructure(): PortfolioData {
     return {
       personal_info: {
         full_name: "John Doe",
@@ -182,6 +182,7 @@ export class JsonFileLoader {
           technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
           github: "https://github.com/johndoe/portfolio",
           live_link: "https://johndoe.dev",
+          images: [],
         },
       ],
       education: [

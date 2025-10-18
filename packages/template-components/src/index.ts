@@ -18,7 +18,32 @@ export * from "./components/chat/Suggestions";
 export * from "./components/chat/types";
 
 // Export types and configuration
-export * from "./types/portfolio";
+// Re-export types from shared schema package
+export type {
+  // Backend-aligned types
+  PortfolioData,
+  PersonalInfo,
+  WorkExperience,
+  Project,
+  ProjectImage,
+  Education,
+  Certification,
+  TextBlobs,
+  LayoutSettings,
+  PortfolioMetadata,
+  DateInfo,
+  Profile,
+  ProfileType,
+  // Display format types
+  DisplayPortfolioData,
+  DisplayPortfolioProfile,
+  DisplayProject,
+  DisplayEducation,
+  DisplayWorkExperience,
+  SocialLink,
+  SocialType,
+} from "@portfolioly/schema";
+
 export * from "./config/portfolio-config";
 export * from "./config/template-config";
 

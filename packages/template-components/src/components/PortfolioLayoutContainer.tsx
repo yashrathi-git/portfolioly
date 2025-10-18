@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LayoutSwitcher, type LayoutMode } from "./LayoutSwitcher";
 import { ChatPortfolio } from "./ChatPortfolio";
 import { TraditionalPortfolio } from "./TraditionalPortfolio";
-import type { PortfolioData } from "../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 import type { ChatProfile, Suggestion } from "./chat/types";
 import PortfolioErrorBoundary from "./ErrorBoundary";
 
@@ -15,7 +15,7 @@ export interface PortfolioLayoutSettings {
 }
 
 export interface PortfolioLayoutContainerProps {
-  portfolioData?: PortfolioData | null;
+  portfolioData?: DisplayPortfolioData | null;
   layoutSettings?: PortfolioLayoutSettings;
   isLoading?: boolean;
   error?: string;

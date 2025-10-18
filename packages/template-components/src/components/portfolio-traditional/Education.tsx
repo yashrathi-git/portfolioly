@@ -1,12 +1,12 @@
 import BlurFade from "../magicui/blur-fade";
 import { ResumeCard } from "../resume-card";
-import type { EducationItem } from "../../types/portfolio";
+import type { DisplayEducation } from "@portfolioly/schema";
 import { GraduationCap } from "lucide-react";
 
 const BLUR_FADE_DELAY = 0.04;
 
 export type EducationSectionProps = {
-  items?: EducationItem[];
+  items?: DisplayEducation[];
 };
 
 function formatPeriod(start?: string | null, end?: string | null) {
@@ -31,7 +31,7 @@ function formatPeriod(start?: string | null, end?: string | null) {
   return `${sanitizedStart} - ${sanitizedEnd}`;
 }
 
-function formatDescription(item: EducationItem) {
+function formatDescription(item: DisplayEducation) {
   if (!item.grade?.trim()) {
     return undefined;
   }
@@ -39,7 +39,7 @@ function formatDescription(item: EducationItem) {
   return `Grade: ${item.grade.trim()}`;
 }
 
-function hasRequiredProps(item: EducationItem) {
+function hasRequiredProps(item: DisplayEducation) {
   return Boolean(
     item.school?.trim() && (item.start?.trim() || item.end?.trim())
   );
@@ -66,7 +66,7 @@ export function Education({ items = [] }: EducationSectionProps) {
               delay={BLUR_FADE_DELAY * 8 + idx * 0.05}
             >
               <ResumeCard
-                logoUrl={education.logoUrl ?? ""}
+                logoUrl={""} // logoUrl removed from display schema
                 altText={education.school ?? "Education"}
                 title={education.school ?? ""}
                 subtitle={education.degree ?? undefined}

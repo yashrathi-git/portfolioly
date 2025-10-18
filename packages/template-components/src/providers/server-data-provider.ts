@@ -2,12 +2,12 @@
  * Server-side data provider for Next.js SSR/SSG support
  */
 
-import { PortfolioData, BackendPortfolioData } from "../types/portfolio";
-import { TemplateConfig } from "../config/template-config";
+import type { DisplayPortfolioData, PortfolioData } from "@portfolioly/schema";
 import {
-  mapBackendToFrontend,
-  validateApiResponse,
-} from "../utils/data-mapper";
+  mapBackendToDisplay,
+  validatePortfolioData,
+} from "@portfolioly/schema";
+import { TemplateConfig } from "../config/template-config";
 
 export interface ServerDataProviderOptions {
   config: TemplateConfig;
@@ -16,7 +16,7 @@ export interface ServerDataProviderOptions {
 }
 
 export interface ServerFetchResult {
-  data?: PortfolioData | null;
+  data?: DisplayPortfolioData | null;
   error?: string;
   notFound?: boolean;
   revalidate?: number; // For ISR
@@ -38,7 +38,7 @@ export class ServerDataProvider {
    */
   async fetchPortfolioData(username?: string): Promise<ServerFetchResult> {
     try {
-      let backendData: BackendPortfolioData | null = null;
+      let backendData: PortfolioData | null = null;
 
       if (username) {
         // Public portfolio request
@@ -62,7 +62,7 @@ export class ServerDataProvider {
         };
       }
 
-      const portfolioData = mapBackendToFrontend(backendData);
+      const portfolioData = mapBackendToDisplay(backendData);
 
       return {
         data: portfolioData,
@@ -80,7 +80,7 @@ export class ServerDataProvider {
           const jsonData = await this.fetchFromJson();
           if (jsonData) {
             return {
-              data: mapBackendToFrontend(jsonData),
+              data: mapBackendToDisplay(jsonData),
               revalidate: 3600, // 1 hour for JSON data
             };
           }
@@ -104,7 +104,7 @@ export class ServerDataProvider {
    */
   private async fetchPublicPortfolio(
     username: string
-  ): Promise<BackendPortfolioData | null> {
+  ): Promise<PortfolioData | null> {
     const endpoint =
       this.config.apiEndpoints?.publicPortfolio || "/api/public/portfolio";
     const url = `${this.baseUrl}${endpoint}/${encodeURIComponent(username)}`;
@@ -128,17 +128,17 @@ export class ServerDataProvider {
 
     const data = await response.json();
 
-    if (!validateApiResponse(data)) {
+    try {
+      return validatePortfolioData(data);
+    } catch (error) {
       throw new Error("Invalid portfolio data structure received from API");
     }
-
-    return data;
   }
 
   /**
    * Fetch private portfolio (authenticated)
    */
-  private async fetchPrivatePortfolio(): Promise<BackendPortfolioData | null> {
+  private async fetchPrivatePortfolio(): Promise<PortfolioData | null> {
     const endpoint =
       this.config.apiEndpoints?.authenticatedPortfolio || "/api/portfolio";
     const url = `${this.baseUrl}${endpoint}`;
@@ -163,17 +163,17 @@ export class ServerDataProvider {
 
     const data = await response.json();
 
-    if (!validateApiResponse(data)) {
+    try {
+      return validatePortfolioData(data);
+    } catch (error) {
       throw new Error("Invalid portfolio data structure received from API");
     }
-
-    return data;
   }
 
   /**
    * Fetch data from JSON file (server-side)
    */
-  private async fetchFromJson(): Promise<BackendPortfolioData | null> {
+  private async fetchFromJson(): Promise<PortfolioData | null> {
     const jsonPath = this.config.jsonFiles?.portfolioData;
 
     if (!jsonPath) {
@@ -190,11 +190,11 @@ export class ServerDataProvider {
 
     const data = await response.json();
 
-    if (!validateApiResponse(data)) {
+    try {
+      return validatePortfolioData(data);
+    } catch (error) {
       throw new Error("Invalid JSON structure in portfolio data file");
     }
-
-    return data;
   }
 
   /**
@@ -203,7 +203,7 @@ export class ServerDataProvider {
   async fetchMultiplePortfolios(usernames: string[]): Promise<{
     portfolios: Array<{
       username: string;
-      data?: PortfolioData | null;
+      data?: DisplayPortfolioData | null;
       error?: string;
     }>;
     revalidate: number;

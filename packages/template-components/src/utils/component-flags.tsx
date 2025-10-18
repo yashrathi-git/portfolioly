@@ -3,17 +3,17 @@
  */
 
 import React from "react";
-import { PortfolioData } from "../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 
 export interface ComponentDataRequirements {
   requiresExternalData: boolean;
   dataSource: "api" | "json" | "props";
-  fallbackData?: PortfolioData | null;
+  fallbackData?: DisplayPortfolioData | null;
   description: string;
 }
 
 export interface FlaggedComponentProps {
-  portfolioData?: PortfolioData | null;
+  portfolioData?: DisplayPortfolioData | null;
   isLoading?: boolean;
   error?: string;
 }
@@ -41,13 +41,14 @@ export function requiresExternalData(
         }
       }
 
-      const effectiveData =
-        portfolioData ?? requirements.fallbackData ?? null;
+      const effectiveData = portfolioData ?? requirements.fallbackData ?? null;
 
       return <Component {...props} portfolioData={effectiveData} />;
     };
 
-    WrappedComponent.displayName = `RequiresExternalData(${Component.displayName || Component.name})`;
+    WrappedComponent.displayName = `RequiresExternalData(${
+      Component.displayName || Component.name
+    })`;
 
     (WrappedComponent as any).__dataRequirements = {
       requiresExternalData: true,
@@ -125,7 +126,7 @@ export function logFlaggedComponents(moduleExports: Record<string, any>): void {
  */
 export function withDummyData<P extends FlaggedComponentProps>(
   Component: React.ComponentType<P>,
-  dummyData?: PortfolioData | null
+  dummyData?: DisplayPortfolioData | null
 ) {
   return function DummyDataWrapper(props: P) {
     const effectiveProps = {
@@ -144,7 +145,7 @@ export function withDummyData<P extends FlaggedComponentProps>(
  */
 export function validateComponentData(
   componentName: string,
-  data: PortfolioData | null | undefined,
+  data: DisplayPortfolioData | null | undefined,
   requirements: ComponentDataRequirements
 ): {
   isValid: boolean;
@@ -179,7 +180,7 @@ export function validateComponentData(
  */
 export function useComponentDataTracking(
   componentName: string,
-  data: PortfolioData | null | undefined,
+  data: DisplayPortfolioData | null | undefined,
   requirements?: ComponentDataRequirements
 ) {
   if (process.env.NODE_ENV === "development" && requirements) {

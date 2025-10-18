@@ -6,13 +6,13 @@ import {
 } from "../../components/ui/avatar";
 import BlurFade from "../magicui/blur-fade";
 import BlurFadeText from "../magicui/blur-fade-text";
-import type { TemplatePortfolioProfile } from "../../types/portfolio";
+import type { DisplayPortfolioProfile } from "@portfolioly/schema";
 import { SocialIcon } from "./SocialIcon";
 
 const BLUR_FADE_DELAY = 0.08;
 
 export type HeroProps = {
-  profile: TemplatePortfolioProfile;
+  profile: DisplayPortfolioProfile;
 };
 
 const getInitials = (name?: string | null) => {
@@ -36,7 +36,7 @@ export const Hero = ({ profile }: HeroProps) => {
   const firstName = profile.name?.split(/\s+/)[0];
   const headline = profile.headline;
   const summary = profile.summary;
-  const avatarSrc = profile.profile_photo_url || profile.avatarUrl;
+  const avatarSrc = profile.avatarUrl;
   const initials = getInitials(profile.name);
   const hasSocials =
     Array.isArray(profile.socials) && profile.socials.length > 0;

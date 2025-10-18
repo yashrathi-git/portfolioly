@@ -3,18 +3,18 @@
  */
 
 import React, { Component, ReactNode } from "react";
-import { PortfolioData } from "../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 
 export interface ErrorBoundaryState {
   hasError: boolean;
   errorType: "network" | "auth" | "validation" | "unknown";
   errorMessage?: string;
-  fallbackData?: PortfolioData;
+  fallbackData?: DisplayPortfolioData;
 }
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallbackData?: PortfolioData;
+  fallbackData?: DisplayPortfolioData;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
@@ -83,7 +83,7 @@ export class PortfolioErrorBoundary extends Component<
 interface ErrorFallbackProps {
   errorType: ErrorBoundaryState["errorType"];
   errorMessage?: string;
-  fallbackData?: PortfolioData;
+  fallbackData?: DisplayPortfolioData;
   onRetry: () => void;
 }
 

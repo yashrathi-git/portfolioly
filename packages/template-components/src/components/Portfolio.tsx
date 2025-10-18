@@ -5,11 +5,11 @@ import {
   PortfolioLayoutContainer,
   type PortfolioLayoutSettings,
 } from "./PortfolioLayoutContainer";
-import type { PortfolioData } from "../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 import type { ChatProfile, Suggestion } from "./chat/types";
 
 export interface PortfolioProps {
-  portfolioData?: PortfolioData | null;
+  portfolioData?: DisplayPortfolioData | null;
   isLoading?: boolean;
   error?: string;
   isOwner?: boolean;
@@ -141,8 +141,7 @@ export const Portfolio = ({
       return {
         name: portfolioData.profile.name,
         avatarUrl:
-          portfolioData.profile.profile_photo_url ||
-          portfolioData.profile.avatarUrl,
+          portfolioData.profile.avatarUrl || portfolioData.profile.avatarUrl,
         links: links.length > 0 ? links : undefined,
       };
     }

@@ -9,17 +9,17 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import { PortfolioData } from "../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 import { TemplateConfig } from "../config/template-config";
 import { BatchDataProvider } from "./batch-data-provider";
 
 interface HydrationContextValue {
-  portfolioData?: PortfolioData | null;
+  portfolioData?: DisplayPortfolioData | null;
   isLoading: boolean;
   error?: string;
   dataProvider?: BatchDataProvider;
   refreshData: () => Promise<void>;
-  setPortfolioData: (data: PortfolioData | null) => void;
+  setPortfolioData: (data: DisplayPortfolioData | null) => void;
 }
 
 const HydrationContext = createContext<HydrationContextValue | null>(null);
@@ -27,7 +27,7 @@ const HydrationContext = createContext<HydrationContextValue | null>(null);
 interface HydrationProviderProps {
   children: ReactNode;
   config: TemplateConfig;
-  initialData?: PortfolioData | null;
+  initialData?: DisplayPortfolioData | null;
   username?: string;
   baseUrl?: string;
 }
@@ -39,9 +39,8 @@ export function HydrationProvider({
   username,
   baseUrl = "",
 }: HydrationProviderProps) {
-  const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(
-    initialData || null
-  );
+  const [portfolioData, setPortfolioData] =
+    useState<DisplayPortfolioData | null>(initialData || null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [dataProvider] = useState(() => new BatchDataProvider(config, baseUrl));
@@ -123,7 +122,9 @@ export function usePortfolioData() {
  * Higher-order component to wrap components with portfolio data
  */
 export function withPortfolioData<P extends object>(
-  Component: React.ComponentType<P & { portfolioData?: PortfolioData | null }>
+  Component: React.ComponentType<
+    P & { portfolioData?: DisplayPortfolioData | null }
+  >
 ) {
   return function WrappedComponent(props: P) {
     const { portfolioData } = usePortfolioData();
@@ -135,7 +136,9 @@ export function withPortfolioData<P extends object>(
 /**
  * Utility to serialize portfolio data for Next.js props
  */
-export function serializePortfolioData(data: PortfolioData | null): string {
+export function serializePortfolioData(
+  data: DisplayPortfolioData | null
+): string {
   if (!data) return "null";
 
   try {
@@ -151,7 +154,7 @@ export function serializePortfolioData(data: PortfolioData | null): string {
  */
 export function deserializePortfolioData(
   serialized: string
-): PortfolioData | null {
+): DisplayPortfolioData | null {
   if (!serialized || serialized === "null") return null;
 
   try {
@@ -175,7 +178,7 @@ export function useClientSidePortfolioData(
   } = {}
 ) {
   const { enabled = true, refetchOnMount = false, baseUrl = "" } = options;
-  const [data, setData] = useState<PortfolioData | null>(null);
+  const [data, setData] = useState<DisplayPortfolioData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [dataProvider] = useState(() => new BatchDataProvider(config, baseUrl));
@@ -255,7 +258,7 @@ export function HydrationBoundary({
  * Utility for Next.js pages to handle hydration
  */
 export interface HydratedPageProps {
-  portfolioData?: PortfolioData | null;
+  portfolioData?: DisplayPortfolioData | null;
   username?: string;
   config: TemplateConfig;
 }

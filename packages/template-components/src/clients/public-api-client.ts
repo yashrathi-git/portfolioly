@@ -2,7 +2,7 @@
  * API client for public portfolio data access
  */
 
-import { BackendPortfolioData } from "../types/portfolio";
+import type { PortfolioData } from "@portfolioly/schema";
 import { TemplateConfig } from "../config/template-config";
 import { DataProviderError } from "../providers/data-provider";
 
@@ -49,7 +49,7 @@ export class PublicApiClient {
   async getPublicPortfolioData(
     username: string,
     publicToken?: string
-  ): Promise<BackendPortfolioData | null> {
+  ): Promise<PortfolioData | null> {
     if (!username || username.trim() === "") {
       throw new DataProviderError(
         "Username is required for public portfolio access",
@@ -83,9 +83,7 @@ export class PublicApiClient {
         headers,
       });
 
-      const data = await this.handleResponse<BackendPortfolioData | null>(
-        response
-      );
+      const data = await this.handleResponse<PortfolioData | null>(response);
 
       this.log("Received public portfolio data:", data);
       return data;

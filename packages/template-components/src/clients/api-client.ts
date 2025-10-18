@@ -2,7 +2,7 @@
  * API client for authenticated portfolio data access
  */
 
-import { BackendPortfolioData } from "../types/portfolio";
+import type { PortfolioData } from "@portfolioly/schema";
 import { TemplateConfig } from "../config/template-config";
 import { DataProviderError } from "../providers/data-provider";
 
@@ -60,7 +60,7 @@ export class AuthenticatedApiClient {
   /**
    * Get authenticated user's portfolio data
    */
-  async getPortfolioData(): Promise<BackendPortfolioData | null> {
+  async getPortfolioData(): Promise<PortfolioData | null> {
     try {
       const endpoint =
         this.config.apiEndpoints?.authenticatedPortfolio || "/api/portfolio";
@@ -73,9 +73,7 @@ export class AuthenticatedApiClient {
         headers: this.getAuthHeaders(),
       });
 
-      const data = await this.handleResponse<BackendPortfolioData | null>(
-        response
-      );
+      const data = await this.handleResponse<PortfolioData | null>(response);
 
       this.log("Received portfolio data:", data);
       return data;
@@ -97,7 +95,7 @@ export class AuthenticatedApiClient {
   /**
    * Save portfolio data for authenticated user
    */
-  async savePortfolioData(portfolioData: BackendPortfolioData): Promise<void> {
+  async savePortfolioData(portfolioData: PortfolioData): Promise<void> {
     try {
       const endpoint =
         this.config.apiEndpoints?.authenticatedPortfolio || "/api/portfolio";

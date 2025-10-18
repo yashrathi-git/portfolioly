@@ -15,7 +15,7 @@ import type {
   ChatResponse,
   ToolCall,
 } from "./chat/types";
-import type { PortfolioData } from "../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
 import {
@@ -27,7 +27,7 @@ export type ChatPortfolioProps = {
   profile?: ChatProfile;
   suggestions?: Suggestion[]; // full list
   presets?: Record<string, string>; // label -> assistant reply
-  portfolioData?: PortfolioData | null;
+  portfolioData?: DisplayPortfolioData | null;
   isLoading?: boolean;
   error?: string;
   username?: string; // Portfolio username for API calls
@@ -80,14 +80,14 @@ const ChatPortfolioComponent = ({
         name: profile.name ?? effectivePortfolioData?.profile?.name,
         avatarUrl:
           profile.avatarUrl ??
-          effectivePortfolioData?.profile?.profile_photo_url ??
+          effectivePortfolioData?.profile?.avatarUrl ??
           effectivePortfolioData?.profile?.avatarUrl,
       }
     : effectivePortfolioData?.profile
     ? {
         name: effectivePortfolioData.profile.name,
         avatarUrl:
-          effectivePortfolioData.profile.profile_photo_url ||
+          effectivePortfolioData.profile.avatarUrl ||
           effectivePortfolioData.profile.avatarUrl,
       }
     : undefined;
@@ -146,7 +146,7 @@ const ChatPortfolioComponent = ({
         heading: "Projects",
         projects: effectivePortfolioData.projects.map((p) => ({
           name: p.name,
-          role: p.role,
+          // role field removed from new schema
           one_line_description: p.one_line_description,
           highlights: p.highlights,
           technologies: p.technologies,

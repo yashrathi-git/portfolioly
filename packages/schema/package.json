@@ -1,0 +1,30 @@
+{
+  "name": "@portfolioly/schema",
+  "private": true,
+  "version": "0.0.0",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vite": "^5",
+    "vite-plugin-dts": "^4"
+  },
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch"
+  }
+}

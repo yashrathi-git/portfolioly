@@ -3,7 +3,7 @@
  */
 
 import { TemplateConfig } from "../config/template-config";
-import { PortfolioData } from "../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 import { getFlaggedComponents } from "./component-flags";
 
 export interface DebugInfo {
@@ -170,7 +170,7 @@ export function validateConfiguration(config: TemplateConfig): {
 /**
  * Debug utility to analyze portfolio data
  */
-export function analyzePortfolioData(data: PortfolioData | null): {
+export function analyzePortfolioData(data: DisplayPortfolioData | null): {
   hasData: boolean;
   completeness: number; // 0-1 score
   missingFields: string[];
@@ -276,7 +276,7 @@ export async function testDataSources(config: TemplateConfig): Promise<{
  */
 export function generateDebugReport(
   config: TemplateConfig,
-  data: PortfolioData | null,
+  data: DisplayPortfolioData | null,
   moduleExports?: Record<string, any>
 ): DebugInfo {
   const configValidation = validateConfiguration(config);

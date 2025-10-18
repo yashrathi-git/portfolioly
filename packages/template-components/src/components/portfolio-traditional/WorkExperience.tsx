@@ -1,11 +1,11 @@
 import BlurFade from "../magicui/blur-fade";
 import { ResumeCard } from "../resume-card";
-import type { ExperienceItem } from "../../types/portfolio";
+import type { DisplayWorkExperience } from "@portfolioly/schema";
 
 const BLUR_FADE_DELAY = 0.04;
 
 export type WorkExperienceProps = {
-  items?: ExperienceItem[];
+  items?: DisplayWorkExperience[];
 };
 
 function formatPeriod(start?: string | null, end?: string | null) {
@@ -50,7 +50,7 @@ function normalizeDescription(points?: string[] | string | null) {
   return filtered.join("\n");
 }
 
-function hasRequiredProps(item: ExperienceItem) {
+function hasRequiredProps(item: DisplayWorkExperience) {
   return Boolean(
     item.companyName?.trim() &&
       (item.start?.trim() ||
@@ -79,7 +79,7 @@ export function WorkExperience({ items = [] }: WorkExperienceProps) {
               delay={BLUR_FADE_DELAY * 6 + idx * 0.05}
             >
               <ResumeCard
-                logoUrl={work.logoUrl ?? ""}
+                logoUrl={""} // logoUrl removed from display schema
                 altText={work.companyName ?? "Company"}
                 title={work.companyName ?? ""}
                 subtitle={work.role ?? undefined}

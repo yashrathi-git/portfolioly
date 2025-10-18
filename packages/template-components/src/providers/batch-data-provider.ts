@@ -3,11 +3,11 @@
  */
 
 import { HybridDataProvider } from "./hybrid-data-provider";
-import { PortfolioData } from "../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 import { TemplateConfig } from "../config/template-config";
 
 export interface BatchLoadResult {
-  portfolioData?: PortfolioData | null;
+  portfolioData?: DisplayPortfolioData | null;
   userSettings?: {
     username?: string;
     isPublic?: boolean;
@@ -93,7 +93,7 @@ export class BatchDataProvider extends HybridDataProvider {
   async batchLoadMultiplePortfolios(usernames: string[]): Promise<{
     portfolios: Array<{
       username: string;
-      data?: PortfolioData | null;
+      data?: DisplayPortfolioData | null;
       error?: string;
     }>;
     loadedFrom: "api" | "json" | "cache";

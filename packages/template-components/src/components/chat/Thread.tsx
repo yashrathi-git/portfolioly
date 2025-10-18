@@ -2,7 +2,7 @@
 
 import { Sparkles } from "lucide-react";
 import type { Message, ToolCall } from "./types";
-import type { PortfolioData } from "../../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 import { AboutWidget } from "../widgets/AboutWidget";
 import { ProjectsWidget } from "../widgets/ProjectsWidget";
 import { SkillsWidget } from "../widgets/SkillsWidget";
@@ -16,13 +16,13 @@ import { MarkdownContent } from "../../utils/markdown";
 type ThreadProps = {
   messages: Message[];
   isThinking?: boolean;
-  portfolioData?: PortfolioData | null;
+  portfolioData?: DisplayPortfolioData | null;
 };
 
 // Helper function to prepare widget data from portfolio data
 const prepareWidgetData = (
   widgetType: string,
-  portfolioData: PortfolioData | null | undefined,
+  portfolioData: DisplayPortfolioData | null | undefined,
   indices?: number[]
 ) => {
   if (!portfolioData) return null;
@@ -38,7 +38,7 @@ const prepareWidgetData = (
               portfolioData.profile.headline ||
               "",
             location: portfolioData.profile.location,
-            profile_photo_url: portfolioData.profile.profile_photo_url,
+            profile_photo_url: portfolioData.profile.avatarUrl,
             avatarUrl: portfolioData.profile.avatarUrl, // Keep for backward compatibility
           }
         : null;
@@ -162,7 +162,7 @@ const prepareWidgetData = (
 // Helper function to render a widget based on tool call
 const renderWidget = (
   toolCall: ToolCall,
-  portfolioData: PortfolioData | null | undefined
+  portfolioData: DisplayPortfolioData | null | undefined
 ) => {
   const widgetData = prepareWidgetData(
     toolCall.widget,

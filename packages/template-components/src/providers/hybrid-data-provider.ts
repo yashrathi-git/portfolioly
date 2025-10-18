@@ -7,8 +7,8 @@ import { AuthenticatedApiClient } from "../clients/api-client";
 import { PublicApiClient } from "../clients/public-api-client";
 import { JsonFileLoader } from "../clients/json-loader";
 import { TemplateConfig } from "../config/template-config";
-import { BackendPortfolioData, PortfolioData } from "../types/portfolio";
-import { mapBackendToFrontend } from "../utils/data-mapper";
+import type { PortfolioData, DisplayPortfolioData } from "@portfolioly/schema";
+import { mapBackendToDisplay } from "@portfolioly/schema";
 
 export class HybridDataProvider extends BaseDataProvider {
   private authenticatedClient: AuthenticatedApiClient;
@@ -29,17 +29,19 @@ export class HybridDataProvider extends BaseDataProvider {
   /**
    * Get portfolio data with hybrid fallback logic
    */
-  async getPortfolioData(username?: string): Promise<PortfolioData | null> {
+  async getPortfolioData(
+    username?: string
+  ): Promise<DisplayPortfolioData | null> {
     const cacheKey = username ? `public_${username}` : "portfolio_data";
 
     // Check cache first
-    const cached = this.getCachedData<PortfolioData>(cacheKey);
+    const cached = this.getCachedData<DisplayPortfolioData>(cacheKey);
     if (cached) {
       this.log("Returning cached portfolio data");
       return cached;
     }
 
-    let backendData: BackendPortfolioData | null = null;
+    let backendData: PortfolioData | null = null;
     let dataSource = "";
 
     try {
@@ -79,7 +81,7 @@ export class HybridDataProvider extends BaseDataProvider {
     }
 
     // Transform backend data to frontend format
-    const portfolioData = mapBackendToFrontend(backendData);
+    const portfolioData = mapBackendToDisplay(backendData);
 
     // Cache the result
     this.setCachedData(cacheKey, portfolioData);
@@ -91,7 +93,7 @@ export class HybridDataProvider extends BaseDataProvider {
   /**
    * Get private portfolio data with data source selection
    */
-  private async getPrivatePortfolioData(): Promise<BackendPortfolioData | null> {
+  private async getPrivatePortfolioData(): Promise<PortfolioData | null> {
     switch (this.config.dataSource) {
       case "api":
       case "hybrid":
@@ -113,7 +115,7 @@ export class HybridDataProvider extends BaseDataProvider {
    */
   private async getPublicPortfolioData(
     username: string
-  ): Promise<BackendPortfolioData | null> {
+  ): Promise<PortfolioData | null> {
     switch (this.config.dataSource) {
       case "api":
       case "hybrid":
@@ -134,11 +136,11 @@ export class HybridDataProvider extends BaseDataProvider {
   /**
    * Get authenticated portfolio data (always uses API)
    */
-  async getAuthenticatedPortfolioData(): Promise<PortfolioData | null> {
+  async getAuthenticatedPortfolioData(): Promise<DisplayPortfolioData | null> {
     const cacheKey = "authenticated_portfolio";
 
     // Check cache first
-    const cached = this.getCachedData<PortfolioData>(cacheKey);
+    const cached = this.getCachedData<DisplayPortfolioData>(cacheKey);
     if (cached) {
       this.log("Returning cached authenticated portfolio data");
       return cached;
@@ -151,7 +153,7 @@ export class HybridDataProvider extends BaseDataProvider {
         return null;
       }
 
-      const portfolioData = mapBackendToFrontend(backendData);
+      const portfolioData = mapBackendToDisplay(backendData);
 
       // Cache the result
       this.setCachedData(cacheKey, portfolioData);

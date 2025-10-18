@@ -2,13 +2,13 @@
  * Abstract data provider interface and base implementation
  */
 
-import { PortfolioData } from "../types/portfolio";
+import type { DisplayPortfolioData } from "@portfolioly/schema";
 import { TemplateConfig } from "../config/template-config";
 
 export interface DataProvider {
   // Core data fetching
-  getPortfolioData(username?: string): Promise<PortfolioData | null>;
-  getAuthenticatedPortfolioData(): Promise<PortfolioData | null>;
+  getPortfolioData(username?: string): Promise<DisplayPortfolioData | null>;
+  getAuthenticatedPortfolioData(): Promise<DisplayPortfolioData | null>;
 
   // Username management
   checkUsernameAvailability(username: string): Promise<boolean>;
@@ -28,8 +28,10 @@ export abstract class BaseDataProvider implements DataProvider {
     this.config = config;
   }
 
-  abstract getPortfolioData(username?: string): Promise<PortfolioData | null>;
-  abstract getAuthenticatedPortfolioData(): Promise<PortfolioData | null>;
+  abstract getPortfolioData(
+    username?: string
+  ): Promise<DisplayPortfolioData | null>;
+  abstract getAuthenticatedPortfolioData(): Promise<DisplayPortfolioData | null>;
   abstract checkUsernameAvailability(username: string): Promise<boolean>;
   abstract setUsername(username: string): Promise<void>;
   abstract setPortfolioVisibility(isPublic: boolean): Promise<void>;

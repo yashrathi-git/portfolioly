@@ -1,12 +1,12 @@
 "use client";
 
-import type { EducationItem as SchemaEducation } from "../../types/portfolio";
+import type { DisplayEducation } from "@portfolioly/schema";
 import { typography } from "../../lib/typography";
 import { cn } from "../../lib/utils";
 
 export type EducationWidgetProps = {
   heading?: string;
-  items: SchemaEducation[];
+  items: DisplayEducation[];
 };
 
 export const EducationWidget = ({

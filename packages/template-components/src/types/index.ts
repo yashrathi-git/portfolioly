@@ -2,8 +2,31 @@
  * Main type definitions for template components
  */
 
-// Re-export all types for easy importing
-export * from "./portfolio";
+// Re-export types from shared schema package
+export type {
+  // Backend-aligned types
+  PortfolioData,
+  PersonalInfo,
+  WorkExperience,
+  Project,
+  ProjectImage,
+  Education,
+  Certification,
+  TextBlobs,
+  LayoutSettings,
+  PortfolioMetadata,
+  DateInfo,
+  Profile,
+  ProfileType,
+  // Display format types
+  DisplayPortfolioData,
+  DisplayPortfolioProfile,
+  DisplayProject,
+  DisplayEducation,
+  DisplayWorkExperience,
+  SocialLink,
+  SocialType,
+} from "@portfolioly/schema";
 
 // Configuration types
 export type { TemplateConfig, DataSourceType } from "../config/template-config";

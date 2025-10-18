@@ -2,11 +2,7 @@
 
 import { Github, ExternalLink, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import type {
-  PortfolioProject as LegacyProject,
-  Project,
-  ProjectImage,
-} from "../../types/portfolio";
+import type { DisplayProject, ProjectImage } from "@portfolioly/schema";
 import { typography } from "../../lib/typography";
 import { cn } from "../../lib/utils";
 import { MarkdownContent } from "../../utils/markdown";
@@ -18,8 +14,8 @@ import {
   CarouselPrevious,
 } from "../ui/carousel";
 
-// Support both legacy and new schema
-export type ProjectsWidgetProject = LegacyProject & Partial<Project>;
+// Use display project type
+export type ProjectsWidgetProject = DisplayProject;
 
 export type ProjectsWidgetProps = {
   heading?: string;
@@ -281,7 +277,7 @@ export const ProjectsWidget = ({
   const visibleProjects = projects.filter((project) =>
     Boolean(
       project.name ||
-        project.role ||
+        // role field removed from new schema
         project.one_line_description ||
         project.highlights ||
         project.technologies?.length ||
@@ -325,16 +321,7 @@ export const ProjectsWidget = ({
                           {p.name}
                         </h4>
                       ) : null}
-                      {p.role && (
-                        <p
-                          className={cn(
-                            "text-[color:var(--muted-foreground)] mt-1",
-                            typography.label.small
-                          )}
-                        >
-                          {p.role}
-                        </p>
-                      )}
+                      {/* role field removed from new schema */}
                     </div>
                   </div>
 

@@ -11,7 +11,7 @@ import {
   Code2,
   Palette,
 } from "lucide-react";
-import type { SocialType } from "../../types/portfolio";
+import type { SocialType } from "@portfolioly/schema";
 
 export type SocialIconProps = {
   type: SocialType;

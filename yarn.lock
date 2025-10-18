@@ -1525,10 +1525,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@portfolioly/schema@workspace:*, @portfolioly/schema@workspace:packages/schema":
+  version: 0.0.0-use.local
+  resolution: "@portfolioly/schema@workspace:packages/schema"
+  dependencies:
+    typescript: "npm:^5"
+    vite: "npm:^5"
+    vite-plugin-dts: "npm:^4"
+    zod: "npm:^3.24.1"
+  languageName: unknown
+  linkType: soft
+
 "@portfolioly/template-components@workspace:*, @portfolioly/template-components@workspace:packages/template-components":
   version: 0.0.0-use.local
   resolution: "@portfolioly/template-components@workspace:packages/template-components"
   dependencies:
+    "@portfolioly/schema": "workspace:*"
     "@types/react": "npm:^19"
     "@types/react-dom": "npm:^19"
     "@vitejs/plugin-react-swc": "npm:^3"
@@ -8499,5 +8511,12 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: 10c0/dceb44c28578b31641e13695d200d34ec4ab3966a5729814d5445b194933c096b7ced71494ce53a0e8820685d1d010df8b2422e5bf2cdea7e469d97ffbea306f
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.24.1":
+  version: 3.25.76
+  resolution: "zod@npm:3.25.76"
+  checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
   languageName: node
   linkType: hard

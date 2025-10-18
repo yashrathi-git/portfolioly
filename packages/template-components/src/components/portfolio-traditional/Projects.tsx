@@ -1,4 +1,4 @@
-import type { PortfolioProject } from "../../types/portfolio";
+import type { DisplayProject } from "@portfolioly/schema";
 import { Github, ExternalLink } from "lucide-react";
 import { Badge } from "../ui/badge";
 import {
@@ -14,7 +14,7 @@ import BlurFade from "../magicui/blur-fade";
 const BLUR_FADE_DELAY = 0.04;
 
 export type ProjectsProps = {
-  items?: PortfolioProject[];
+  items?: DisplayProject[];
 };
 
 function normalizeHighlights(highlights?: string[] | string): string {
@@ -38,10 +38,9 @@ function normalizeHighlights(highlights?: string[] | string): string {
 }
 
 export const Projects = ({ items = [] }: ProjectsProps) => {
-  const visibleItems = items.filter((item: PortfolioProject) =>
+  const visibleItems = items.filter((item: DisplayProject) =>
     Boolean(
       item.name ||
-        item.role ||
         item.one_line_description ||
         item.highlights?.length ||
         item.technologies?.length ||
@@ -74,7 +73,7 @@ export const Projects = ({ items = [] }: ProjectsProps) => {
           </div>
         </BlurFade>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-w-[800px] mx-auto">
-          {visibleItems.map((project: PortfolioProject, id: number) => {
+          {visibleItems.map((project: DisplayProject, id: number) => {
             const description = normalizeHighlights(project.highlights);
             const links = [];
 
@@ -100,10 +99,10 @@ export const Projects = ({ items = [] }: ProjectsProps) => {
                 delay={BLUR_FADE_DELAY * 12 + id * 0.05}
               >
                 <Card className="flex flex-col overflow-hidden border hover:shadow-lg hover:shadow-foreground/5 hover:border-foreground/30 hover:scale-[1.02] hover:bg-accent/50 transition-all duration-300 ease-out h-full group">
-                  {project.primaryCardImage && (
+                  {project.images?.[0]?.url && (
                     <div className="block cursor-pointer">
                       <img
-                        src={project.primaryCardImage}
+                        src={project.images[0].url}
                         alt={project.name || "Project"}
                         className="h-40 w-full overflow-hidden object-cover object-top"
                       />
@@ -111,7 +110,7 @@ export const Projects = ({ items = [] }: ProjectsProps) => {
                   )}
                   <CardHeader
                     className={
-                      project.primaryCardImage
+                      project.images?.[0]?.url
                         ? "px-4 pt-4 pb-3"
                         : "px-4 pt-6 pb-3"
                     }
