@@ -2,6 +2,19 @@
 
 A FastAPI backend with Firebase authentication and email verification middleware.
 
+## Schema Alignment
+
+The backend Pydantic models in `app/schemas/portfolio.py` are aligned with the frontend TypeScript types defined in the `@portfolioly/schema` package. This ensures type consistency across the entire stack:
+
+- **Backend**: Pydantic models for validation and serialization
+- **Frontend**: Zod schemas in `@portfolioly/schema` package
+- **Alignment**: Field names, types, and validation rules match exactly
+
+When updating schemas, ensure changes are reflected in both:
+
+1. Backend Pydantic models (`backend/app/schemas/portfolio.py`)
+2. Frontend Zod schemas (`packages/schema/src/schemas/*.ts`)
+
 ## Project Structure
 
 ```
@@ -18,11 +31,28 @@ backend/
 │   │   ├── models.py        # Authentication models
 │   │   ├── middleware.py    # Auth middleware & dependencies
 │   │   └── routes.py        # Auth-related routes
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── portfolio.py     # Portfolio Pydantic models
+│   │   ├── auth.py          # Auth schemas
+│   │   └── user_settings.py # User settings schemas
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── portfolio.py     # Portfolio routes
+│   │   ├── upload.py        # Upload routes
+│   │   ├── public_portfolio.py # Public portfolio routes
+│   │   └── user_settings.py # User settings routes
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── portfolio_service.py
+│   │   ├── ai_processor.py
+│   │   └── user_settings_service.py
 │   └── api/
 │       ├── __init__.py
 │       └── routes.py        # Main API routes
 ├── firebaseServiceKeyJson/
 │   └── firebaseServiceKey.json
+├── tests/                   # Test files
 ├── .env
 ├── requirements.txt
 ├── run.py                   # Development server

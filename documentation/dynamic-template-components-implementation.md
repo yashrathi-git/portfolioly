@@ -4,6 +4,8 @@
 
 This document provides an exhaustive list of all changes made during the implementation of dynamic template components with API integration, public portfolio publishing, and authenticated data fetching capabilities.
 
+**Note**: This implementation has been further enhanced with the `@portfolioly/schema` package, which provides unified type definitions and validation. See the [Schema Package README](../packages/schema/README.md) for details on the centralized schema architecture.
+
 ## 🎯 Major Features Implemented
 
 1. **Dynamic Data Sources**: API, JSON, and hybrid data source support
@@ -13,6 +15,7 @@ This document provides an exhaustive list of all changes made during the impleme
 5. **Error Resilience**: Comprehensive error handling and fallbacks
 6. **Development Tools**: Debug logging and component flagging
 7. **Type Safety**: Full TypeScript support throughout
+8. **Unified Schema Package**: Centralized type definitions and validation with `@portfolioly/schema`
 
 ---
 

@@ -928,3 +928,108 @@
 - **Sanitization**: Username sanitization and reserved word checking
 
 This technical breakdown provides an exhaustive view of every functional and technical change made during the dynamic template components implementation, covering code-level details, architectural patterns, and technical specifications.
+
+---
+
+## 📦 Schema Package Integration
+
+### Overview
+
+Following the dynamic template components implementation, the project was further enhanced with the `@portfolioly/schema` package to eliminate duplicate type definitions and provide runtime validation.
+
+### Key Features
+
+- **Single Source of Truth**: All portfolio data structures defined once in Zod schemas
+- **Runtime Validation**: Catch data inconsistencies with detailed error messages
+- **Type Inference**: TypeScript types automatically generated from Zod schemas
+- **Data Transformation**: Utilities to convert between backend and display formats
+- **Zero Duplication**: Shared across frontend apps and packages
+
+### Architecture
+
+```
+packages/schema/
+├── src/
+│   ├── schemas/          # Zod schema definitions
+│   │   ├── core.ts       # DateInfo, Profile
+│   │   ├── personal.ts   # PersonalInfo
+│   │   ├── work.ts       # WorkExperience
+│   │   ├── project.ts    # Project, ProjectImage
+│   │   ├── education.ts  # Education
+│   │   ├── certification.ts # Certification
+│   │   ├── metadata.ts   # TextBlobs, LayoutSettings, Metadata
+│   │   └── portfolio.ts  # Root PortfolioData schema
+│   ├── transformers/     # Data transformation utilities
+│   │   ├── backend-to-display.ts # Main transformer
+│   │   ├── entity-mappers.ts     # Individual entity mappers
+│   │   ├── profile-mapper.ts     # Profile to social links
+│   │   ├── date-formatter.ts     # Date formatting
+│   │   └── validators.ts         # Validation utilities
+│   ├── types/
+│   │   └── display.ts    # Display format types
+│   └── index.ts          # Public API
+```
+
+### Migration Impact
+
+**Before (Duplicate Definitions):**
+
+- `apps/main/src/types/portfolio.ts` - Main app types
+- `packages/template-components/src/types/portfolio.ts` - Component types
+- `apps/main/src/utils/portfolioDataMapper.ts` - Main app mapper
+- `packages/template-components/src/utils/data-mapper.ts` - Component mapper
+
+**After (Centralized):**
+
+- `packages/schema/src/schemas/*.ts` - Single schema definition
+- `packages/schema/src/transformers/*.ts` - Single transformation logic
+- All apps import from `@portfolioly/schema`
+
+### Usage Examples
+
+**Validation:**
+
+```typescript
+import { validatePortfolioData } from "@portfolioly/schema";
+
+const data = validatePortfolioData(apiResponse); // Throws on invalid data
+```
+
+**Safe Validation:**
+
+```typescript
+import { validatePortfolioDataSafe } from "@portfolioly/schema";
+
+const result = validatePortfolioDataSafe(apiResponse);
+if (result.success) {
+  console.log(result.data);
+} else {
+  console.error(result.error.issues);
+}
+```
+
+**Data Transformation:**
+
+```typescript
+import { mapBackendToDisplay } from "@portfolioly/schema";
+
+const displayData = mapBackendToDisplay(backendData);
+```
+
+### Benefits
+
+1. **Type Safety**: Runtime validation catches data issues early
+2. **Consistency**: Single schema ensures consistency across apps
+3. **Maintainability**: Update schema once, affects all consumers
+4. **Developer Experience**: Better autocomplete and type checking
+5. **Error Handling**: Detailed validation errors with field-level information
+
+### Technical Details
+
+- **Build Tool**: Vite 5.x with TypeScript
+- **Validation Library**: Zod 3.x
+- **Output Formats**: ESM + CJS with TypeScript declarations
+- **Tree-Shaking**: Optimized exports for minimal bundle size
+- **Testing**: Comprehensive test coverage for transformers
+
+For complete documentation, see [Schema Package README](../packages/schema/README.md).

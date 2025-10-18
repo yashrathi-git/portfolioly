@@ -8,6 +8,7 @@ portfolioly/
 │   ├── main/               # Main portfolio app (Next.js)
 │   └── template/           # Template viewer app (Next.js)
 ├── packages/               # Shared packages
+│   ├── schema/             # Unified portfolio schema with Zod validation
 │   └── template-components/ # Reusable portfolio components
 ├── backend/                # Python FastAPI backend
 ├── documentation/          # Project documentation
@@ -65,6 +66,32 @@ app/
 └── dependencies/ # FastAPI dependencies
 ```
 
+## Schema Package (`packages/schema/`)
+
+### Structure
+
+```
+src/
+├── schemas/      # Zod schema definitions
+│   ├── core.ts          # Core types (DateInfo, Profile)
+│   ├── personal.ts      # PersonalInfo schema
+│   ├── work.ts          # WorkExperience schema
+│   ├── project.ts       # Project and ProjectImage schemas
+│   ├── education.ts     # Education schema
+│   ├── certification.ts # Certification schema
+│   ├── metadata.ts      # Metadata schemas
+│   └── portfolio.ts     # Root PortfolioData schema
+├── transformers/ # Data transformation utilities
+│   ├── backend-to-display.ts # Backend to display format
+│   ├── entity-mappers.ts     # Individual entity mappers
+│   ├── profile-mapper.ts     # Profile to social link mapping
+│   ├── date-formatter.ts     # Date formatting utilities
+│   └── validators.ts         # Validation utilities
+├── types/        # TypeScript type definitions
+│   └── display.ts # Display format types
+└── index.ts      # Public API exports
+```
+
 ## Template Components Package (`packages/template-components/`)
 
 ### Structure
@@ -117,3 +144,10 @@ src/
 - Component instructions in `INSTRUCTIONS.md` files
 - API documentation in backend `README.md`
 - Architecture decisions in `.kiro/specs/` directories
+- Package documentation in `packages/*/README.md` files
+
+### Shared Packages
+
+- **Schema Package**: All packages and apps import from `@portfolioly/schema` for type definitions and validation
+- **Template Components**: Reusable UI components that consume schema types
+- **Workspace Protocol**: Packages linked via `workspace:*` in package.json

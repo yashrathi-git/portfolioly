@@ -226,12 +226,24 @@ class ProjectImage(BaseModel):
 
 ## TypeScript Schema Changes
 
-All Python schema changes are mirrored in TypeScript:
+All Python schema changes are mirrored in TypeScript through the `@portfolioly/schema` package:
+
+**Centralized Schema Package:**
+
+The project now uses `@portfolioly/schema` as the single source of truth for all portfolio data structures. This package provides:
+
+- **Zod Schemas**: Runtime validation matching backend Pydantic models
+- **Type Inference**: Automatic TypeScript types from Zod schemas
+- **Data Transformation**: Utilities to convert between backend and display formats
+- **Validation Functions**: `validatePortfolioData()` and `validatePortfolioDataSafe()`
 
 **Files Updated:**
 
-- `apps/main/src/types/portfolio.ts`
-- `packages/template-components/src/types/portfolio.ts`
+- `packages/schema/src/schemas/*.ts` - Zod schema definitions
+- `packages/schema/src/types/display.ts` - Display format types
+- `packages/schema/src/transformers/*.ts` - Data transformation utilities
+- `apps/main/src/types/portfolio.ts` - Now imports from `@portfolioly/schema`
+- `packages/template-components/src/types/portfolio.ts` - Now imports from `@portfolioly/schema`
 
 **Key Changes:**
 
@@ -242,6 +254,20 @@ All Python schema changes are mirrored in TypeScript:
 - `WorkExperience` interface: Changed `highlights` from `string[]` to `string`
 - `Certification` interface: Added `issuer`
 - `TextBlobs` interface: `achievements` explicitly documented as markdown string
+
+**Migration to Schema Package:**
+
+All apps and packages now import types from `@portfolioly/schema`:
+
+```typescript
+// Before
+import { PortfolioData } from "../types/portfolio";
+
+// After
+import { type PortfolioData } from "@portfolioly/schema";
+```
+
+See the [Schema Package README](../packages/schema/README.md) for complete usage documentation.
 
 ---
 

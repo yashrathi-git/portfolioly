@@ -21,11 +21,19 @@
 - **Icons**: Lucide React
 - **Notifications**: Sonner
 
+### Schema Package (`packages/schema`)
+
+- **Build Tool**: Vite 5.x with TypeScript
+- **Validation**: Zod 3.x for runtime schema validation
+- **Output**: ESM + CJS formats with TypeScript declarations
+- **Purpose**: Single source of truth for portfolio data structures
+
 ### Template Components Package (`packages/template-components`)
 
 - **Build Tool**: Vite 5.x with React SWC plugin
 - **Output**: ESM + CJS formats with TypeScript declarations
 - **Peer Dependencies**: React 18+, Framer Motion, Lucide React
+- **Schema Dependency**: Imports from `@portfolioly/schema`
 
 ### Template App (`apps/template`)
 
@@ -80,7 +88,9 @@ cd backend && uv run uvicorn app.main:app --reload
 
 - **UI**: Radix UI + Tailwind CSS + class-variance-authority
 - **Forms**: Custom form components with validation
+- **Schema Validation**: Zod for runtime type checking and validation
 - **Error Handling**: Structured error boundaries and toast notifications
 - **Data Fetching**: Custom hooks with error handling
+- **Data Transformation**: Centralized mappers in `@portfolioly/schema`
 - **Theming**: next-themes with CSS custom properties
 - **File Uploads**: Multipart form handling with progress tracking
