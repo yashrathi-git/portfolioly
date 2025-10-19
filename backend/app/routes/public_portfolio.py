@@ -26,6 +26,8 @@ from .utils.auth_helpers import (
     get_user_settings_by_username,
     validate_portfolio_access,
 )
+from ..routes.public_portfolio_chat import handle_chat_request
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/public", tags=["public-portfolio"])
@@ -294,7 +296,5 @@ async def chat_with_public_portfolio(
     authorization: str = Header(..., description="Bearer token for authentication"),
 ):
     """Chat with an AI assistant about a public portfolio using token authentication."""
-
-    from ..routes.public_portfolio_chat import handle_chat_request
 
     return await handle_chat_request(username, request, authorization)

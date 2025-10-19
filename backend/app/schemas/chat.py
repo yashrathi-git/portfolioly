@@ -38,12 +38,23 @@ class ChatConversation(BaseModel):
     user_id: Optional[str] = None  # Firebase UID if authenticated
 
 
+class MessagePart(BaseModel):
+    """Message part from Vercel AI SDK (for multimodal messages)."""
+
+    type: str  # e.g., "text", "image"
+    text: Optional[str] = None
+    # Add other fields as needed for images, etc.
+
+
 class ChatRequestMessage(BaseModel):
     """Individual message in chat request from Vercel AI SDK."""
 
     role: Literal["user", "assistant", "system"]
     content: str
     id: Optional[str] = None
+    parts: Optional[List[MessagePart]] = Field(
+        None, description="Message parts for multimodal content (optional)"
+    )
 
 
 class ChatRequest(BaseModel):
