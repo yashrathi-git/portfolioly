@@ -1,7 +1,7 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import type { Message, ToolCall } from "./types";
+import type { Message } from "./types";
 import type { DisplayPortfolioData } from "@portfolioly/schema";
 import { AboutWidget } from "../widgets/AboutWidget";
 import { ProjectsWidget } from "../widgets/ProjectsWidget";
@@ -12,6 +12,7 @@ import { EducationWidget } from "../widgets/EducationWidget";
 import { typography } from "../../lib/typography";
 import { cn } from "../../lib/utils";
 import { MarkdownContent } from "../../utils/markdown";
+import { parseMessageContent } from "../../utils/parseMessageContent";
 
 type ThreadProps = {
   messages: Message[];
@@ -117,61 +118,57 @@ const prepareWidgetData = (
         }
       });
       return contactItems.length
-        ? { heading: "Contact", items: contactItems }
+        ? {
+            heading: "Contact",
+            items: contactItems,
+          }
         : null;
     }
 
     case "experience":
-      if (!portfolioData.experience?.length) return null;
-      const experiences = indices
-        ? indices.map((i) => portfolioData.experience?.[i]).filter(Boolean)
-        : portfolioData.experience;
-      return {
-        heading: "Work Experience",
-        items: experiences.map((exp: any) => ({
-          companyName: exp.companyName,
-          role: exp.role,
-          location: exp.location,
-          start: exp.start,
-          end: exp.end,
-          points: exp.points,
-        })),
-      };
+      return portfolioData.experience?.length
+        ? {
+            heading: "Work Experience",
+            items: portfolioData.experience.map((exp: any) => ({
+              companyName: exp.companyName,
+              role: exp.role,
+              location: exp.location,
+              start: exp.start,
+              end: exp.end,
+              points: exp.points,
+            })),
+          }
+        : null;
 
     case "education":
-      if (!portfolioData.education?.length) return null;
-      const educations = indices
-        ? indices.map((i) => portfolioData.education?.[i]).filter(Boolean)
-        : portfolioData.education;
-      return {
-        heading: "Education",
-        items: educations.map((edu: any) => ({
-          school: edu.school,
-          degree: edu.degree,
-          start: edu.start,
-          end: edu.end,
-          location: edu.location,
-        })),
-      };
+      return portfolioData.education?.length
+        ? {
+            heading: "Education",
+            items: portfolioData.education.map((edu: any) => ({
+              school: edu.school,
+              degree: edu.degree,
+              start: edu.start,
+              end: edu.end,
+              location: edu.location,
+            })),
+          }
+        : null;
 
     default:
       return null;
   }
 };
 
-// Helper function to render a widget based on tool call
+// Helper function to render a widget
 const renderWidget = (
-  toolCall: ToolCall,
+  widgetType: string,
+  indices: number[] | undefined,
   portfolioData: DisplayPortfolioData | null | undefined
 ) => {
-  const widgetData = prepareWidgetData(
-    toolCall.widget,
-    portfolioData,
-    toolCall.indices
-  );
+  const widgetData = prepareWidgetData(widgetType, portfolioData, indices);
   if (!widgetData) return null;
 
-  switch (toolCall.widget) {
+  switch (widgetType) {
     case "about":
       return <AboutWidget {...(widgetData as any)} />;
     case "projects":
@@ -196,78 +193,53 @@ export const Thread = ({
 }: ThreadProps) => {
   return (
     <div className="space-y-5 pt-2">
-      {messages.map((m) => (
-        <div key={m.id} className="flex gap-3">
-          {m.role === "assistant" ? (
-            <div className="mt-1 size-9 shrink-0 rounded-full bg-[var(--secondary)] flex items-center justify-center">
-              <Sparkles className="size-4.5 text-[color:var(--secondary-foreground)]" />
-            </div>
-          ) : (
-            <div className="mt-1 size-9 shrink-0 rounded-full bg-[oklch(0.84_0.07_250)] text-white flex items-center justify-center">
-              U
-            </div>
-          )}
+      {messages.map((m) => {
+        // Parse message content to extract text and widget parts
+        const parts =
+          m.role === "assistant"
+            ? parseMessageContent(m.content)
+            : [{ type: "text" as const, content: m.content }];
 
-          {m.role === "assistant" && m.toolCalls ? (
+        // Check if there's any text content to show
+        const hasTextContent = parts.some(
+          (p) => p.type === "text" && p.content.trim()
+        );
+
+        return (
+          <div key={m.id} className="flex gap-3">
+            {m.role === "assistant" ? (
+              <div className="mt-1 size-9 shrink-0 rounded-full bg-[var(--secondary)] flex items-center justify-center">
+                <Sparkles className="size-4.5 text-[color:var(--secondary-foreground)]" />
+              </div>
+            ) : (
+              <div className="mt-1 size-9 shrink-0 rounded-full bg-[oklch(0.84_0.07_250)] text-white flex items-center justify-center">
+                U
+              </div>
+            )}
+
             <div
               className={cn(
                 "flex-1 max-w-full md:max-w-[85%] leading-relaxed [&_*]:text-inherit [&_*]:leading-[inherit] space-y-4",
                 typography.content.responsive
               )}
             >
-              {/* Render text content if present */}
-              {m.content && (
-                <div className="rounded-2xl rounded-tl-none px-5 py-3.5 md:py-4 bg-[var(--secondary)] text-[color:var(--secondary-foreground)] shadow-sm">
-                  <MarkdownContent
-                    content={m.content}
-                    overrides={{
-                      p: {
-                        component: ({ className, ...props }) => (
-                          <p
-                            {...props}
-                            className={cn("m-0 whitespace-pre-wrap", className)}
-                          />
-                        ),
-                      },
-                      ul: {
-                        component: ({ className, ...props }) => (
-                          <ul
-                            {...props}
-                            className={cn(
-                              "ml-5 list-disc space-y-1 my-2",
-                              className
-                            )}
-                          />
-                        ),
-                      },
-                      ol: {
-                        component: ({ className, ...props }) => (
-                          <ol
-                            {...props}
-                            className={cn(
-                              "ml-5 list-decimal space-y-1 my-2",
-                              className
-                            )}
-                          />
-                        ),
-                      },
-                      li: {
-                        component: ({ className, ...props }) => (
-                          <li {...props} className={cn("", className)} />
-                        ),
-                      },
-                    }}
-                  />
-                </div>
-              )}
+              {parts.map((part, idx) => {
+                if (part.type === "text") {
+                  // Only render text bubble if there's actual content
+                  if (!part.content.trim()) return null;
 
-              {/* Render tool calls from API */}
-              {m.toolCalls.map((toolCall, idx) => (
-                <div key={idx} className="space-y-2">
-                  {toolCall.explanation && (
-                    <div className="rounded-2xl rounded-tl-none px-5 py-3.5 md:py-4 bg-[var(--secondary)] text-[color:var(--secondary-foreground)] shadow-sm">
+                  return (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "rounded-2xl px-5 py-3.5 md:py-4 shadow-sm",
+                        m.role === "assistant"
+                          ? "bg-[var(--secondary)] text-[color:var(--secondary-foreground)] rounded-tl-none"
+                          : "bg-[oklch(0.74_0.15_310)] text-white rounded-tr-none"
+                      )}
+                    >
                       <MarkdownContent
-                        content={toolCall.explanation}
+                        content={part.content}
                         overrides={{
                           p: {
                             component: ({ className, ...props }) => (
@@ -310,65 +282,21 @@ export const Thread = ({
                         }}
                       />
                     </div>
-                  )}
-                  {renderWidget(toolCall, portfolioData)}
-                </div>
-              ))}
+                  );
+                } else if (part.type === "widget") {
+                  // Render widget
+                  return (
+                    <div key={idx}>
+                      {renderWidget(part.widget, part.indices, portfolioData)}
+                    </div>
+                  );
+                }
+                return null;
+              })}
             </div>
-          ) : (
-            <div
-              className={cn(
-                "max-w-full md:max-w-[85%] rounded-2xl px-5 py-3.5 md:py-4 leading-relaxed shadow-sm",
-                typography.content.responsive,
-                m.role === "assistant"
-                  ? "bg-[var(--secondary)] text-[color:var(--secondary-foreground)] rounded-tl-none"
-                  : "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] rounded-tr-none"
-              )}
-            >
-              <MarkdownContent
-                content={m.content}
-                overrides={{
-                  p: {
-                    component: ({ className, ...props }) => (
-                      <p
-                        {...props}
-                        className={cn("m-0 whitespace-pre-wrap", className)}
-                      />
-                    ),
-                  },
-                  ul: {
-                    component: ({ className, ...props }) => (
-                      <ul
-                        {...props}
-                        className={cn(
-                          "ml-5 list-disc space-y-1 my-2",
-                          className
-                        )}
-                      />
-                    ),
-                  },
-                  ol: {
-                    component: ({ className, ...props }) => (
-                      <ol
-                        {...props}
-                        className={cn(
-                          "ml-5 list-decimal space-y-1 my-2",
-                          className
-                        )}
-                      />
-                    ),
-                  },
-                  li: {
-                    component: ({ className, ...props }) => (
-                      <li {...props} className={cn("", className)} />
-                    ),
-                  },
-                }}
-              />
-            </div>
-          )}
-        </div>
-      ))}
+          </div>
+        );
+      })}
 
       {isThinking && (
         <div className="flex gap-3">

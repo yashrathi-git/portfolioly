@@ -186,86 +186,9 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
     return availableSuggestions;
   }, [data]);
 
-  // Dynamic presets based on actual user data
-  const presets = useMemo(() => {
-    const personalInfo = data.personal_info;
-    const name = personalInfo?.full_name;
-    const presetResponses: Record<string, string> = {};
-
-    if (personalInfo?.summary || personalInfo?.headline || name) {
-      presetResponses["About Me"] =
-        personalInfo?.summary ||
-        [
-          name ? `I'm ${name}` : null,
-          personalInfo?.headline,
-          personalInfo?.location,
-        ]
-          .filter(Boolean)
-          .join(" · ") ||
-        "Thanks for your interest!";
-    }
-
-    if (data.projects && data.projects.length > 0) {
-      const projectCount = data.projects.length;
-      const topProject = data.projects[0];
-      presetResponses["Projects"] =
-        `I've worked on ${projectCount} project${
-          projectCount > 1 ? "s" : ""
-        }.` + (topProject.name ? ` Recent highlight: ${topProject.name}.` : "");
-    }
-
-    const allTechnologies = new Set<string>();
-    data.work_experiences?.forEach((exp) => {
-      exp.technologies?.forEach((tech) => tech && allTechnologies.add(tech));
-    });
-    data.projects?.forEach((proj) => {
-      proj.technologies?.forEach((tech) => tech && allTechnologies.add(tech));
-    });
-
-    if (allTechnologies.size > 0) {
-      const techList = Array.from(allTechnologies).slice(0, 6).join(", ");
-      presetResponses["Skills"] =
-        `My current toolkit includes ${techList}` +
-        (allTechnologies.size > 6 ? " and more." : ".");
-    }
-
-    if (data.work_experiences && data.work_experiences.length > 0) {
-      const currentJob = data.work_experiences.find((exp) => exp.is_current);
-      const latestJob = currentJob || data.work_experiences[0];
-      const org = latestJob.organization || "my company";
-      const title = latestJob.title || "a professional";
-      presetResponses["Experience"] = `I'm ${
-        currentJob ? "currently" : "recently"
-      } ${title} at ${org}.`;
-    }
-
-    if (data.education && data.education.length > 0) {
-      const latestEdu = data.education[0];
-      presetResponses["Education"] =
-        `I studied ${latestEdu.degree || ""}`.trim() +
-        (latestEdu.institution ? ` at ${latestEdu.institution}.` : "");
-    }
-
-    if (
-      data.personal_info?.email ||
-      data.personal_info?.profiles?.some(
-        (p) =>
-          ["linkedin", "github", "website", "portfolio"].includes(
-            p.type ?? ""
-          ) && p.url
-      )
-    ) {
-      presetResponses["Contact"] =
-        "Feel free to reach out via the contact details listed.";
-    }
-
-    return presetResponses;
-  }, [data]);
-
   const hasContent = Boolean(
     profile ||
       suggestions.length > 0 ||
-      Object.keys(presets).length > 0 ||
       (templateData.profile &&
         (templateData.profile.name ||
           templateData.profile.headline ||
@@ -329,7 +252,6 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
             isPreview={true}
             profile={profile}
             suggestions={suggestions}
-            presets={presets}
             username={username}
             apiBaseUrl={env.API_BASE_URL}
             authToken={authToken}

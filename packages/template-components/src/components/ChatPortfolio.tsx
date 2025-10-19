@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useChat } from "@ai-sdk/react";
 import { AnimatePresence, motion } from "framer-motion";
 import ChatHeader from "./chat/Header";
 import { EmptyState } from "./chat/EmptyState";
 import { Thread } from "./chat/Thread";
 import { Composer } from "./chat/Composer";
 import { Suggestions } from "./chat/Suggestions";
-import type { Message, ChatProfile, Suggestion, ToolCall } from "./chat/types";
+import type { Message, ChatProfile, Suggestion } from "./chat/types";
 import type { DisplayPortfolioData } from "@portfolioly/schema";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
@@ -15,12 +16,10 @@ import {
   requiresExternalData,
   useComponentDataTracking,
 } from "../utils/component-flags";
-import { streamChatResponse } from "../services/chatService";
 
 export type ChatPortfolioProps = {
   profile?: ChatProfile;
   suggestions?: Suggestion[]; // full list
-  presets?: Record<string, string>; // label -> assistant reply
   portfolioData?: DisplayPortfolioData | null;
   isLoading?: boolean;
   error?: string;
@@ -33,7 +32,6 @@ export type ChatPortfolioProps = {
 const ChatPortfolioComponent = ({
   profile,
   suggestions = [],
-  presets = {},
   portfolioData,
   isLoading = false,
   error,
@@ -53,23 +51,11 @@ const ChatPortfolioComponent = ({
     description:
       "Interactive chat-based portfolio requiring portfolio data for dynamic responses and widget content",
   });
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isThinking, setIsThinking] = useState(false);
+
   const [inlineMax, setInlineMax] = useState(5);
-  const [conversationId, setConversationId] = useState<string | undefined>(
-    undefined
-  );
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | undefined>();
+  const [localInput, setLocalInput] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
-
-  // Character-level animation state
-  const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
-  const contentBufferRef = useRef<string>("");
-  const [displayedContent, setDisplayedContent] = useState<string>("");
-  const animationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const hasStarted = messages.length > 0;
 
   const effectivePortfolioData = portfolioData;
 
@@ -90,6 +76,46 @@ const ChatPortfolioComponent = ({
           effectivePortfolioData.profile.avatarUrl,
       }
     : undefined;
+
+  // Use Vercel AI SDK's useChat hook
+  const {
+    messages: aiMessages,
+    input,
+    handleInputChange,
+    handleSubmit: aiHandleSubmit,
+    isLoading: aiIsLoading,
+    error: aiError,
+  } = useChat({
+    api: `${apiBaseUrl}/public/chat/${username}`,
+    headers: {
+      Authorization: `Bearer ${publicToken}`,
+    },
+    body: {
+      conversation_id: conversationId,
+    },
+    onFinish: (message, options) => {
+      // Extract conversation_id from the response if available
+      // The backend sends it in the done event: d:{"finishReason":"stop","conversationId":"..."}
+      // The AI SDK should handle this, but we may need to extract it from response
+      // For now, we'll keep the conversation_id state as is
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
+    },
+  });
+
+  // Convert AI SDK messages to our Message type
+  const messages: Message[] = aiMessages.map((msg) => ({
+    id: msg.id,
+    role: msg.role as "user" | "assistant",
+    content: msg.content,
+  }));
+
+  const hasStarted = messages.length > 0;
+
+  // Determine thinking state: show only until first assistant message chunk arrives
+  const isThinking =
+    aiIsLoading && messages[messages.length - 1]?.role !== "assistant";
 
   // Show loading state
   if (isLoading && !portfolioData) {
@@ -128,134 +154,6 @@ const ChatPortfolioComponent = ({
     );
   }
 
-  const aboutData = effectivePortfolioData?.profile
-    ? {
-        name: effectivePortfolioData.profile.name,
-        title: effectivePortfolioData.profile.headline || "",
-        summary:
-          effectivePortfolioData.profile.summary ||
-          effectivePortfolioData.profile.headline ||
-          "",
-        location: effectivePortfolioData.profile.location,
-      }
-    : null;
-
-  const projectsData = effectivePortfolioData?.projects?.length
-    ? {
-        heading: "Projects",
-        projects: effectivePortfolioData.projects.map((p) => ({
-          name: p.name,
-          // role field removed from new schema
-          one_line_description: p.one_line_description,
-          highlights: p.highlights,
-          technologies: p.technologies,
-          github: p.github,
-          live_link: p.live_link,
-        })),
-      }
-    : null;
-
-  const skillsData = effectivePortfolioData?.skills?.length
-    ? {
-        heading: "Skills",
-        categories: [
-          {
-            title: "Skills",
-            items: effectivePortfolioData.skills.map((skill) => ({
-              name: skill,
-              chip: true,
-            })),
-          },
-        ],
-      }
-    : null;
-
-  const contactItems: {
-    id: string;
-    kind: "email" | "github" | "website" | "linkedin";
-    label: string;
-    href: string;
-    sub?: string;
-  }[] = [];
-
-  if (effectivePortfolioData?.profile?.email) {
-    contactItems.push({
-      id: "email",
-      kind: "email",
-      label: effectivePortfolioData.profile.email,
-      href: `mailto:${effectivePortfolioData.profile.email}`,
-      sub: "Email",
-    });
-  }
-
-  effectivePortfolioData?.profile?.socials?.forEach((link, index) => {
-    const id = `${link.type}-${index}`;
-
-    if (link.type === "github") {
-      contactItems.push({
-        id,
-        kind: "github",
-        label: link.label || link.href,
-        href: link.href,
-        sub: "GitHub",
-      });
-      return;
-    }
-
-    if (link.type === "linkedin") {
-      contactItems.push({
-        id,
-        kind: "linkedin",
-        label: link.label || link.href,
-        href: link.href,
-        sub: "LinkedIn",
-      });
-      return;
-    }
-
-    contactItems.push({
-      id,
-      kind: "website",
-      label: link.label || link.href,
-      href: link.href,
-      sub: link.type,
-    });
-  });
-
-  const contactData = contactItems.length
-    ? {
-        heading: "Contact",
-        items: contactItems,
-      }
-    : null;
-
-  const experienceData = effectivePortfolioData?.experience?.length
-    ? {
-        heading: "Work Experience",
-        items: effectivePortfolioData.experience.map((experience) => ({
-          companyName: experience.companyName,
-          role: experience.role,
-          location: experience.location,
-          start: experience.start,
-          end: experience.end,
-          points: experience.points,
-        })),
-      }
-    : null;
-
-  const educationData = effectivePortfolioData?.education?.length
-    ? {
-        heading: "Education",
-        items: effectivePortfolioData.education.map((education) => ({
-          school: education.school,
-          degree: education.degree,
-          start: education.start,
-          end: education.end,
-          location: education.location,
-        })),
-      }
-    : null;
-
   // Auto-scroll on new messages
   useEffect(() => {
     listRef.current?.scrollTo({
@@ -264,363 +162,29 @@ const ChatPortfolioComponent = ({
     });
   }, [messages, isThinking]);
 
-  // Character-level streaming animation
-  useEffect(() => {
-    // Clear any existing interval
-    if (animationIntervalRef.current) {
-      clearInterval(animationIntervalRef.current);
-      animationIntervalRef.current = null;
-    }
-
-    // Only animate if there's a current message being streamed
-    if (!currentMessageId) return;
-
-    // Start animation loop
-    animationIntervalRef.current = setInterval(() => {
-      const buffer = contentBufferRef.current;
-      const displayed = displayedContent;
-
-      if (displayed.length < buffer.length) {
-        const remaining = buffer.length - displayed.length;
-        // Fast catch-up if far behind, otherwise show character by character
-        const charsToAdd = remaining > 50 ? Math.min(10, remaining) : 1;
-        const newDisplayed = buffer.slice(0, displayed.length + charsToAdd);
-        setDisplayedContent(newDisplayed);
-
-        // Update the message with animated content
-        setMessages((prevMessages) => {
-          const msgIndex = prevMessages.findIndex(
-            (msg) => msg.id === currentMessageId
-          );
-          if (msgIndex >= 0) {
-            const updated = [...prevMessages];
-            updated[msgIndex] = {
-              ...updated[msgIndex],
-              content: newDisplayed,
-            };
-            return updated;
-          }
-          return prevMessages;
-        });
-      }
-    }, 20); // 20ms = ~50 characters per second
-
-    return () => {
-      if (animationIntervalRef.current) {
-        clearInterval(animationIntervalRef.current);
-        animationIntervalRef.current = null;
-      }
-    };
-  }, [currentMessageId, displayedContent, contentBufferRef.current]);
-
-  const chooseWidget = (text: string) => {
-    const t = text.toLowerCase();
-    if (
-      /(^|\b)(work experience|experience|employment|resume|career)(\b|$)/.test(
-        t
-      )
-    ) {
-      return experienceData
-        ? { name: "experience" as const, props: experienceData }
-        : null;
-    }
-    if (/(^|\b)(me|about|yourself|who are you)(\b|$)/.test(t)) {
-      return aboutData ? { name: "about" as const, props: aboutData } : null;
-    }
-    if (
-      t.includes("project") ||
-      t.includes("work") ||
-      t.includes("portfolio") ||
-      t.includes("latest")
-    ) {
-      return projectsData
-        ? { name: "projects" as const, props: projectsData }
-        : null;
-    }
-    if (t.includes("skill") || t.includes("stack") || t.includes("tech")) {
-      return skillsData ? { name: "skills" as const, props: skillsData } : null;
-    }
-    if (
-      t.includes("education") ||
-      t.includes("school") ||
-      t.includes("university") ||
-      t.includes("college") ||
-      t.includes("degree")
-    ) {
-      return educationData
-        ? { name: "education" as const, props: educationData }
-        : null;
-    }
-    if (t.includes("contact") || t.includes("email") || t.includes("reach")) {
-      return contactData
-        ? { name: "contact" as const, props: contactData }
-        : null;
-    }
-    // Match suggestion labels exact
-    const hit = suggestions.find((s) => s.label.toLowerCase() === t);
-    if (hit) {
-      if ((hit.id === "me" || hit.id === "about") && aboutData)
-        return { name: "about" as const, props: aboutData };
-      if ((hit.id === "projects" || hit.id === "latest") && projectsData)
-        return { name: "projects" as const, props: projectsData };
-      if ((hit.id === "skills" || hit.id === "stack") && skillsData)
-        return { name: "skills" as const, props: skillsData };
-      if (hit.id === "contact" && contactData)
-        return { name: "contact" as const, props: contactData };
-      if (hit.id === "education" && educationData)
-        return { name: "education" as const, props: educationData };
-      if (hit.id === "experience" && experienceData)
-        return { name: "experience" as const, props: experienceData };
-    }
-    return null;
-  };
-
-  const sendUserMessage = async (text: string, isRetry: boolean = false) => {
-    const value = text.trim();
+  const onSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const value = (localInput || input).trim();
     if (!value) return;
 
-    // Only add user message if not a retry
-    if (!isRetry) {
-      const userMsg: Message = {
-        id: crypto.randomUUID(),
-        role: "user",
-        content: value,
-      };
-      setMessages((m) => [...m, userMsg]);
-    }
-
-    setIsThinking(true);
-    setApiError(null);
-
-    // If username AND apiBaseUrl are provided, use API; otherwise fall back to keyword matching
+    // Use AI SDK's handleSubmit
     if (username && apiBaseUrl && publicToken) {
-      try {
-        // Initialize streaming state
-        contentBufferRef.current = "";
-        setDisplayedContent("");
-        let messageId: string | null = null;
-
-        // Stream response from service
-        for await (const event of streamChatResponse({
-          message: value,
-          conversationId,
-          username,
-          apiBaseUrl,
-          publicToken,
-        })) {
-          switch (event.type) {
-            case "content": {
-              // Create message on first content chunk and dismiss loading
-              if (!messageId) {
-                messageId = crypto.randomUUID();
-                setCurrentMessageId(messageId);
-                setIsThinking(false); // Dismiss loading immediately
-                const newMessage: Message = {
-                  id: messageId,
-                  role: "assistant",
-                  content: "",
-                };
-                setMessages((m) => [...m, newMessage]);
-              }
-
-              // Accumulate in buffer for animation
-              contentBufferRef.current += event.data;
-              break;
-            }
-
-            case "widget": {
-              // Dismiss loading indicator
-              if (isThinking) {
-                setIsThinking(false);
-              }
-
-              // Finalize any pending text message
-              if (messageId) {
-                // Fast-forward animation to completion
-                setDisplayedContent(contentBufferRef.current);
-                setMessages((prevMessages) => {
-                  const msgIndex = prevMessages.findIndex(
-                    (msg) => msg.id === messageId
-                  );
-                  if (msgIndex >= 0) {
-                    const updated = [...prevMessages];
-                    updated[msgIndex] = {
-                      ...updated[msgIndex],
-                      content: contentBufferRef.current,
-                    };
-                    return updated;
-                  }
-                  return prevMessages;
-                });
-
-                // Reset for next message
-                messageId = null;
-                setCurrentMessageId(null);
-                contentBufferRef.current = "";
-                setDisplayedContent("");
-              }
-
-              // Create widget message
-              const widgetMessage: Message = {
-                id: crypto.randomUUID(),
-                role: "assistant",
-                content: "",
-                toolCalls: [
-                  {
-                    type: "widget_render",
-                    widget: event.widget as any,
-                    indices: event.indices,
-                    explanation: undefined,
-                  },
-                ],
-              };
-              setMessages((m) => [...m, widgetMessage]);
-              break;
-            }
-
-            case "message_break": {
-              // Finalize current message and prepare for next one
-              if (messageId) {
-                // Fast-forward animation to completion
-                setDisplayedContent(contentBufferRef.current);
-                setMessages((prevMessages) => {
-                  const msgIndex = prevMessages.findIndex(
-                    (msg) => msg.id === messageId
-                  );
-                  if (msgIndex >= 0) {
-                    const updated = [...prevMessages];
-                    updated[msgIndex] = {
-                      ...updated[msgIndex],
-                      content: contentBufferRef.current,
-                    };
-                    return updated;
-                  }
-                  return prevMessages;
-                });
-              }
-
-              // Reset state for next message
-              messageId = null;
-              setCurrentMessageId(null);
-              contentBufferRef.current = "";
-              setDisplayedContent("");
-              break;
-            }
-
-            case "done": {
-              // Update conversation ID
-              if (event.conversationId) {
-                setConversationId(event.conversationId);
-              }
-
-              // Finalize any remaining content
-              if (messageId && contentBufferRef.current) {
-                setDisplayedContent(contentBufferRef.current);
-                setMessages((prevMessages) => {
-                  const msgIndex = prevMessages.findIndex(
-                    (msg) => msg.id === messageId
-                  );
-                  if (msgIndex >= 0) {
-                    const updated = [...prevMessages];
-                    updated[msgIndex] = {
-                      ...updated[msgIndex],
-                      content: contentBufferRef.current,
-                    };
-                    return updated;
-                  }
-                  return prevMessages;
-                });
-              }
-
-              // Clean up
-              setCurrentMessageId(null);
-              setIsThinking(false);
-              break;
-            }
-
-            case "error": {
-              setApiError(event.error);
-              setIsThinking(false);
-              setCurrentMessageId(null);
-
-              // Determine if retry is appropriate
-              const isNetworkError = event.error.includes("connect");
-              const isRateLimit = event.error.includes("rate limit");
-
-              let errorContent = event.error;
-              if (isNetworkError && !isRateLimit) {
-                errorContent += "\n\n[Click to retry]";
-              }
-
-              const errorMsg: Message = {
-                id: crypto.randomUUID(),
-                role: "assistant",
-                content: errorContent,
-              };
-              setMessages((m) => [...m, errorMsg]);
-              return;
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Chat streaming error:", error);
-        setIsThinking(false);
-        setCurrentMessageId(null);
-
-        const errorMsg: Message = {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: "I'm having trouble connecting right now.",
-        };
-        setMessages((m) => [...m, errorMsg]);
-      }
-    } else {
-      // Fallback to keyword matching for backward compatibility
-      const widget = chooseWidget(value);
-      const assistantContent =
-        presets[value] ||
-        "Looks like I need to gather more details. I'll check with our AI assistant and get back to you.";
-
-      setTimeout(() => {
-        const reply: Message = widget
-          ? {
-              id: crypto.randomUUID(),
-              role: "assistant",
-              content: "",
-              toolCalls: [
-                {
-                  type: "widget_render",
-                  widget: widget.name as any,
-                  indices: undefined,
-                  explanation: undefined,
-                },
-              ],
-            }
-          : {
-              id: crypto.randomUUID(),
-              role: "assistant",
-              content: assistantContent,
-            };
-        setMessages((m) => [...m, reply]);
-        setIsThinking(false);
-      }, 600);
+      aiHandleSubmit(e);
+      setLocalInput("");
     }
   };
 
-  const handleRetry = (originalMessage: string) => {
-    // Remove the last error message
-    setMessages((m) => m.slice(0, -1));
-    // Retry the original message
-    sendUserMessage(originalMessage, true);
+  const onPickSuggestion = (suggestion: Suggestion) => {
+    setLocalInput(suggestion.label);
+    // Trigger submission after a short delay to allow input to update
+    setTimeout(() => {
+      const form = new Event("submit", { bubbles: true, cancelable: true });
+      onSubmit(form as any);
+    }, 10);
   };
 
-  const onSubmit = () => {
-    const text = input;
-    setInput("");
-    sendUserMessage(text);
-  };
-
-  const onPickSuggestion = (s: Suggestion) => sendUserMessage(s.label);
+  // Show API error if present
+  const displayError = aiError?.message;
 
   return (
     <PortfolioErrorBoundary>
@@ -629,8 +193,6 @@ const ChatPortfolioComponent = ({
       >
         {/* Ambient gradient orbs */}
         <div className="pointer-events-none absolute inset-0">
-          {/* <div className="absolute -top-40 -left-32 h-80 w-80 rounded-full blur-3xl opacity-40 dark:opacity-20 bg-[oklch(0.84_0.07_250)]" /> */}
-          {/* <div className="absolute -bottom-40 -right-32 h-80 w-80 rounded-full blur-3xl opacity-30 dark:opacity-20 bg-[oklch(0.74_0.15_310)]" /> */}
           {/* subtle grid overlay */}
           <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,rgba(0,0,0,0.35)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.35)_1px,transparent_1px)] [background-size:24px_24px] dark:opacity-[0.08]" />
         </div>
@@ -650,8 +212,11 @@ const ChatPortfolioComponent = ({
                 subtitle={effectivePortfolioData?.profile?.headline || ""}
                 description="Ask about projects, skills, or anything you're curious about."
                 suggestions={suggestions}
-                inputValue={input}
-                onInputChange={setInput}
+                inputValue={localInput || input}
+                onInputChange={(val) => {
+                  setLocalInput(val);
+                  handleInputChange({ target: { value: val } } as any);
+                }}
                 onSubmit={onSubmit}
                 onPick={onPickSuggestion}
               />
@@ -721,9 +286,19 @@ const ChatPortfolioComponent = ({
                     )}
                   </AnimatePresence>
 
+                  {/* Show error message if present */}
+                  {displayError && (
+                    <div className="mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-800 dark:text-red-200">
+                      {displayError}
+                    </div>
+                  )}
+
                   <Composer
-                    value={input}
-                    onChange={setInput}
+                    value={localInput || input}
+                    onChange={(val) => {
+                      setLocalInput(val);
+                      handleInputChange({ target: { value: val } } as any);
+                    }}
                     onSubmit={onSubmit}
                     placeholder="Type your message…"
                   />

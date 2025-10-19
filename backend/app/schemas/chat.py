@@ -22,9 +22,8 @@ class ChatMessage(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     role: Literal["user", "assistant"]
-    content: str
+    content: str  # Raw content including <<<WIDGET:...>>> delimiters
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    tool_calls: Optional[List[ToolCall]] = None
 
 
 class ChatConversation(BaseModel):
@@ -39,16 +38,29 @@ class ChatConversation(BaseModel):
     user_id: Optional[str] = None  # Firebase UID if authenticated
 
 
-class ChatRequest(BaseModel):
-    """Request payload for chat endpoint."""
+class ChatRequestMessage(BaseModel):
+    """Individual message in chat request from Vercel AI SDK."""
 
-    message: str = Field(..., min_length=1, max_length=500)
-    conversation_id: Optional[str] = None
+    role: Literal["user", "assistant", "system"]
+    content: str
+    id: Optional[str] = None
+
+
+class ChatRequest(BaseModel):
+    """Request payload for chat endpoint (Vercel AI SDK format)."""
+
+    messages: List[ChatRequestMessage] = Field(
+        ..., description="Array of messages from AI SDK"
+    )
+    conversation_id: Optional[str] = Field(None, alias="conversationId")
+    id: Optional[str] = None  # Chat ID from AI SDK
+
+    class Config:
+        populate_by_name = True  # Allow both conversation_id and conversationId
 
 
 class ChatResponse(BaseModel):
     """Response payload from chat endpoint."""
 
-    content: str  # Text response from LLM
-    tool_calls: Optional[List[ToolCall]] = None
+    content: str  # Text response from LLM including widget delimiters
     conversation_id: str

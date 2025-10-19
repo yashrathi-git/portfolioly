@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Optional, AsyncGenerator
 
 from fastapi import HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-from ..schemas.chat import ChatRequest, ChatMessage, ToolCall
+from ..schemas.chat import ChatRequest, ChatMessage
 from ..schemas.portfolio import PortfolioData
 from ..services.chat_storage_service import ChatStorageService, ChatStorageError
 from ..dependencies.chat_rate_limiting import (
@@ -126,7 +125,6 @@ async def _stream_chat_response(
 
     async def event_stream() -> AsyncGenerator[str, None]:
         content_buffer = ""
-        tool_calls: list[ToolCall] = []
 
         try:
             async for chunk in ai_chat_service.process_chat_streaming(
@@ -139,46 +137,39 @@ async def _stream_chat_response(
 
                 if chunk_type == "content" and isinstance(data, str):
                     content_buffer += data
-                    # Stream each content chunk immediately
-                    yield f"data: {json.dumps({'type': 'content', 'data': data})}\n\n"
+                    # Stream text delta in Vercel AI SDK format
+                    # Format: 0:"text chunk"\n
+                    escaped_text = (
+                        data.replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
+                    yield f'0:"{escaped_text}"\n'
 
                 elif chunk_type == "cmd" and isinstance(data, str):
-                    # Stream command delimiter as separate event
-                    yield f"data: {json.dumps({'type': 'cmd', 'data': data})}\n\n"
-
-                    # Parse command to extract tool call information
-                    if data.startswith("WIDGET:"):
-                        parts = data[7:].split(":")
-                        widget_name = parts[0]
-                        indices = None
-                        if len(parts) > 1:
-                            try:
-                                indices = [int(i.strip()) for i in parts[1].split(",")]
-                            except (ValueError, AttributeError):
-                                pass
-
-                        tool_call = ToolCall(
-                            type="widget_render",
-                            widget=widget_name,
-                            indices=indices,
-                            explanation=None,
-                        )
-                        tool_calls.append(tool_call)
+                    # Include delimiter commands in the content buffer
+                    # so they're stored in the database as raw text
+                    delimiter = f"<<<{data}>>>"
+                    content_buffer += delimiter
+                    escaped_delimiter = delimiter.replace("\\", "\\\\").replace(
+                        '"', '\\"'
+                    )
+                    yield f'0:"{escaped_delimiter}"\n'
 
                 elif chunk_type == "done":
                     # Processing completed successfully
                     break
 
                 elif chunk_type == "error":
-                    # Stream error and exit
-                    yield f"data: {json.dumps({'type': 'error', 'data': data})}\n\n"
+                    # Stream error in AI SDK format
+                    error_msg = str(data).replace("\\", "\\\\").replace('"', '\\"')
+                    yield f'3:{{"error":"{error_msg}"}}\n'
                     return
 
-            # Store assistant message with accumulated content and tool calls
+            # Store assistant message with raw content including delimiters
             assistant_message = ChatMessage(
                 role="assistant",
                 content=content_buffer,
-                tool_calls=tool_calls or None,
             )
             await _persist_assistant_message(
                 chat_storage,
@@ -189,16 +180,16 @@ async def _stream_chat_response(
                 portfolio_owner_user_id,
             )
 
-            # Send completion event
-            done_payload = {
-                "type": "done",
-                "data": {"conversation_id": conversation_id},
-            }
-            yield f"data: {json.dumps(done_payload)}\n\n"
+            # Send stream completion in AI SDK format
+            # e: event data (usage stats)
+            # d: done signal
+            yield 'e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n'
+            yield f'd:{{"finishReason":"stop","conversationId":"{conversation_id}"}}\n'
 
         except Exception as e:
             logger.error(f"Error in event stream: {str(e)}", exc_info=True)
-            yield f"data: {json.dumps({'type': 'error', 'data': f'Stream error: {str(e)}'})}\n\n"
+            error_msg = str(e).replace("\\", "\\\\").replace('"', '\\"')
+            yield f'3:{{"error":"Stream error: {error_msg}"}}\n'
 
     return StreamingResponse(
         event_stream(),
@@ -208,6 +199,7 @@ async def _stream_chat_response(
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
             "Content-Type": "text/event-stream",
+            "x-vercel-ai-data-stream": "v1",
         },
     )
 
@@ -249,7 +241,14 @@ async def handle_chat_request(
 
     body = await request.json()
     chat_request = ChatRequest(**body)
-    validate_chat_input_length(chat_request.message)
+
+    # Extract the last user message from the AI SDK messages array
+    user_messages = [msg for msg in chat_request.messages if msg.role == "user"]
+    if not user_messages:
+        raise HTTPException(status_code=400, detail="No user message found in request")
+
+    last_user_message = user_messages[-1].content
+    validate_chat_input_length(last_user_message)
 
     await check_portfolio_owner_usage_limit(portfolio_owner_user_id)
 
@@ -260,14 +259,14 @@ async def handle_chat_request(
         chat_storage, username, ip_address, chat_request.conversation_id
     )
 
-    user_message = ChatMessage(role="user", content=chat_request.message)
+    user_message = ChatMessage(role="user", content=last_user_message)
     await _store_message(
         chat_storage, conversation_id, user_message, username, ip_address
     )
 
     return await _stream_chat_response(
         username,
-        chat_request.message,
+        last_user_message,
         conversation_id,
         history,
         portfolio_data,

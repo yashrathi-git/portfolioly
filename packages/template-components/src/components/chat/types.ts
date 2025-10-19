@@ -1,22 +1,7 @@
-export type ToolCall = {
-  type: "widget_render";
-  widget:
-    | "about"
-    | "projects"
-    | "skills"
-    | "contact"
-    | "experience"
-    | "education";
-  indices?: number[]; // Optional: filter to specific items (zero-based)
-  explanation?: string; // Optional: text to show alongside widget
-};
-
 export type Message = {
   id: string;
   role: "user" | "assistant";
-  content: string;
-  // Optional: tool calls from AI backend for rendering multiple widgets
-  toolCalls?: ToolCall[];
+  content: string; // Raw content including <<<WIDGET:...>>> delimiters
 };
 
 export type Suggestion = {
@@ -40,7 +25,6 @@ export type ChatRequest = {
 };
 
 export type ChatResponse = {
-  content: string; // Text response from LLM
-  tool_calls?: ToolCall[];
+  content: string; // Text response from LLM including widget delimiters
   conversation_id: string;
 };
