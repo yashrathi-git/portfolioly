@@ -109,7 +109,7 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
     }
 
     return {
-      name: personalInfo.full_name,
+      name: personalInfo.full_name || undefined,
       badge: headerLinks.length ? "Chat Portfolio" : undefined,
       links: headerLinks,
     };
