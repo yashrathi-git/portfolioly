@@ -208,7 +208,7 @@ export const Thread = ({
             </div>
           )}
 
-          {m.role === "assistant" && (m.widget || m.toolCalls) ? (
+          {m.role === "assistant" && m.toolCalls ? (
             <div
               className={cn(
                 "flex-1 max-w-full md:max-w-[85%] leading-relaxed [&_*]:text-inherit [&_*]:leading-[inherit] space-y-4",
@@ -229,43 +229,86 @@ export const Thread = ({
                           />
                         ),
                       },
+                      ul: {
+                        component: ({ className, ...props }) => (
+                          <ul
+                            {...props}
+                            className={cn(
+                              "ml-5 list-disc space-y-1 my-2",
+                              className
+                            )}
+                          />
+                        ),
+                      },
+                      ol: {
+                        component: ({ className, ...props }) => (
+                          <ol
+                            {...props}
+                            className={cn(
+                              "ml-5 list-decimal space-y-1 my-2",
+                              className
+                            )}
+                          />
+                        ),
+                      },
+                      li: {
+                        component: ({ className, ...props }) => (
+                          <li {...props} className={cn("", className)} />
+                        ),
+                      },
                     }}
                   />
                 </div>
               )}
 
-              {/* Render legacy widget format for backward compatibility */}
-              {m.widget && (
-                <>
-                  {m.widget.name === "about" && (
-                    <AboutWidget {...(m.widget.props as any)} />
-                  )}
-                  {m.widget.name === "projects" && (
-                    <ProjectsWidget {...(m.widget.props as any)} />
-                  )}
-                  {m.widget.name === "skills" && (
-                    <SkillsWidget {...(m.widget.props as any)} />
-                  )}
-                  {m.widget.name === "contact" && (
-                    <ContactWidget {...(m.widget.props as any)} />
-                  )}
-                  {m.widget.name === "experience" && (
-                    <WorkExperienceWidget {...(m.widget.props as any)} />
-                  )}
-                  {m.widget.name === "education" && (
-                    <EducationWidget {...(m.widget.props as any)} />
-                  )}
-                </>
-              )}
-
               {/* Render tool calls from API */}
-              {m.toolCalls?.map((toolCall, idx) => (
+              {m.toolCalls.map((toolCall, idx) => (
                 <div key={idx} className="space-y-2">
                   {toolCall.explanation && (
                     <div className="rounded-2xl rounded-tl-none px-5 py-3.5 md:py-4 bg-[var(--secondary)] text-[color:var(--secondary-foreground)] shadow-sm">
-                      <p className="whitespace-pre-wrap">
-                        {toolCall.explanation}
-                      </p>
+                      <MarkdownContent
+                        content={toolCall.explanation}
+                        overrides={{
+                          p: {
+                            component: ({ className, ...props }) => (
+                              <p
+                                {...props}
+                                className={cn(
+                                  "m-0 whitespace-pre-wrap",
+                                  className
+                                )}
+                              />
+                            ),
+                          },
+                          ul: {
+                            component: ({ className, ...props }) => (
+                              <ul
+                                {...props}
+                                className={cn(
+                                  "ml-5 list-disc space-y-1 my-2",
+                                  className
+                                )}
+                              />
+                            ),
+                          },
+                          ol: {
+                            component: ({ className, ...props }) => (
+                              <ol
+                                {...props}
+                                className={cn(
+                                  "ml-5 list-decimal space-y-1 my-2",
+                                  className
+                                )}
+                              />
+                            ),
+                          },
+                          li: {
+                            component: ({ className, ...props }) => (
+                              <li {...props} className={cn("", className)} />
+                            ),
+                          },
+                        }}
+                      />
                     </div>
                   )}
                   {renderWidget(toolCall, portfolioData)}
@@ -291,6 +334,33 @@ export const Thread = ({
                         {...props}
                         className={cn("m-0 whitespace-pre-wrap", className)}
                       />
+                    ),
+                  },
+                  ul: {
+                    component: ({ className, ...props }) => (
+                      <ul
+                        {...props}
+                        className={cn(
+                          "ml-5 list-disc space-y-1 my-2",
+                          className
+                        )}
+                      />
+                    ),
+                  },
+                  ol: {
+                    component: ({ className, ...props }) => (
+                      <ol
+                        {...props}
+                        className={cn(
+                          "ml-5 list-decimal space-y-1 my-2",
+                          className
+                        )}
+                      />
+                    ),
+                  },
+                  li: {
+                    component: ({ className, ...props }) => (
+                      <li {...props} className={cn("", className)} />
                     ),
                   },
                 }}

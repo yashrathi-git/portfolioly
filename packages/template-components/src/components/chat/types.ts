@@ -15,17 +15,6 @@ export type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
-  // Optional rich widget to render structured UI instead of plain text
-  widget?: {
-    name:
-      | "about"
-      | "projects"
-      | "skills"
-      | "contact"
-      | "experience"
-      | "education";
-    props: Record<string, any>;
-  };
   // Optional: tool calls from AI backend for rendering multiple widgets
   toolCalls?: ToolCall[];
 };

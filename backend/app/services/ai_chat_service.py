@@ -153,17 +153,13 @@ class AIChatService:
             logger.info(
                 f"Starting OpenAI streaming request with model: {self.model_name}"
             )
-            print(self.model_name)
-            print(self.endpoint)
-            print(messages)
-            print(ChatConfig.MAX_RESPONSE_TOKENS)
-            print(0.7)
+
             stream = await self.client.chat.completions.create(
                 model=self.model_name,
                 messages=messages,
                 stream=True,
-                max_tokens=ChatConfig.MAX_RESPONSE_TOKENS,
-                temperature=0.7,
+                max_completion_tokens=ChatConfig.MAX_RESPONSE_TOKENS,
+                reasoning_effort="minimal",
             )
 
             async for chunk in stream:

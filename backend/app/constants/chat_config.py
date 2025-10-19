@@ -17,7 +17,7 @@ class ChatConfig:
     MAX_TOOL_ARGUMENT_CHARS = 4000
 
     # AI processing
-    CHAT_MODEL_NAME = "DeepSeek-V3.1"  # Azure AI model
+    CHAT_MODEL_NAME = "gpt-5-mini"  # Azure AI model
     PROCESSOR_MODEL_NAME = "DeepSeek-V3.1"  # Default model for AIProcessor
     MAX_CONVERSATION_HISTORY = 10  # Number of previous messages to include
     MAX_RESPONSE_TOKENS = 500  # Keep token limit to control Azure response size

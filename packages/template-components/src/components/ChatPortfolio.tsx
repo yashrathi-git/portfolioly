@@ -7,14 +7,7 @@ import { EmptyState } from "./chat/EmptyState";
 import { Thread } from "./chat/Thread";
 import { Composer } from "./chat/Composer";
 import { Suggestions } from "./chat/Suggestions";
-import type {
-  Message,
-  ChatProfile,
-  Suggestion,
-  ChatRequest,
-  ChatResponse,
-  ToolCall,
-} from "./chat/types";
+import type { Message, ChatProfile, Suggestion, ToolCall } from "./chat/types";
 import type { DisplayPortfolioData } from "@portfolioly/schema";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
@@ -22,6 +15,7 @@ import {
   requiresExternalData,
   useComponentDataTracking,
 } from "../utils/component-flags";
+import { streamChatResponse } from "../services/chatService";
 
 export type ChatPortfolioProps = {
   profile?: ChatProfile;
@@ -68,7 +62,12 @@ const ChatPortfolioComponent = ({
   );
   const [apiError, setApiError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const rafIdRef = useRef<number | null>(null);
+
+  // Character-level animation state
+  const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+  const contentBufferRef = useRef<string>("");
+  const [displayedContent, setDisplayedContent] = useState<string>("");
+  const animationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const hasStarted = messages.length > 0;
 
@@ -265,6 +264,55 @@ const ChatPortfolioComponent = ({
     });
   }, [messages, isThinking]);
 
+  // Character-level streaming animation
+  useEffect(() => {
+    // Clear any existing interval
+    if (animationIntervalRef.current) {
+      clearInterval(animationIntervalRef.current);
+      animationIntervalRef.current = null;
+    }
+
+    // Only animate if there's a current message being streamed
+    if (!currentMessageId) return;
+
+    // Start animation loop
+    animationIntervalRef.current = setInterval(() => {
+      const buffer = contentBufferRef.current;
+      const displayed = displayedContent;
+
+      if (displayed.length < buffer.length) {
+        const remaining = buffer.length - displayed.length;
+        // Fast catch-up if far behind, otherwise show character by character
+        const charsToAdd = remaining > 50 ? Math.min(10, remaining) : 1;
+        const newDisplayed = buffer.slice(0, displayed.length + charsToAdd);
+        setDisplayedContent(newDisplayed);
+
+        // Update the message with animated content
+        setMessages((prevMessages) => {
+          const msgIndex = prevMessages.findIndex(
+            (msg) => msg.id === currentMessageId
+          );
+          if (msgIndex >= 0) {
+            const updated = [...prevMessages];
+            updated[msgIndex] = {
+              ...updated[msgIndex],
+              content: newDisplayed,
+            };
+            return updated;
+          }
+          return prevMessages;
+        });
+      }
+    }, 20); // 20ms = ~50 characters per second
+
+    return () => {
+      if (animationIntervalRef.current) {
+        clearInterval(animationIntervalRef.current);
+        animationIntervalRef.current = null;
+      }
+    };
+  }, [currentMessageId, displayedContent, contentBufferRef.current]);
+
   const chooseWidget = (text: string) => {
     const t = text.toLowerCase();
     if (
@@ -345,32 +393,184 @@ const ChatPortfolioComponent = ({
     setApiError(null);
 
     // If username AND apiBaseUrl are provided, use API; otherwise fall back to keyword matching
-    // Note: For authenticated preview without username, we still need username for the endpoint
-    if (username && apiBaseUrl) {
+    if (username && apiBaseUrl && publicToken) {
       try {
-        await callChatAPI(value);
-      } catch (error) {
-        console.error("Chat API error:", error);
-        setIsThinking(false);
+        // Initialize streaming state
+        contentBufferRef.current = "";
+        setDisplayedContent("");
+        let messageId: string | null = null;
 
-        // Determine error type and show appropriate message with retry option
-        const isNetworkError =
-          error instanceof TypeError ||
-          (error as any).message?.includes("fetch");
-        const isRateLimit = apiError?.includes("rate limit");
+        // Stream response from service
+        for await (const event of streamChatResponse({
+          message: value,
+          conversationId,
+          username,
+          apiBaseUrl,
+          publicToken,
+        })) {
+          switch (event.type) {
+            case "content": {
+              // Create message on first content chunk and dismiss loading
+              if (!messageId) {
+                messageId = crypto.randomUUID();
+                setCurrentMessageId(messageId);
+                setIsThinking(false); // Dismiss loading immediately
+                const newMessage: Message = {
+                  id: messageId,
+                  role: "assistant",
+                  content: "",
+                };
+                setMessages((m) => [...m, newMessage]);
+              }
 
-        let errorContent =
-          apiError || "I'm having trouble connecting right now.";
+              // Accumulate in buffer for animation
+              contentBufferRef.current += event.data;
+              break;
+            }
 
-        // Add retry button for network errors (not for rate limits or access denied)
-        if (isNetworkError && !isRateLimit) {
-          errorContent += "\n\n[Click to retry]";
+            case "widget": {
+              // Dismiss loading indicator
+              if (isThinking) {
+                setIsThinking(false);
+              }
+
+              // Finalize any pending text message
+              if (messageId) {
+                // Fast-forward animation to completion
+                setDisplayedContent(contentBufferRef.current);
+                setMessages((prevMessages) => {
+                  const msgIndex = prevMessages.findIndex(
+                    (msg) => msg.id === messageId
+                  );
+                  if (msgIndex >= 0) {
+                    const updated = [...prevMessages];
+                    updated[msgIndex] = {
+                      ...updated[msgIndex],
+                      content: contentBufferRef.current,
+                    };
+                    return updated;
+                  }
+                  return prevMessages;
+                });
+
+                // Reset for next message
+                messageId = null;
+                setCurrentMessageId(null);
+                contentBufferRef.current = "";
+                setDisplayedContent("");
+              }
+
+              // Create widget message
+              const widgetMessage: Message = {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: "",
+                toolCalls: [
+                  {
+                    type: "widget_render",
+                    widget: event.widget as any,
+                    indices: event.indices,
+                    explanation: undefined,
+                  },
+                ],
+              };
+              setMessages((m) => [...m, widgetMessage]);
+              break;
+            }
+
+            case "message_break": {
+              // Finalize current message and prepare for next one
+              if (messageId) {
+                // Fast-forward animation to completion
+                setDisplayedContent(contentBufferRef.current);
+                setMessages((prevMessages) => {
+                  const msgIndex = prevMessages.findIndex(
+                    (msg) => msg.id === messageId
+                  );
+                  if (msgIndex >= 0) {
+                    const updated = [...prevMessages];
+                    updated[msgIndex] = {
+                      ...updated[msgIndex],
+                      content: contentBufferRef.current,
+                    };
+                    return updated;
+                  }
+                  return prevMessages;
+                });
+              }
+
+              // Reset state for next message
+              messageId = null;
+              setCurrentMessageId(null);
+              contentBufferRef.current = "";
+              setDisplayedContent("");
+              break;
+            }
+
+            case "done": {
+              // Update conversation ID
+              if (event.conversationId) {
+                setConversationId(event.conversationId);
+              }
+
+              // Finalize any remaining content
+              if (messageId && contentBufferRef.current) {
+                setDisplayedContent(contentBufferRef.current);
+                setMessages((prevMessages) => {
+                  const msgIndex = prevMessages.findIndex(
+                    (msg) => msg.id === messageId
+                  );
+                  if (msgIndex >= 0) {
+                    const updated = [...prevMessages];
+                    updated[msgIndex] = {
+                      ...updated[msgIndex],
+                      content: contentBufferRef.current,
+                    };
+                    return updated;
+                  }
+                  return prevMessages;
+                });
+              }
+
+              // Clean up
+              setCurrentMessageId(null);
+              setIsThinking(false);
+              break;
+            }
+
+            case "error": {
+              setApiError(event.error);
+              setIsThinking(false);
+              setCurrentMessageId(null);
+
+              // Determine if retry is appropriate
+              const isNetworkError = event.error.includes("connect");
+              const isRateLimit = event.error.includes("rate limit");
+
+              let errorContent = event.error;
+              if (isNetworkError && !isRateLimit) {
+                errorContent += "\n\n[Click to retry]";
+              }
+
+              const errorMsg: Message = {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: errorContent,
+              };
+              setMessages((m) => [...m, errorMsg]);
+              return;
+            }
+          }
         }
+      } catch (error) {
+        console.error("Chat streaming error:", error);
+        setIsThinking(false);
+        setCurrentMessageId(null);
 
         const errorMsg: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: errorContent,
+          content: "I'm having trouble connecting right now.",
         };
         setMessages((m) => [...m, errorMsg]);
       }
@@ -383,7 +583,19 @@ const ChatPortfolioComponent = ({
 
       setTimeout(() => {
         const reply: Message = widget
-          ? { id: crypto.randomUUID(), role: "assistant", content: "", widget }
+          ? {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: "",
+              toolCalls: [
+                {
+                  type: "widget_render",
+                  widget: widget.name as any,
+                  indices: undefined,
+                  explanation: undefined,
+                },
+              ],
+            }
           : {
               id: crypto.randomUUID(),
               role: "assistant",
@@ -400,283 +612,6 @@ const ChatPortfolioComponent = ({
     setMessages((m) => m.slice(0, -1));
     // Retry the original message
     sendUserMessage(originalMessage, true);
-  };
-
-  const callChatAPI = async (message: string) => {
-    // Check if publicToken is provided when using API
-    if (!publicToken) {
-      setApiError("Chat is unavailable. Please refresh the page to continue.");
-      throw new Error("Public token is required for chat");
-    }
-
-    try {
-      const chatRequest: ChatRequest = {
-        message,
-        conversation_id: conversationId,
-      };
-
-      const url = `${apiBaseUrl}/public/chat/${encodeURIComponent(username!)}`;
-
-      let response: Response;
-      try {
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${publicToken}`,
-        };
-
-        response = await fetch(url, {
-          method: "POST",
-          headers,
-          body: JSON.stringify(chatRequest),
-        });
-      } catch (fetchError) {
-        // Network error (no internet, CORS, etc.)
-        setApiError(
-          "Unable to connect to the chat service. Please check your internet connection."
-        );
-        throw fetchError;
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-
-        if (response.status === 429) {
-          const retryAfter = response.headers.get("Retry-After");
-          const retryMessage = retryAfter
-            ? `Please try again in ${retryAfter} seconds.`
-            : "Please try again in a few minutes.";
-          setApiError(`You've reached the rate limit. ${retryMessage}`);
-          throw new Error("Rate limit exceeded");
-        } else if (response.status === 404) {
-          setApiError(
-            "Portfolio not found. Please check the username and try again."
-          );
-          throw new Error("Portfolio not found");
-        } else if (response.status === 403) {
-          setApiError(
-            "This portfolio's chat is private and requires authentication."
-          );
-          throw new Error("Access denied");
-        } else if (response.status === 400) {
-          const message =
-            errorData?.detail?.message ||
-            errorData?.message ||
-            "Invalid request";
-          setApiError(`${message}. Please try rephrasing your message.`);
-          throw new Error("Bad request");
-        } else if (response.status >= 500) {
-          setApiError(
-            "The chat service is temporarily unavailable. Please try again in a moment."
-          );
-          throw new Error("Server error");
-        } else {
-          setApiError("Something went wrong. Please try again.");
-          throw new Error(`API error: ${response.status}`);
-        }
-      }
-
-      // Handle SSE streaming response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (!reader) {
-        throw new Error("No response body");
-      }
-
-      // Streaming state management
-      let currentContentBuffer = "";
-      let currentMessageId: string | null = null; // null until we create the first message
-      let pending = "";
-      let hasStartedResponse = false; // Track if we've dismissed loading indicator
-
-      const ALLOWED_WIDGETS = new Set([
-        "about",
-        "projects",
-        "skills",
-        "contact",
-        "experience",
-        "education",
-      ]);
-
-      // Helper: Dismiss loading indicator on first response
-      const dismissLoadingIndicator = () => {
-        if (!hasStartedResponse) {
-          hasStartedResponse = true;
-          setIsThinking(false);
-        }
-      };
-
-      // Helper: Create or update text message with current buffer
-      const updateTextMessage = () => {
-        const content = currentContentBuffer.trim();
-        if (!content) return;
-
-        // Create message ID on first update
-        if (currentMessageId === null) {
-          currentMessageId = crypto.randomUUID();
-        }
-
-        setMessages((m) => {
-          const existingIndex = m.findIndex(
-            (msg) => msg.id === currentMessageId
-          );
-
-          if (existingIndex >= 0) {
-            // Update existing message
-            const updated = [...m];
-            updated[existingIndex] = {
-              ...updated[existingIndex],
-              content: content,
-            };
-            return updated;
-          }
-
-          // Create new message
-          return [
-            ...m,
-            {
-              id: currentMessageId!,
-              role: "assistant" as const,
-              content: content,
-            },
-          ];
-        });
-      };
-
-      // Helper: Finalize current text message and reset for next one
-      const finalizeTextMessage = () => {
-        // Cancel any pending RAF update
-        if (rafIdRef.current !== null) {
-          cancelAnimationFrame(rafIdRef.current);
-          rafIdRef.current = null;
-        }
-
-        // Only finalize if we have content
-        if (currentContentBuffer.trim()) {
-          updateTextMessage();
-        }
-
-        // Reset buffer and ID for next message
-        currentContentBuffer = "";
-        currentMessageId = null;
-      };
-
-      // Helper: Create widget message
-      const createWidgetMessage = (widgetName: string, indices?: number[]) => {
-        const widgetMessage: Message = {
-          id: crypto.randomUUID(),
-          role: "assistant" as const,
-          content: "",
-          toolCalls: [
-            {
-              type: "widget_render",
-              widget: widgetName as any,
-              indices,
-              explanation: undefined,
-            },
-          ],
-        };
-        setMessages((m) => [...m, widgetMessage]);
-      };
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        pending += decoder.decode(value, { stream: true });
-
-        let newlineIdx: number;
-        while ((newlineIdx = pending.indexOf("\n\n")) >= 0) {
-          const rawEvent = pending.slice(0, newlineIdx).trim();
-          pending = pending.slice(newlineIdx + 2);
-
-          if (!rawEvent.startsWith("data: ")) continue;
-          const payload = rawEvent.slice(6);
-
-          let parsed: any;
-          try {
-            parsed = JSON.parse(payload);
-          } catch (e) {
-            console.error("Error parsing SSE data:", e);
-            continue;
-          }
-
-          if (parsed.type === "content") {
-            // Accumulate content in buffer
-            currentContentBuffer += parsed.data;
-
-            // Dismiss loading indicator on first content
-            dismissLoadingIndicator();
-
-            // Throttle UI updates using RAF for smooth streaming
-            if (rafIdRef.current === null) {
-              rafIdRef.current = requestAnimationFrame(() => {
-                rafIdRef.current = null;
-                updateTextMessage();
-              });
-            }
-          } else if (parsed.type === "cmd") {
-            const command = parsed.data as string;
-
-            if (command === "MSG_BREAK") {
-              // Dismiss loading indicator
-              dismissLoadingIndicator();
-
-              // Finalize current text message and prepare for next one
-              finalizeTextMessage();
-            } else if (command.startsWith("WIDGET:")) {
-              // Dismiss loading indicator immediately for widgets
-              dismissLoadingIndicator();
-
-              // Parse widget command: WIDGET:name or WIDGET:name:0,1
-              const parts = command.slice(7).split(":");
-              const widgetName = parts[0];
-              const indicesStr = parts[1];
-
-              if (ALLOWED_WIDGETS.has(widgetName)) {
-                // Parse indices if provided
-                let indices: number[] | undefined = undefined;
-                if (indicesStr) {
-                  const nums = indicesStr
-                    .split(",")
-                    .map((s) => Number(s.trim()))
-                    .filter((n) => Number.isInteger(n));
-                  if (nums.length) indices = nums;
-                }
-
-                // Finalize any pending text message before showing widget
-                finalizeTextMessage();
-
-                // Create and display widget message
-                createWidgetMessage(widgetName, indices);
-              }
-            }
-          } else if (parsed.type === "done") {
-            if (parsed.data?.conversation_id) {
-              setConversationId(parsed.data.conversation_id);
-            }
-
-            // Finalize any remaining text message
-            finalizeTextMessage();
-
-            // Ensure loading indicator is dismissed
-            dismissLoadingIndicator();
-          } else if (parsed.type === "error") {
-            const errorMessage =
-              typeof parsed.data === "string"
-                ? parsed.data
-                : "An error occurred while processing your message.";
-            setApiError(errorMessage);
-            setIsThinking(false);
-            throw new Error(errorMessage);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Chat API call failed:", error);
-      setIsThinking(false);
-      throw error;
-    }
   };
 
   const onSubmit = () => {
