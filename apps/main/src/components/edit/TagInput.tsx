@@ -1,93 +1,66 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { TagInput as EmblorTagInput, Tag } from "emblor";
+import { toast } from "sonner";
 
 export interface TagInputProps {
   value: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
-  allowDuplicates?: boolean;
   className?: string;
 }
 
 export function TagInput({
   value = [],
   onChange,
-  placeholder = "Type and press Enter or comma",
-  allowDuplicates = false,
+  placeholder = "Add a tag",
   className,
 }: TagInputProps) {
-  const [input, setInput] = useState("");
+  // Convert string[] to Tag[] format
+  const tags: Tag[] = value.map((text, index) => ({
+    id: `${text}-${index}`,
+    text,
+  }));
 
-  const commit = (raw: string) => {
-    const parts = raw
-      .split(/[\n,]/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (parts.length === 0) return;
+  const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
 
-    const next = [...value];
-    for (const p of parts) {
-      if (allowDuplicates || !next.includes(p)) next.push(p);
+  const handleSetTags = (newTags: React.SetStateAction<Tag[]>) => {
+    const resolvedTags =
+      typeof newTags === "function" ? newTags(tags) : newTags;
+
+    // Check for duplicates and show toast
+    const textValues = resolvedTags.map((tag) => tag.text);
+    const seen = new Set<string>();
+
+    for (const text of textValues) {
+      if (seen.has(text)) {
+        toast.error(`"${text}" is already added.`);
+        return;
+      }
+      seen.add(text);
     }
-    onChange(next);
-    setInput("");
-  };
 
-  const remove = (idx: number) => {
-    const next = value.filter((_, i) => i !== idx);
-    onChange(next);
+    onChange(textValues);
   };
 
   return (
-    <div className={className}>
-      <div className="flex flex-wrap gap-2 mb-2">
-        {value.map((t, i) => (
-          <Badge
-            key={`${t}-${i}`}
-            variant="secondary"
-            className="flex items-center gap-1"
-          >
-            {t}
-            <button
-              type="button"
-              className="ml-1 inline-flex items-center text-muted-foreground hover:text-foreground"
-              onClick={() => remove(i)}
-              aria-label={`Remove ${t}`}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </Badge>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <Input
-          placeholder={placeholder}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              commit(input);
-            }
-          }}
-          onPaste={(e) => {
-            const text = e.clipboardData.getData("text");
-            if (text.includes(",") || text.includes("\n")) {
-              e.preventDefault();
-              commit(text);
-            }
-          }}
-        />
-        <Button type="button" variant="secondary" onClick={() => commit(input)}>
-          Add
-        </Button>
-      </div>
-    </div>
+    <EmblorTagInput
+      tags={tags}
+      setTags={handleSetTags}
+      placeholder={placeholder}
+      styleClasses={{
+        input: className || "w-full",
+        inlineTagsContainer:
+          "border-input dark:bg-input/30 flex min-h-9 w-full rounded-md border bg-transparent px-3 py-1 shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+        tag: {
+          body: "bg-secondary text-secondary-foreground border-secondary/50 hover:bg-secondary/80",
+        },
+      }}
+      activeTagIndex={activeTagIndex}
+      setActiveTagIndex={setActiveTagIndex}
+      shape="pill"
+    />
   );
 }
 

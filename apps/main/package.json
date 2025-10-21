@@ -28,6 +28,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "compressorjs": "^1.2.1",
+    "emblor": "^1.4.8",
     "firebase": "^12.3.0",
     "framer-motion": "^12.23.21",
     "lucide-react": "^0.544.0",
