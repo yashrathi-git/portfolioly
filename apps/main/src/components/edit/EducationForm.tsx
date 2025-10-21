@@ -132,6 +132,18 @@ export function EducationForm({ value, onChange }: EducationFormProps) {
               </div>
             </div>
 
+            <div className="grid gap-2">
+              <Label>Institution Logo URL</Label>
+              <Input
+                value={ed.logo_url ?? ""}
+                onChange={(e) => update(idx, { logo_url: e.target.value })}
+                placeholder="https://example.com/logo.png"
+              />
+              <p className="text-sm text-muted-foreground">
+                URL to the institution logo image
+              </p>
+            </div>
+
             <div className="flex justify-end">
               <Button
                 type="button"

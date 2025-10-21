@@ -25,6 +25,8 @@ export type ProjectImage = z.infer<typeof ProjectImageSchema>;
  */
 export const ProjectSchema = z.object({
   name: z.string().nullable().optional(),
+  /** Card image URL for project thumbnail (supports static images and GIFs) */
+  card_image_url: z.string().nullable().optional(),
   /** Markdown-formatted highlights/features */
   highlights: z.string().nullable().optional(),
   technologies: z.array(z.string()).optional().default([]),

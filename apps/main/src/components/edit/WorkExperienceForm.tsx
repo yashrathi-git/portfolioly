@@ -20,6 +20,7 @@ const emptyWE: WorkExperience = {
   organization: "",
   title: "",
   location: "",
+  logo_url: null,
   start_date: { month: 1, year: new Date().getFullYear() },
   end_date: { month: 12, year: new Date().getFullYear() },
   is_current: false,
@@ -67,7 +68,7 @@ export function WorkExperienceForm({
         )}
         {items.map((exp, idx) => (
           <div key={idx} className="grid gap-4 p-4 rounded-md border">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Organization</Label>
                 <Input
@@ -93,6 +94,17 @@ export function WorkExperienceForm({
                   onChange={(e) => update(idx, { location: e.target.value })}
                   placeholder="San Francisco, CA"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label>Company Logo URL</Label>
+                <Input
+                  value={exp.logo_url ?? ""}
+                  onChange={(e) => update(idx, { logo_url: e.target.value })}
+                  placeholder="https://example.com/logo.png"
+                />
+                <p className="text-xs text-muted-foreground">
+                  URL to the company logo image
+                </p>
               </div>
             </div>
 

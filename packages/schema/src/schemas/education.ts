@@ -13,6 +13,7 @@ export const EducationSchema = z.object({
   institution: z.string().nullable().optional(),
   degree: z.string().nullable().optional(),
   branch: z.string().nullable().optional(),
+  logo_url: z.string().nullable().optional(),
   start_date: DateInfoSchema,
   end_date: DateInfoSchema,
   is_current: z.boolean().nullable().optional(),

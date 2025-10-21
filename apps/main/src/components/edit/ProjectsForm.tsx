@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Project } from "@portfolioly/schema";
 import { TagInput } from "./TagInput";
 import { ProjectImageUpload } from "./ProjectImageUpload";
+import { ProjectCardImageUpload } from "./ProjectCardImageUpload";
 
 export interface ProjectsFormProps {
   value: Project[];
@@ -115,7 +116,7 @@ export function ProjectsForm({ value, onChange }: ProjectsFormProps) {
 
             {/* More context: larger textbox */}
             <div className="grid gap-2">
-              <Label>More context</Label>
+              <Label>Detailed Description</Label>
               <Textarea
                 rows={5}
                 value={p.more_context ?? ""}
@@ -123,7 +124,21 @@ export function ProjectsForm({ value, onChange }: ProjectsFormProps) {
                 placeholder="Architecture, design decisions, performance notes, collaboration, etc."
               />
               <p className="text-xs text-muted-foreground">
-                Supports markdown formatting for detailed project description
+                This markdown-supported description will be shown when users
+                click on the project card
+              </p>
+            </div>
+
+            {/* Card Image */}
+            <div className="grid gap-2">
+              <Label>Card Image</Label>
+              <ProjectCardImageUpload
+                value={p.card_image_url ?? null}
+                onChange={(url) => update(idx, { card_image_url: url })}
+              />
+              <p className="text-xs text-muted-foreground">
+                This image will be shown on the project card. Supports static
+                images and animated GIFs.
               </p>
             </div>
 

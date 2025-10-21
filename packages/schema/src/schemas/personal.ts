@@ -12,12 +12,14 @@ import { ProfileSchema } from "./core";
 export const PersonalInfoSchema = z.object({
   full_name: z.string().nullable().optional(),
   headline: z.string().nullable().optional(),
+  chatfolio_headline: z.string().nullable().optional(),
   summary: z.string().nullable().optional(),
   email: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
   profile_photo_url: z.string().nullable().optional(),
   profiles: z.array(ProfileSchema).optional().default([]),
+  tags: z.array(z.string()).optional().default([]),
 });
 
 export type PersonalInfo = z.infer<typeof PersonalInfoSchema>;

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TagInput } from "./TagInput";
 import type { PersonalInfo } from "@portfolioly/schema";
 
 export interface PersonalInfoFormProps {
@@ -36,6 +37,20 @@ export function PersonalInfoForm({ value, onChange }: PersonalInfoFormProps) {
             onChange={(e) => onChange({ ...v, headline: e.target.value })}
             placeholder="Senior Software Engineer"
           />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="chatfolio_headline">ChatFolio Headline</Label>
+          <Input
+            id="chatfolio_headline"
+            value={v.chatfolio_headline ?? ""}
+            onChange={(e) =>
+              onChange({ ...v, chatfolio_headline: e.target.value })
+            }
+            placeholder="Your chat portfolio headline"
+          />
+          <p className="text-sm text-muted-foreground">
+            This headline will be shown on the front page of your chat portfolio
+          </p>
         </div>
         <div className="grid gap-2">
           <Label htmlFor="summary">Summary</Label>
@@ -76,6 +91,17 @@ export function PersonalInfoForm({ value, onChange }: PersonalInfoFormProps) {
             onChange={(e) => onChange({ ...v, location: e.target.value })}
             placeholder="San Francisco, CA"
           />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="tags">Technology Tags</Label>
+          <TagInput
+            value={v.tags ?? []}
+            onChange={(tags) => onChange({ ...v, tags })}
+            placeholder="e.g., React, TypeScript, Node.js"
+          />
+          <p className="text-sm text-muted-foreground">
+            These tags will be displayed on your chat portfolio page
+          </p>
         </div>
       </CardContent>
     </Card>

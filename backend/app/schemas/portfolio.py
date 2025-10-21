@@ -46,12 +46,14 @@ class PersonalInfo(BaseModel):
 
     full_name: Optional[str] = None
     headline: Optional[str] = None
+    chatfolio_headline: Optional[str] = None
     summary: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
     location: Optional[str] = None
     profile_photo_url: Optional[str] = None
     profiles: Optional[List[Profile]] = Field(default_factory=list)
+    tags: Optional[List[str]] = Field(default_factory=list)
 
 
 class WorkExperience(BaseModel):
@@ -60,6 +62,7 @@ class WorkExperience(BaseModel):
     organization: Optional[str] = None
     title: Optional[str] = None
     location: Optional[str] = None
+    logo_url: Optional[str] = None
     start_date: Optional[DateInfo] = None
     end_date: Optional[DateInfo] = None
     is_current: Optional[bool] = None
@@ -82,6 +85,9 @@ class Project(BaseModel):
     """Project information with links and technologies."""
 
     name: Optional[str] = None
+    card_image_url: Optional[str] = Field(
+        None, description="Card image URL for project thumbnail (supports GIFs)"
+    )
     highlights: Optional[str] = None
     technologies: Optional[List[str]] = Field(default_factory=list)
     github: Optional[str] = None
@@ -104,6 +110,7 @@ class Education(BaseModel):
     institution: Optional[str] = None
     degree: Optional[str] = None
     branch: Optional[str] = None
+    logo_url: Optional[str] = None
     start_date: Optional[DateInfo] = None
     end_date: Optional[DateInfo] = None
     is_current: Optional[bool] = None
@@ -182,6 +189,7 @@ class PortfolioData(BaseModel):
                 "personal_info": {
                     "full_name": "John Doe",
                     "headline": "Senior Software Engineer",
+                    "chatfolio_headline": "Building scalable web applications",
                     "summary": "Experienced developer with 5+ years in web development",
                     "email": "john.doe@example.com",
                     "location": "San Francisco, CA",
@@ -193,12 +201,14 @@ class PortfolioData(BaseModel):
                             "label": "LinkedIn Profile",
                         }
                     ],
+                    "tags": ["Python", "React", "TypeScript", "AWS"],
                 },
                 "work_experiences": [
                     {
                         "organization": "Tech Corp",
                         "title": "Senior Software Engineer",
                         "location": "San Francisco, CA",
+                        "logo_url": "https://storage.azure.com/logos/techcorp.png",
                         "start_date": {"month": 1, "year": 2020},
                         "end_date": {"month": 12, "year": 2023},
                         "is_current": False,
@@ -209,6 +219,7 @@ class PortfolioData(BaseModel):
                 "projects": [
                     {
                         "name": "Portfolio Website",
+                        "card_image_url": "https://storage.azure.com/user123/projects/card-image.webp",
                         "highlights": "- Built responsive design\n- Implemented CI/CD\n- Optimized for performance",
                         "technologies": ["Next.js", "TypeScript", "Tailwind CSS"],
                         "github": "https://github.com/johndoe/portfolio",
@@ -234,6 +245,7 @@ class PortfolioData(BaseModel):
                         "institution": "University of California",
                         "degree": "Bachelor of Science",
                         "branch": "Computer Science",
+                        "logo_url": "https://storage.azure.com/logos/uc-berkeley.png",
                         "start_date": {"month": 9, "year": 2016},
                         "end_date": {"month": 6, "year": 2020},
                         "location": "Berkeley, CA",
