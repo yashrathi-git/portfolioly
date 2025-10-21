@@ -147,58 +147,37 @@ function EditPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Edit Portfolio
-            </h1>
-            <p className="text-muted-foreground">
-              Welcome back, {user?.displayName || user?.email?.split("@")[0]}!
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {hasUnsavedChanges && (
-              <span className="text-sm text-muted-foreground">
-                Unsaved changes
-              </span>
+    <main className="w-full">
+      {/* Success/Error Messages */}
+      {(saveSuccess || error) && (
+        <div className="container px-6 py-4">
+          <div className="max-w-5xl mx-auto space-y-4">
+            {saveSuccess && (
+              <Alert>
+                <AlertDescription>
+                  Portfolio saved successfully!
+                </AlertDescription>
+              </Alert>
             )}
 
-            <Button
-              onClick={handleSave}
-              disabled={saving || !hasUnsavedChanges}
-              className="flex items-center gap-2"
-            >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {saving ? "Saving..." : "Save"}
-            </Button>
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
           </div>
         </div>
+      )}
 
-        {saveSuccess && (
-          <Alert>
-            <AlertDescription>Portfolio saved successfully!</AlertDescription>
-          </Alert>
-        )}
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <PortfolioEditor
-          initial={portfolioData || undefined}
-          onChange={handlePortfolioChange}
-        />
-      </div>
+      <PortfolioEditor
+        initial={portfolioData || undefined}
+        onChange={handlePortfolioChange}
+        onSave={handleSave}
+        saving={saving}
+        hasUnsavedChanges={hasUnsavedChanges}
+        userName={user?.displayName || user?.email?.split("@")[0]}
+      />
     </main>
   );
 }
