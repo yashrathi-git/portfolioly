@@ -25,21 +25,25 @@ export function EditorTopBar({
 }: EditorTopBarProps) {
   return (
     <div className="sticky top-14 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto max-w-7xl px-4 flex h-16 items-center justify-between">
+      <div className="mx-auto max-w-7xl px-4 flex h-16 items-center justify-between gap-2">
         {/* Left: Title and Subtitle */}
-        <div className="flex flex-col">
-          <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        <div className="flex flex-col min-w-0 flex-shrink">
+          <h1 className="text-lg md:text-xl font-semibold tracking-tight truncate">
+            {title}
+          </h1>
+          <p className="text-xs md:text-sm text-muted-foreground truncate hidden sm:block">
+            {subtitle}
+          </p>
         </div>
 
         {/* Right: Mode Toggle and Save Button */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
           {/* Edit/Preview Toggle */}
           <div className="flex items-center rounded-lg bg-muted p-1">
             <button
               onClick={() => onModeChange("edit")}
               className={cn(
-                "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                "px-3 md:px-4 py-1.5 text-xs md:text-sm font-medium rounded-md transition-all min-h-[44px] md:min-h-0",
                 activeMode === "edit"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -50,7 +54,7 @@ export function EditorTopBar({
             <button
               onClick={() => onModeChange("preview")}
               className={cn(
-                "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                "px-3 md:px-4 py-1.5 text-xs md:text-sm font-medium rounded-md transition-all min-h-[44px] md:min-h-0",
                 activeMode === "preview"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -73,7 +77,9 @@ export function EditorTopBar({
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? "Saving..." : "Save"}
+              <span className="hidden sm:inline">
+                {saving ? "Saving..." : "Save"}
+              </span>
             </Button>
           )}
         </div>

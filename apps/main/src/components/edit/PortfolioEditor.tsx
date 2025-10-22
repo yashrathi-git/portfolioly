@@ -70,10 +70,10 @@ export function PortfolioEditor({
 
       {/* Content Area */}
       {activeMode === "edit" ? (
-        <div className="mx-auto max-w-7xl px-4 py-8">
+        <div className="mx-auto max-w-7xl px-4 md:px-4 py-8">
           <div className="flex gap-6">
-            {/* Floating Sidebar */}
-            <div className="w-60 flex-shrink-0">
+            {/* Floating Sidebar - Hidden on mobile */}
+            <div className="hidden md:block w-60 flex-shrink-0">
               <div className="sticky top-[7.5rem]">
                 <NavigationSidebar
                   sections={sections}
@@ -85,16 +85,32 @@ export function PortfolioEditor({
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 min-w-0">
-              {activeSectionConfig && (
-                <div
-                  role="tabpanel"
-                  id={`section-${activeSection}`}
-                  aria-labelledby={`tab-${activeSection}`}
-                >
-                  {renderSectionContent(activeSectionConfig, data, update)}
-                </div>
-              )}
+            <div className="flex-1 min-w-0 w-full">
+              {/* Desktop: Show only active section */}
+              <div className="hidden md:block">
+                {activeSectionConfig && (
+                  <div
+                    role="tabpanel"
+                    id={`section-${activeSection}`}
+                    aria-labelledby={`tab-${activeSection}`}
+                  >
+                    {renderSectionContent(activeSectionConfig, data, update)}
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile: Show all sections stacked */}
+              <div className="md:hidden space-y-6">
+                {sections.map((section) => (
+                  <div
+                    key={section.id}
+                    id={`section-${section.id}`}
+                    className="scroll-mt-24"
+                  >
+                    {renderSectionContent(section, data, update)}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
