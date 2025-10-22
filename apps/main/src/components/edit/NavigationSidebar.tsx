@@ -57,15 +57,17 @@ export function NavigationSidebar({
             <Icon className="h-4 w-4 flex-shrink-0" />
             <span className="flex-1 text-left">{section.label}</span>
             {/* Completion Indicator */}
-            {hasData && (
-              <span
-                className={cn(
-                  "h-1.5 w-1.5 rounded-full flex-shrink-0",
-                  isActive ? "bg-primary-foreground" : "bg-green-500"
-                )}
-                aria-label="Completed"
-              />
-            )}
+            <span
+              className={cn(
+                "h-2 w-2 rounded-full flex-shrink-0 ml-auto",
+                hasData
+                  ? isActive
+                    ? "bg-primary-foreground"
+                    : "bg-green-500"
+                  : "bg-muted"
+              )}
+              aria-label={hasData ? "Completed" : "Empty"}
+            />
           </button>
         );
       })}
