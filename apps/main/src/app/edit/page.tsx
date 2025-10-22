@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import withAuth from "@/lib/auth/withAuth";
+import { toast } from "sonner";
 // Dynamic import to disable SSR for PortfolioEditor
 const PortfolioEditor = dynamic(
   () =>
@@ -15,7 +16,7 @@ const PortfolioEditor = dynamic(
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Save, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import type { PortfolioData } from "@portfolioly/schema";
 import {
   getUserPortfolio,
@@ -31,7 +32,6 @@ function EditPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Load portfolio data on mount
@@ -64,7 +64,6 @@ function EditPage() {
   const handlePortfolioChange = (newData: PortfolioData) => {
     setPortfolioData(newData);
     setHasUnsavedChanges(true);
-    setSaveSuccess(false);
   };
 
   // Save portfolio data
@@ -78,15 +77,27 @@ function EditPage() {
       await saveUserPortfolio(portfolioData);
 
       setHasUnsavedChanges(false);
-      setSaveSuccess(true);
 
-      // Hide success message after 3 seconds
-      setTimeout(() => setSaveSuccess(false), 3000);
+      // Show success toast
+      toast.success("Portfolio saved successfully!", {
+        duration: 3000,
+        position: "bottom-right",
+      });
     } catch (err) {
       if (err instanceof PortfolioAPIError) {
         setError(err.message);
+        toast.error("Failed to save portfolio", {
+          description: err.message,
+          duration: 5000,
+          position: "bottom-right",
+        });
       } else {
-        setError("Failed to save portfolio");
+        const errorMessage = "Failed to save portfolio";
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          duration: 5000,
+          position: "bottom-right",
+        });
       }
       console.error("Error saving portfolio:", err);
     } finally {
@@ -148,24 +159,14 @@ function EditPage() {
 
   return (
     <main className="w-full">
-      {/* Success/Error Messages */}
-      {(saveSuccess || error) && (
+      {/* Error Messages */}
+      {error && (
         <div className="container px-6 py-4">
-          <div className="max-w-5xl mx-auto space-y-4">
-            {saveSuccess && (
-              <Alert>
-                <AlertDescription>
-                  Portfolio saved successfully!
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          <div className="max-w-5xl mx-auto">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           </div>
         </div>
       )}
