@@ -64,22 +64,45 @@ export function EditorTopBar({
             </button>
           </div>
 
-          {/* Save Button */}
+          {/* Save Button - Enhanced with proper states and minimum width */}
           {onSave && (
             <Button
               onClick={onSave}
               disabled={saving || !hasUnsavedChanges}
-              className="flex items-center gap-2"
+              className={cn(
+                "flex items-center gap-2 min-w-[120px] transition-all duration-150",
+                // Disabled state styling
+                (saving || !hasUnsavedChanges) && "cursor-not-allowed",
+                // Mobile: Ensure proper touch target
+                "min-h-[44px] md:min-h-0"
+              )}
               size="sm"
+              aria-label={
+                saving
+                  ? "Saving portfolio changes"
+                  : hasUnsavedChanges
+                  ? "Save portfolio changes"
+                  : "No changes to save"
+              }
             >
               {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <>
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                  <span className="hidden sm:inline">Saving...</span>
+                  <span className="sm:hidden">Save</span>
+                </>
               ) : (
-                <Save className="h-4 w-4" />
+                <>
+                  <Save className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">
+                    {hasUnsavedChanges ? "Save Changes" : "Saved"}
+                  </span>
+                  <span className="sm:hidden">Save</span>
+                </>
               )}
-              <span className="hidden sm:inline">
-                {saving ? "Saving..." : "Save"}
-              </span>
             </Button>
           )}
         </div>
