@@ -139,6 +139,14 @@ class UsernameAvailabilityResponse(BaseModel):
     suggestions: Optional[list[str]] = None
 
 
+class AccessModeUpdateRequest(BaseModel):
+    """Request schema for updating access mode."""
+
+    access_mode: Literal["public", "private"] = Field(
+        ..., description="Access mode for the portfolio"
+    )
+
+
 class UserSettingsResponse(BaseModel):
     """Response schema for user settings."""
 

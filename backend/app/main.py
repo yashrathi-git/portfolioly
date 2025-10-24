@@ -77,7 +77,7 @@ def create_app() -> FastAPI:
     app.include_router(upload_router)
     app.include_router(portfolio_router)
     app.include_router(public_portfolio_router)
-    app.include_router(user_settings_router)
+    app.include_router(user_settings_router, prefix="/user-settings")
 
     @app.on_event("startup")
     async def startup_event():

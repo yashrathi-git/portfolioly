@@ -2,14 +2,17 @@
 User settings service for managing usernames and portfolio visibility.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from datetime import datetime
 import logging
 import re
 import secrets
 import string
 
-from ..core.firebase import get_firebase_auth
+import firebase_admin
+from firebase_admin import firestore
+
+from ..core.firebase import initialize_firebase
 from ..schemas.user_settings import UserSettings, UserSettingsCreate, UserSettingsUpdate
 
 logger = logging.getLogger(__name__)
@@ -37,13 +40,8 @@ class UserSettingsService:
     def _initialize_firebase(self):
         """Initialize Firebase Firestore client."""
         try:
-            import firebase_admin
-            from firebase_admin import firestore
-
             # Initialize Firebase if not already done
             if not firebase_admin._apps:
-                from ..core.firebase import initialize_firebase
-
                 initialize_firebase()
 
             self._db = firestore.client()
@@ -192,6 +190,25 @@ class UserSettingsService:
         """Remove username and set portfolio to private."""
         updates = UserSettingsUpdate(username=None, is_public=False)
         self.update_user_settings(user_id, updates)
+
+    def update_access_mode(self, user_id: str, access_mode: str) -> None:
+        """Update the access mode for a user's portfolio."""
+        try:
+            doc_ref = self.db.collection("user_settings").document(user_id)
+
+            # Update chat_settings.access_mode and updated_at timestamp
+            doc_ref.update(
+                {
+                    "chat_settings.access_mode": access_mode,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                }
+            )
+
+            logger.info(f"Updated access mode to {access_mode} for user {user_id}")
+
+        except Exception as e:
+            logger.error(f"Error updating access mode for user {user_id}: {e}")
+            raise UserSettingsError(f"Failed to update access mode: {e}")
 
     def validate_username(self, username: str) -> Dict[str, Any]:
         """Validate username format and availability."""

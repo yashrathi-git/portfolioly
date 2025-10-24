@@ -9,6 +9,7 @@ import logging
 
 from ..auth.middleware import require_verified_email
 from ..schemas.auth import UserToken
+from ..schemas.user_settings import AccessModeUpdateRequest
 from ..services.user_settings_service import (
     get_user_settings_service,
     UserSettingsError,
@@ -177,4 +178,32 @@ def remove_username(
         raise HTTPException(status_code=500, detail="Failed to remove username")
     except Exception as e:
         logger.error(f"Unexpected error removing username for user {user.uid}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.patch("/access-mode", response_model=dict)
+def update_access_mode(
+    request: AccessModeUpdateRequest,
+    user: UserToken = Depends(require_verified_email),
+):
+    """
+    Update the portfolio access mode (public/private).
+    """
+    try:
+        user_settings_service = get_user_settings_service()
+
+        # Update chat_settings.access_mode
+        user_settings_service.update_access_mode(user.uid, request.access_mode)
+
+        logger.info(f"Access mode updated to {request.access_mode} for user {user.uid}")
+
+        return {"success": True, "access_mode": request.access_mode}
+
+    except UserSettingsError as e:
+        logger.error(
+            f"User settings error updating access mode for user {user.uid}: {e}"
+        )
+        raise HTTPException(status_code=500, detail="Failed to update access mode")
+    except Exception as e:
+        logger.error(f"Unexpected error updating access mode for user {user.uid}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")

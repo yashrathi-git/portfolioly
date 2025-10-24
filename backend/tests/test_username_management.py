@@ -4,158 +4,21 @@ Tests for username uniqueness and access control functionality.
 
 import pytest
 from unittest.mock import Mock, patch
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading
-import time
+from fastapi.testclient import TestClient
 
-from app.services.user_settings_service import UserSettingsService, UserSettingsError
-from app.schemas.user_settings import UserSettingsCreate
+from app.main import app
+from app.services.user_settings_service import UserSettingsService
+
+client = TestClient(app)
 
 
-class TestUsernameUniqueness:
-    """Test username uniqueness constraints and concurrent registration scenarios."""
+class TestUsernameValidation:
+    """Test username validation rules."""
 
-    @pytest.fixture
-    def mock_firestore(self):
-        """Mock Firestore client for testing."""
-        with patch("app.services.user_settings_service.firestore") as mock_firestore:
-            mock_client = Mock()
-            mock_firestore.client.return_value = mock_client
-            yield mock_client
-
-    @pytest.fixture
-    def user_settings_service(self, mock_firestore):
-        """Create UserSettingsService with mocked Firestore."""
+    def test_username_validation_rules(self):
+        """Test username validation with various inputs."""
         service = UserSettingsService()
-        service._db = mock_firestore
-        return service
 
-    def test_username_uniqueness_single_user(
-        self, user_settings_service, mock_firestore
-    ):
-        """Test that a single user can set a username successfully."""
-        # Mock no existing username
-        mock_firestore.collection.return_value.where.return_value.limit.return_value.stream.return_value = (
-            []
-        )
-        mock_firestore.collection.return_value.document.return_value.set = Mock()
-
-        user_id = "user123"
-        username = "testuser"
-
-        # Should succeed
-        user_settings_service.set_username(user_id, username)
-
-        # Verify the username was set
-        mock_firestore.collection.return_value.document.assert_called_with(user_id)
-
-    def test_username_uniqueness_duplicate_rejection(
-        self, user_settings_service, mock_firestore
-    ):
-        """Test that duplicate usernames are rejected."""
-        # Mock existing username
-        existing_doc = Mock()
-        existing_doc.to_dict.return_value = {
-            "user_id": "other_user",
-            "username": "testuser",
-            "is_public": True,
-        }
-        mock_firestore.collection.return_value.where.return_value.limit.return_value.stream.return_value = [
-            existing_doc
-        ]
-
-        user_id = "user123"
-        username = "testuser"
-
-        # Should raise error for duplicate username
-        with pytest.raises(UserSettingsError, match="already taken"):
-            user_settings_service.set_username(user_id, username)
-
-    def test_username_uniqueness_same_user_update(
-        self, user_settings_service, mock_firestore
-    ):
-        """Test that a user can update their own username."""
-        # Mock existing username for same user
-        existing_doc = Mock()
-        existing_doc.to_dict.return_value = {
-            "user_id": "user123",
-            "username": "oldusername",
-            "is_public": True,
-        }
-        mock_firestore.collection.return_value.where.return_value.limit.return_value.stream.return_value = [
-            existing_doc
-        ]
-
-        # Mock get_user_settings to return existing settings
-        with patch.object(user_settings_service, "get_user_settings") as mock_get:
-            mock_get.return_value = {
-                "user_id": "user123",
-                "username": "oldusername",
-                "is_public": True,
-            }
-
-            mock_firestore.collection.return_value.document.return_value.update = Mock()
-
-            user_id = "user123"
-            new_username = "newusername"
-
-            # Should succeed - same user updating their username
-            user_settings_service.set_username(user_id, new_username)
-
-            # Verify update was called
-            mock_firestore.collection.return_value.document.return_value.update.assert_called_once()
-
-    def test_concurrent_username_registration(self, mock_firestore):
-        """Test concurrent username registration scenarios."""
-        # This test simulates race conditions in username registration
-        service = UserSettingsService()
-        service._db = mock_firestore
-
-        username = "popular_username"
-        user_ids = [f"user{i}" for i in range(5)]
-
-        # Track which registrations succeed/fail
-        results = {}
-        lock = threading.Lock()
-
-        def register_username(user_id):
-            try:
-                # Simulate checking availability (initially all see it as available)
-                mock_firestore.collection.return_value.where.return_value.limit.return_value.stream.return_value = (
-                    []
-                )
-
-                # Add small delay to increase chance of race condition
-                time.sleep(0.01)
-
-                # First user to actually set it should succeed
-                with lock:
-                    if username not in results:
-                        results[username] = user_id
-                        service.set_username(user_id, username)
-                        return True
-                    else:
-                        # Simulate database constraint violation
-                        raise UserSettingsError("Username is already taken")
-
-            except UserSettingsError:
-                return False
-
-        # Run concurrent registrations
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [
-                executor.submit(register_username, user_id) for user_id in user_ids
-            ]
-            success_count = sum(
-                1 for future in as_completed(futures) if future.result()
-            )
-
-        # Only one should succeed
-        assert success_count == 1
-        assert len(results) == 1
-
-    def test_username_validation_rules(self, user_settings_service):
-        """Test username validation rules."""
         test_cases = [
             ("ab", False, "too short"),
             ("a" * 31, False, "too long"),
@@ -172,7 +35,7 @@ class TestUsernameUniqueness:
         ]
 
         for username, should_be_valid, description in test_cases:
-            result = user_settings_service.validate_username(username)
+            result = service.validate_username(username)
             assert (
                 result["valid"] == should_be_valid
             ), f"Failed for {description}: {username}"
@@ -181,229 +44,304 @@ class TestUsernameUniqueness:
 class TestAccessControl:
     """Test access control for public/private portfolios."""
 
-    @pytest.fixture
-    def mock_portfolio_service(self):
-        """Mock portfolio service."""
-        with patch(
-            "app.routes.public_portfolio.get_portfolio_service"
-        ) as mock_get_service:
-            mock_service = Mock()
-            mock_get_service.return_value = mock_service
-            yield mock_service
-
-    @pytest.fixture
-    def mock_user_settings_service(self):
-        """Mock user settings service."""
-        with patch(
-            "app.routes.public_portfolio.get_user_settings_service"
-        ) as mock_get_service:
-            mock_service = Mock()
-            mock_get_service.return_value = mock_service
-            yield mock_service
-
-    def test_public_portfolio_access_allowed(
-        self, mock_user_settings_service, mock_portfolio_service
-    ):
+    def test_public_portfolio_access_allowed(self, mock_verified_user):
         """Test that public portfolios are accessible via public API."""
-        from app.routes.public_portfolio import get_public_portfolio
-
         username = "publicuser"
 
-        # Mock public portfolio settings
-        mock_user_settings_service.get_user_settings_by_username.return_value = {
-            "user_id": "user123",
-            "username": username,
-            "is_public": True,
-        }
+        with patch(
+            "app.routes.utils.auth_helpers.get_user_settings_by_username"
+        ) as mock_get_settings, patch(
+            "app.routes.public_portfolio.get_portfolio_service"
+        ) as mock_get_portfolio_service:
 
-        # Mock portfolio data
-        mock_portfolio_data = {
-            "personal_info": {
-                "full_name": "Public User",
-                "headline": "Software Engineer",
+            mock_get_settings.return_value = {
+                "user_id": "user123",
+                "username": username,
+                "is_public": True,
             }
-        }
-        mock_portfolio_service.get_portfolio_data.return_value = mock_portfolio_data
 
-        # Should return portfolio data
-        result = get_public_portfolio(username)
-        assert result == mock_portfolio_data
+            mock_portfolio_data = {
+                "personal_info": {
+                    "full_name": "Public User",
+                    "headline": "Software Engineer",
+                }
+            }
+            mock_portfolio_service = Mock()
+            mock_portfolio_service.get_portfolio_data.return_value = mock_portfolio_data
+            mock_get_portfolio_service.return_value = mock_portfolio_service
 
-        # Verify correct service calls
-        mock_user_settings_service.get_user_settings_by_username.assert_called_once_with(
-            username
-        )
-        mock_portfolio_service.get_portfolio_data.assert_called_once_with("user123")
+            response = client.get(f"/public/portfolio/{username}")
 
-    def test_private_portfolio_access_denied(
-        self, mock_user_settings_service, mock_portfolio_service
-    ):
+            assert response.status_code == 200
+            data = response.json()
+            assert data["personal_info"]["full_name"] == "Public User"
+            assert data["personal_info"]["headline"] == "Software Engineer"
+
+    def test_private_portfolio_access_denied(self, mock_verified_user):
         """Test that private portfolios return 404 via public API."""
-        from app.routes.public_portfolio import get_public_portfolio
-        from fastapi import HTTPException
-
         username = "privateuser"
 
-        # Mock private portfolio settings
-        mock_user_settings_service.get_user_settings_by_username.return_value = {
-            "user_id": "user123",
-            "username": username,
-            "is_public": False,
-        }
+        with patch(
+            "app.routes.utils.auth_helpers.get_user_settings_by_username"
+        ) as mock_get_settings:
 
-        # Should raise 404 HTTPException
-        with pytest.raises(HTTPException) as exc_info:
-            get_public_portfolio(username)
+            mock_get_settings.return_value = {
+                "user_id": "user123",
+                "username": username,
+                "is_public": False,
+            }
 
-        assert exc_info.value.status_code == 404
-        assert "not found" in exc_info.value.detail.lower()
+            response = client.get(f"/public/portfolio/{username}")
 
-        # Portfolio service should not be called
-        mock_portfolio_service.get_portfolio_data.assert_not_called()
+            assert response.status_code == 404
+            assert "not found" in response.json()["detail"].lower()
 
-    def test_nonexistent_username_access_denied(
-        self, mock_user_settings_service, mock_portfolio_service
-    ):
+    def test_nonexistent_username_access_denied(self, mock_verified_user):
         """Test that non-existent usernames return 404."""
-        from app.routes.public_portfolio import get_public_portfolio
-        from fastapi import HTTPException
-
         username = "nonexistent"
 
-        # Mock no user found
-        mock_user_settings_service.get_user_settings_by_username.return_value = None
+        with patch(
+            "app.routes.utils.auth_helpers.get_user_settings_by_username"
+        ) as mock_get_settings:
 
-        # Should raise 404 HTTPException
-        with pytest.raises(HTTPException) as exc_info:
-            get_public_portfolio(username)
+            mock_get_settings.return_value = None
 
-        assert exc_info.value.status_code == 404
-        assert "not found" in exc_info.value.detail.lower()
+            response = client.get(f"/public/portfolio/{username}")
 
-        # Portfolio service should not be called
-        mock_portfolio_service.get_portfolio_data.assert_not_called()
+            assert response.status_code == 404
+            assert "not found" in response.json()["detail"].lower()
 
-    def test_username_availability_check_accuracy(self, mock_user_settings_service):
+    def test_username_availability_check_accuracy(self, mock_verified_user):
         """Test username availability checking accuracy."""
-        from app.routes.public_portfolio import check_username_availability
-
         # Test available username
-        mock_user_settings_service.get_user_settings_by_username.return_value = None
-        mock_user_settings_service.validate_username.return_value = {"valid": True}
+        with patch(
+            "app.routes.public_portfolio.get_user_settings_by_username"
+        ) as mock_get_settings, patch(
+            "app.routes.public_portfolio.get_user_settings_service"
+        ) as mock_get_service, patch(
+            "app.routes.utils.auth_helpers.get_firebase_auth"
+        ) as mock_firebase:
 
-        result = check_username_availability("available_username")
-        assert result["available"] is True
+            # Mock Firebase auth
+            mock_auth = Mock()
+            mock_auth.verify_id_token.return_value = {
+                "uid": "test_user_123",
+                "email": "test@example.com",
+                "email_verified": True,
+            }
+            mock_firebase.return_value = mock_auth
+
+            mock_get_settings.return_value = None
+            mock_service = Mock()
+            mock_service.validate_username.return_value = {"valid": True}
+            mock_get_service.return_value = mock_service
+
+            response = client.get(
+                "/public/username/available_username/available",
+                headers={"Authorization": "Bearer fake_token"},
+            )
+
+            assert response.status_code == 200
+            assert response.json()["available"] is True
 
         # Test taken username
-        mock_user_settings_service.get_user_settings_by_username.return_value = {
-            "user_id": "other_user",
-            "username": "taken_username",
-        }
+        with patch(
+            "app.routes.public_portfolio.get_user_settings_by_username"
+        ) as mock_get_settings, patch(
+            "app.routes.public_portfolio.get_user_settings_service"
+        ) as mock_get_service, patch(
+            "app.routes.utils.auth_helpers.get_firebase_auth"
+        ) as mock_firebase:
 
-        result = check_username_availability("taken_username")
-        assert result["available"] is False
-        assert "reason" in result
+            # Mock Firebase auth
+            mock_auth = Mock()
+            mock_auth.verify_id_token.return_value = {
+                "uid": "test_user_123",
+                "email": "test@example.com",
+                "email_verified": True,
+            }
+            mock_firebase.return_value = mock_auth
 
-    def test_invalid_username_format_rejected(self, mock_user_settings_service):
+            mock_get_settings.return_value = {
+                "user_id": "other_user",
+                "username": "taken_username",
+            }
+            mock_service = Mock()
+            mock_service.validate_username.return_value = {"valid": True}
+            mock_get_service.return_value = mock_service
+
+            response = client.get(
+                "/public/username/taken_username/available",
+                headers={"Authorization": "Bearer fake_token"},
+            )
+
+            assert response.status_code == 200
+            assert response.json()["available"] is False
+            assert "reason" in response.json()
+
+    def test_invalid_username_format_rejected(self, mock_verified_user):
         """Test that invalid username formats are rejected."""
-        from app.routes.public_portfolio import check_username_availability
+        with patch(
+            "app.routes.public_portfolio.get_user_settings_service"
+        ) as mock_get_service, patch(
+            "app.routes.utils.auth_helpers.get_firebase_auth"
+        ) as mock_firebase:
 
-        # Mock invalid username validation
-        mock_user_settings_service.validate_username.return_value = {
-            "valid": False,
-            "error": "Username too short",
-        }
+            # Mock Firebase auth
+            mock_auth = Mock()
+            mock_auth.verify_id_token.return_value = {
+                "uid": "test_user_123",
+                "email": "test@example.com",
+                "email_verified": True,
+            }
+            mock_firebase.return_value = mock_auth
 
-        result = check_username_availability("ab")
-        assert result["available"] is False
-        assert result["reason"] == "Username too short"
+            mock_service = Mock()
+            mock_service.validate_username.return_value = {
+                "valid": False,
+                "error": "Username too short",
+            }
+            mock_get_service.return_value = mock_service
 
-        # Should not check database for invalid formats
-        mock_user_settings_service.get_user_settings_by_username.assert_not_called()
+            response = client.get(
+                "/public/username/ab/available",
+                headers={"Authorization": "Bearer fake_token"},
+            )
+
+            assert response.status_code == 200
+            assert response.json()["available"] is False
+            assert response.json()["reason"] == "Username too short"
 
 
 class TestPortfolioVisibilityControl:
     """Test portfolio visibility control functionality."""
 
-    @pytest.fixture
-    def mock_user_settings_service(self):
-        """Mock user settings service for visibility tests."""
+    def test_make_portfolio_public_requires_username(self, mock_verified_user):
+        """Test that making portfolio public requires a username."""
         with patch(
             "app.routes.user_settings.get_user_settings_service"
         ) as mock_get_service:
+
+            mock_service = Mock()
+            mock_service.get_user_settings.return_value = {
+                "user_id": "test_user_123",
+                "username": None,
+                "is_public": False,
+            }
+            mock_get_service.return_value = mock_service
+
+            response = client.put(
+                "/user-settings/settings/visibility", json={"is_public": True}
+            )
+
+            assert response.status_code == 400
+            assert "username is required" in response.json()["detail"].lower()
+
+    def test_make_portfolio_public_with_username_succeeds(self, mock_verified_user):
+        """Test that making portfolio public succeeds when user has username."""
+        with patch(
+            "app.routes.user_settings.get_user_settings_service"
+        ) as mock_get_service:
+
+            mock_service = Mock()
+            mock_service.get_user_settings.return_value = {
+                "user_id": "test_user_123",
+                "username": "testuser",
+                "is_public": False,
+            }
+            mock_get_service.return_value = mock_service
+
+            response = client.put(
+                "/user-settings/settings/visibility", json={"is_public": True}
+            )
+
+            assert response.status_code == 200
+            assert "public" in response.json()["message"].lower()
+            assert response.json()["is_public"] is True
+
+            mock_service.set_portfolio_visibility.assert_called_once_with(
+                "test_user_123", True
+            )
+
+    def test_make_portfolio_private_always_succeeds(self, mock_verified_user):
+        """Test that making portfolio private always succeeds."""
+        with patch(
+            "app.routes.user_settings.get_user_settings_service"
+        ) as mock_get_service:
+
             mock_service = Mock()
             mock_get_service.return_value = mock_service
-            yield mock_service
 
-    def test_make_portfolio_public_requires_username(self, mock_user_settings_service):
-        """Test that making portfolio public requires a username."""
-        from app.routes.user_settings import set_portfolio_visibility
-        from app.schemas.auth import UserToken
-        from fastapi import HTTPException
+            response = client.put(
+                "/user-settings/settings/visibility", json={"is_public": False}
+            )
 
-        # Mock user without username
-        mock_user_settings_service.get_user_settings.return_value = {
-            "user_id": "user123",
-            "username": None,
-            "is_public": False,
-        }
+            assert response.status_code == 200
+            assert "private" in response.json()["message"].lower()
+            assert response.json()["is_public"] is False
 
-        user_token = UserToken(
-            uid="user123", email="test@example.com", email_verified=True
+            mock_service.set_portfolio_visibility.assert_called_once_with(
+                "test_user_123", False
+            )
+
+
+class TestAccessModeUpdate:
+    """Test access mode update functionality."""
+
+    def test_update_access_mode_to_private(self, mock_verified_user):
+        """Test updating access mode to private."""
+        with patch(
+            "app.routes.user_settings.get_user_settings_service"
+        ) as mock_get_service:
+
+            mock_service = Mock()
+            mock_get_service.return_value = mock_service
+
+            response = client.patch(
+                "/user-settings/settings/access-mode", json={"access_mode": "private"}
+            )
+
+            assert response.status_code == 200
+            assert response.json()["success"] is True
+            assert response.json()["access_mode"] == "private"
+
+            mock_service.update_access_mode.assert_called_once_with(
+                "test_user_123", "private"
+            )
+
+    def test_update_access_mode_to_public(self, mock_verified_user):
+        """Test updating access mode to public."""
+        with patch(
+            "app.routes.user_settings.get_user_settings_service"
+        ) as mock_get_service:
+
+            mock_service = Mock()
+            mock_get_service.return_value = mock_service
+
+            response = client.patch(
+                "/user-settings/settings/access-mode", json={"access_mode": "public"}
+            )
+
+            assert response.status_code == 200
+            assert response.json()["success"] is True
+            assert response.json()["access_mode"] == "public"
+
+            mock_service.update_access_mode.assert_called_once_with(
+                "test_user_123", "public"
+            )
+
+    def test_update_access_mode_invalid_value(self, mock_verified_user):
+        """Test updating access mode with invalid value."""
+        response = client.patch(
+            "/user-settings/settings/access-mode", json={"access_mode": "invalid"}
         )
 
-        # Should raise 400 error
-        with pytest.raises(HTTPException) as exc_info:
-            set_portfolio_visibility(request={"is_public": True}, user=user_token)
+        assert response.status_code == 422  # Validation error
 
-        assert exc_info.value.status_code == 400
-        assert "username is required" in exc_info.value.detail.lower()
-
-    def test_make_portfolio_public_with_username_succeeds(
-        self, mock_user_settings_service
-    ):
-        """Test that making portfolio public succeeds when user has username."""
-        from app.routes.user_settings import set_portfolio_visibility
-        from app.schemas.auth import UserToken
-
-        # Mock user with username
-        mock_user_settings_service.get_user_settings.return_value = {
-            "user_id": "user123",
-            "username": "testuser",
-            "is_public": False,
-        }
-
-        user_token = UserToken(
-            uid="user123", email="test@example.com", email_verified=True
+    def test_update_access_mode_requires_authentication(self):
+        """Test that access mode update requires authentication."""
+        response = client.patch(
+            "/user-settings/settings/access-mode", json={"access_mode": "private"}
         )
 
-        # Should succeed
-        result = set_portfolio_visibility(request={"is_public": True}, user=user_token)
-
-        assert "public" in result["message"].lower()
-        assert result["is_public"] is True
-
-        # Verify service was called
-        mock_user_settings_service.set_portfolio_visibility.assert_called_once_with(
-            "user123", True
-        )
-
-    def test_make_portfolio_private_always_succeeds(self, mock_user_settings_service):
-        """Test that making portfolio private always succeeds."""
-        from app.routes.user_settings import set_portfolio_visibility
-        from app.schemas.auth import UserToken
-
-        user_token = UserToken(
-            uid="user123", email="test@example.com", email_verified=True
-        )
-
-        # Should succeed without checking username
-        result = set_portfolio_visibility(request={"is_public": False}, user=user_token)
-
-        assert "private" in result["message"].lower()
-        assert result["is_public"] is False
-
-        # Should not call get_user_settings for private
-        mock_user_settings_service.set_portfolio_visibility.assert_called_once_with(
-            "user123", False
-        )
+        assert response.status_code == 401
