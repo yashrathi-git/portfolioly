@@ -170,13 +170,13 @@ def ensure_token(
     Generate a public token for a username.
 
     Authentication rules:
-    - With valid Firebase JWT: Always returns token (regardless of portfolio visibility)
-    - Without Firebase JWT: Returns token only if portfolio is public
+    - With valid Firebase JWT: Always returns token (owner access, regardless of access_mode)
+    - Without Firebase JWT: Returns token only if chat_settings.access_mode is "public"
 
     Returns 404 if:
     - Username doesn't exist
     - Token generation disabled (public_token_enabled == false)
-    - Portfolio is private AND no valid Firebase JWT provided
+    - Portfolio access_mode is "private" AND no valid Firebase JWT provided
 
     Returns:
         EnsureTokenResponse with the generated token in format "psk_xxx..."
@@ -203,15 +203,23 @@ def ensure_token(
             if firebase_user:
                 has_firebase_auth = True
                 logger.info(
-                    f"Firebase JWT verified for token generation: {request.username}"
+                    f"Firebase JWT verified for token generation (owner access): {request.username}"
                 )
 
-        # If no Firebase auth, require portfolio to be public
-        if not has_firebase_auth and not user_settings.get("is_public", False):
+        # If no Firebase auth, check access_mode in chat_settings
+        if not has_firebase_auth:
+            chat_settings = user_settings.get("chat_settings", {})
+            access_mode = chat_settings.get("access_mode", "private")
+
+            if access_mode != "public":
+                logger.info(
+                    f"Portfolio for username '{request.username}' has access_mode '{access_mode}' and no Firebase auth provided"
+                )
+                raise HTTPException(status_code=404, detail="Portfolio not found")
+
             logger.info(
-                f"Portfolio for username '{request.username}' is private and no Firebase auth provided"
+                f"Public access granted for username '{request.username}' (access_mode: public)"
             )
-            raise HTTPException(status_code=404, detail="Portfolio not found")
 
         # Generate the token
         token_version = user_settings.get("public_token_ver", 1)
