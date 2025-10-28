@@ -259,7 +259,7 @@ function SettingsPage() {
 // Headers: Authorization: Bearer {token}
 
 // PUT /api/settings/visibility
-// Body: { is_public: boolean }
+// Body: { access_mode: "public" | "private" }
 // Headers: Authorization: Bearer {token}
 ```
 

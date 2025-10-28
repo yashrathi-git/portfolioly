@@ -31,7 +31,7 @@ class TestPublicPortfolioRoutes:
         return {
             "user_id": "test_user_123",
             "username": "johndoe",
-            "is_public": True,
+            "chat_settings": {"access_mode": "public"},
             "public_token_enabled": True,
             "public_token_ver": 1,
         }

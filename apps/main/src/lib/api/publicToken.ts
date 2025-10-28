@@ -77,12 +77,16 @@ export async function ensureUsername(
  * @returns Public token for chat authentication
  * @throws PublicTokenError if the request fails or portfolio not found
  */
-export async function ensurePublicToken(username: string): Promise<string> {
+export async function ensurePublicToken(
+  username: string,
+  authToken?: string
+): Promise<string> {
   try {
     const response = await fetch(`${env.API_BASE_URL}/public/ensure-token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       },
       body: JSON.stringify({ username }),
     });
@@ -126,7 +130,7 @@ export async function fetchUsernameAndToken(
   authToken: string
 ): Promise<{ username: string; publicToken: string }> {
   const username = await ensureUsername(userId, authToken);
-  const publicToken = await ensurePublicToken(username);
+  const publicToken = await ensurePublicToken(username, authToken);
 
   return { username, publicToken };
 }

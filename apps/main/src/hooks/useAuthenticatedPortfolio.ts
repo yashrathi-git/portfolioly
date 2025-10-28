@@ -34,10 +34,37 @@ export function useAuthenticatedPortfolio(): UseAuthenticatedPortfolioResult {
       const portfolioData = await getUserPortfolio();
       setData(portfolioData);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to fetch portfolio data";
-      setError(errorMessage);
       console.error("Error fetching authenticated portfolio data:", err);
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to fetch portfolio data";
+
+      if (err instanceof Error) {
+        // Network errors
+        if (err.message.includes("fetch") || err.message.includes("network")) {
+          errorMessage =
+            "Unable to connect to the server. Please check your internet connection and try again.";
+        }
+        // Authentication errors
+        else if (
+          err.message.includes("401") ||
+          err.message.includes("unauthorized")
+        ) {
+          errorMessage =
+            "Your session has expired. Please refresh the page and sign in again.";
+        }
+        // Server errors
+        else if (err.message.includes("500") || err.message.includes("503")) {
+          errorMessage =
+            "The server is temporarily unavailable. Please try again in a moment.";
+        }
+        // Use the error message if it's user-friendly
+        else if (err.message && !err.message.includes("HTTP")) {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

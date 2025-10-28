@@ -154,8 +154,16 @@ def validate_portfolio_access(
         logger.info(f"Public token verified for username '{username}'")
 
     # No valid Firebase JWT - check if portfolio is public (if required)
-    if require_public and not user_settings.get("is_public", False):
-        logger.info(f"Portfolio for username '{username}' is private")
-        raise HTTPException(status_code=404, detail="Portfolio not found")
+    if require_public:
+        chat_settings = user_settings.get("chat_settings") or {}
+        access_mode = chat_settings.get("access_mode", "private")
+
+        if access_mode != "public":
+            logger.info(
+                "Portfolio for username '%s' is private (access_mode=%s)",
+                username,
+                access_mode,
+            )
+            raise HTTPException(status_code=404, detail="Portfolio not found")
 
     return user_settings, firebase_user

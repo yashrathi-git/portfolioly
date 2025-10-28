@@ -262,13 +262,15 @@ export class HybridDataProvider extends BaseDataProvider {
         this.config.apiEndpoints?.setVisibility || "/api/settings/visibility";
       const url = `${this.baseUrl}${endpoint}`;
 
+      const accessMode = isPublic ? "public" : "private";
+
       const response = await fetch(url, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.config.authToken}`,
         },
-        body: JSON.stringify({ is_public: isPublic }),
+        body: JSON.stringify({ access_mode: accessMode }),
       });
 
       if (!response.ok) {
@@ -281,7 +283,7 @@ export class HybridDataProvider extends BaseDataProvider {
       // Clear relevant caches
       this.clearCache();
 
-      this.log("Portfolio visibility set successfully:", isPublic);
+      this.log("Portfolio visibility set successfully:", accessMode);
     } catch (error) {
       this.log("Failed to set portfolio visibility:", error);
 

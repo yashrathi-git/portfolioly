@@ -31,12 +31,12 @@
   - **Body**: `{"username": string}`
   - **Validation**: Format validation + uniqueness check
   - **Error**: 409 for conflicts, 400 for invalid format
-- `set_portfolio_visibility()` - PUT `/settings/visibility`
-  - **Body**: `{"is_public": boolean}`
-  - **Business Logic**: Requires username before making public
+- `set_portfolio_access_mode()` - PUT `/settings/visibility`
+  - **Body**: `{"access_mode": "public" | "private"}`
+  - **Business Logic**: Requires username before making access mode public
   - **Validation**: Username existence check for public portfolios
 - `remove_username()` - DELETE `/settings/username`
-  - **Technical**: Sets username to None and is_public to False
+  - **Technical**: Sets username to None and access mode to `"private"`
   - **Side Effect**: Automatically makes portfolio private
 
 #### **NEW FILE: `backend/app/schemas/user_settings.py`**
@@ -44,7 +44,7 @@
 **Classes Added:**
 
 - `UserSettings(BaseModel)`
-  - **Fields**: `user_id: str`, `username: Optional[str]`, `is_public: bool`
+  - **Fields**: `user_id: str`, `username: Optional[str]`, `chat_settings: PortfolioChatSettings`
   - **Timestamps**: `created_at`, `updated_at` with auto-generation
   - **Validation**: Custom `@validator('username')` with regex patterns
   - **Rules**: 3-30 chars, alphanumeric + hyphens/underscores, no start/end special chars
@@ -67,7 +67,7 @@
 - `create_user_settings()` - Document creation with validation
 - `update_user_settings()` - Atomic document updates
 - `set_username()` - Username assignment with conflict checking
-- `set_portfolio_visibility()` - Visibility toggle
+- `update_access_mode()` - Access-mode toggle
 - `remove_username()` - Username removal + privacy enforcement
 - `validate_username()` - Format validation with detailed error messages
 

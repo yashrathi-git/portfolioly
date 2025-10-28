@@ -189,7 +189,7 @@ class TestPortfolioService:
         mock_user_doc.to_dict.return_value = {
             "user_id": "user123",
             "username": "johndoe",
-            "is_public": True,
+            "chat_settings": {"access_mode": "public"},
         }
 
         mock_query = Mock()

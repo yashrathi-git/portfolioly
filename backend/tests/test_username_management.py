@@ -57,7 +57,7 @@ class TestAccessControl:
             mock_get_settings.return_value = {
                 "user_id": "user123",
                 "username": username,
-                "is_public": True,
+                "chat_settings": {"access_mode": "public"},
             }
 
             mock_portfolio_data = {
@@ -88,7 +88,7 @@ class TestAccessControl:
             mock_get_settings.return_value = {
                 "user_id": "user123",
                 "username": username,
-                "is_public": False,
+                "chat_settings": {"access_mode": "private"},
             }
 
             response = client.get(f"/public/portfolio/{username}")
@@ -226,12 +226,13 @@ class TestPortfolioVisibilityControl:
             mock_service.get_user_settings.return_value = {
                 "user_id": "test_user_123",
                 "username": None,
-                "is_public": False,
+                "chat_settings": {"access_mode": "private"},
             }
             mock_get_service.return_value = mock_service
 
             response = client.put(
-                "/user-settings/settings/visibility", json={"is_public": True}
+                "/users/me/settings/visibility",
+                json={"access_mode": "public"},
             )
 
             assert response.status_code == 400
@@ -247,20 +248,21 @@ class TestPortfolioVisibilityControl:
             mock_service.get_user_settings.return_value = {
                 "user_id": "test_user_123",
                 "username": "testuser",
-                "is_public": False,
+                "chat_settings": {"access_mode": "private"},
             }
             mock_get_service.return_value = mock_service
 
             response = client.put(
-                "/user-settings/settings/visibility", json={"is_public": True}
+                "/users/me/settings/visibility",
+                json={"access_mode": "public"},
             )
 
             assert response.status_code == 200
             assert "public" in response.json()["message"].lower()
-            assert response.json()["is_public"] is True
+            assert response.json()["access_mode"] == "public"
 
-            mock_service.set_portfolio_visibility.assert_called_once_with(
-                "test_user_123", True
+            mock_service.update_access_mode.assert_called_once_with(
+                "test_user_123", "public"
             )
 
     def test_make_portfolio_private_always_succeeds(self, mock_verified_user):
@@ -273,15 +275,16 @@ class TestPortfolioVisibilityControl:
             mock_get_service.return_value = mock_service
 
             response = client.put(
-                "/user-settings/settings/visibility", json={"is_public": False}
+                "/users/me/settings/visibility",
+                json={"access_mode": "private"},
             )
 
             assert response.status_code == 200
             assert "private" in response.json()["message"].lower()
-            assert response.json()["is_public"] is False
+            assert response.json()["access_mode"] == "private"
 
-            mock_service.set_portfolio_visibility.assert_called_once_with(
-                "test_user_123", False
+            mock_service.update_access_mode.assert_called_once_with(
+                "test_user_123", "private"
             )
 
 
@@ -298,7 +301,8 @@ class TestAccessModeUpdate:
             mock_get_service.return_value = mock_service
 
             response = client.patch(
-                "/user-settings/settings/access-mode", json={"access_mode": "private"}
+                "/users/me/settings/access-mode",
+                json={"access_mode": "private"},
             )
 
             assert response.status_code == 200
@@ -319,7 +323,8 @@ class TestAccessModeUpdate:
             mock_get_service.return_value = mock_service
 
             response = client.patch(
-                "/user-settings/settings/access-mode", json={"access_mode": "public"}
+                "/users/me/settings/access-mode",
+                json={"access_mode": "public"},
             )
 
             assert response.status_code == 200
@@ -333,7 +338,7 @@ class TestAccessModeUpdate:
     def test_update_access_mode_invalid_value(self, mock_verified_user):
         """Test updating access mode with invalid value."""
         response = client.patch(
-            "/user-settings/settings/access-mode", json={"access_mode": "invalid"}
+            "/users/me/settings/access-mode", json={"access_mode": "invalid"}
         )
 
         assert response.status_code == 422  # Validation error
@@ -341,7 +346,7 @@ class TestAccessModeUpdate:
     def test_update_access_mode_requires_authentication(self):
         """Test that access mode update requires authentication."""
         response = client.patch(
-            "/user-settings/settings/access-mode", json={"access_mode": "private"}
+            "/users/me/settings/access-mode", json={"access_mode": "private"}
         )
 
         assert response.status_code == 401

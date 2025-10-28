@@ -52,7 +52,7 @@ def get_public_portfolio(
     """
     try:
         # Require token - no public requirement check
-        user_settings, _ = validate_portfolio_access(
+        user_settings, firebase_user = validate_portfolio_access(
             username=username, authorization=authorization, require_public=False
         )
 
@@ -61,6 +61,19 @@ def get_public_portfolio(
         if not user_id:
             logger.error(f"No user_id found for username '{username}'")
             raise HTTPException(status_code=404, detail="Portfolio not found")
+
+        # Enforce access_mode gating when no Firebase auth was present
+        if not firebase_user:
+            chat_settings = user_settings.get("chat_settings") or {}
+            access_mode = chat_settings.get("access_mode", "private")
+
+            if access_mode != "public":
+                logger.info(
+                    "Portfolio for username '%s' is private (access_mode=%s)",
+                    username,
+                    access_mode,
+                )
+                raise HTTPException(status_code=404, detail="Portfolio not found")
 
         # Fetch the portfolio data
         portfolio_service = get_portfolio_service()

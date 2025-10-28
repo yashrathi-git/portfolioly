@@ -13,7 +13,12 @@ import firebase_admin
 from firebase_admin import firestore
 
 from ..core.firebase import initialize_firebase
-from ..schemas.user_settings import UserSettings, UserSettingsCreate, UserSettingsUpdate
+from ..schemas.user_settings import (
+    PortfolioChatSettings,
+    UserSettings,
+    UserSettingsCreate,
+    UserSettingsUpdate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +110,9 @@ class UserSettingsService:
             user_settings = UserSettings(
                 user_id=user_id,
                 username=settings.username,
-                is_public=settings.is_public,
                 created_at=now,
                 updated_at=now,
+                chat_settings=PortfolioChatSettings(access_mode=settings.access_mode),
             )
 
             # Check if username is already taken (if provided)
@@ -139,7 +144,8 @@ class UserSettingsService:
             if not existing_data:
                 # Create new settings if none exist
                 create_data = UserSettingsCreate(
-                    username=updates.username, is_public=updates.is_public or False
+                    username=updates.username,
+                    access_mode=updates.access_mode or "private",
                 )
                 return self.create_user_settings(user_id, create_data)
 
@@ -157,8 +163,8 @@ class UserSettingsService:
                     updates.username.lower() if updates.username else None
                 )
 
-            if updates.is_public is not None:
-                update_data["is_public"] = updates.is_public
+            if updates.access_mode is not None:
+                update_data["chat_settings.access_mode"] = updates.access_mode
 
             # Update in Firestore
             doc_ref = self.db.collection("user_settings").document(user_id)
@@ -181,14 +187,9 @@ class UserSettingsService:
         updates = UserSettingsUpdate(username=username)
         self.update_user_settings(user_id, updates)
 
-    def set_portfolio_visibility(self, user_id: str, is_public: bool) -> None:
-        """Set portfolio visibility."""
-        updates = UserSettingsUpdate(is_public=is_public)
-        self.update_user_settings(user_id, updates)
-
     def remove_username(self, user_id: str) -> None:
         """Remove username and set portfolio to private."""
-        updates = UserSettingsUpdate(username=None, is_public=False)
+        updates = UserSettingsUpdate(username=None, access_mode="private")
         self.update_user_settings(user_id, updates)
 
     def update_access_mode(self, user_id: str, access_mode: str) -> None:

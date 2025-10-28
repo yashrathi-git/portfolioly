@@ -13,7 +13,7 @@ class PortfolioChatSettings(BaseModel):
 
     enabled: bool = Field(True, description="Whether chat is enabled at all")
     access_mode: Literal["public", "private"] = Field(
-        "public", description="Public or private access"
+        "private", description="Public or private access"
     )
     monthly_message_count: int = Field(
         0, description="Total messages received this month"
@@ -34,9 +34,6 @@ class UserSettings(BaseModel):
     username: Optional[str] = Field(
         None, description="Public username for portfolio access"
     )
-    is_public: bool = Field(
-        False, description="Whether the portfolio is publicly accessible"
-    )
     public_token_enabled: bool = Field(
         True, description="Whether public token generation is enabled"
     )
@@ -50,7 +47,7 @@ class UserSettings(BaseModel):
     updated_at: Optional[datetime] = Field(
         default_factory=datetime.utcnow, description="When settings were last updated"
     )
-    chat_settings: Optional[PortfolioChatSettings] = Field(
+    chat_settings: PortfolioChatSettings = Field(
         default_factory=PortfolioChatSettings, description="Chat-specific settings"
     )
 
@@ -95,16 +92,17 @@ class UserSettings(BaseModel):
         return v.lower()  # Store usernames in lowercase
 
     class Config:
+        extra = "allow"
         json_encoders = {datetime: lambda v: v.isoformat() + "Z"}
         schema_extra = {
             "example": {
                 "user_id": "firebase_user_123",
                 "username": "johndoe",
-                "is_public": True,
                 "public_token_enabled": True,
                 "public_token_ver": 1,
                 "created_at": "2024-01-15T10:30:00Z",
                 "updated_at": "2024-01-15T10:30:00Z",
+                "chat_settings": {"access_mode": "public", "enabled": True},
             }
         }
 
@@ -113,7 +111,7 @@ class UserSettingsCreate(BaseModel):
     """Schema for creating new user settings."""
 
     username: Optional[str] = None
-    is_public: bool = False
+    access_mode: Literal["public", "private"] = "private"
 
     @validator("username")
     def validate_username(cls, v):
@@ -124,7 +122,7 @@ class UserSettingsUpdate(BaseModel):
     """Schema for updating existing user settings."""
 
     username: Optional[str] = None
-    is_public: Optional[bool] = None
+    access_mode: Optional[Literal["public", "private"]] = None
 
     @validator("username")
     def validate_username(cls, v):
@@ -151,6 +149,6 @@ class UserSettingsResponse(BaseModel):
     """Response schema for user settings."""
 
     username: Optional[str] = None
-    is_public: bool = False
+    access_mode: Literal["public", "private"] = "private"
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
