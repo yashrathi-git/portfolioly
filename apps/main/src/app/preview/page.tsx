@@ -122,7 +122,7 @@ export default function PreviewPage() {
 
   // Render portfolio in fullscreen mode
   return (
-    <div className="min-h-screen">
+    <div className="h-full w-full">
       <Portfolio
         portfolioData={displayData}
         isLoading={false}

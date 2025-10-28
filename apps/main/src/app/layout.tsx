@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import "./globals.css";
 import RootProviders from "@/components/RootProviders";
-import HeaderBar from "@/components/HeaderBar";
 import { getThemeScript } from "@/lib/theme";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -24,11 +24,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-dvh antialiased grid grid-rows-[auto_1fr]">
-        <RootProviders>
-          <HeaderBar />
-          <main className="min-h-0">{children}</main>
-        </RootProviders>
+      <body className="min-h-dvh antialiased bg-background text-foreground">
+        <RootProviders>{children}</RootProviders>
       </body>
     </html>
   );
