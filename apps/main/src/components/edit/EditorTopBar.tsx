@@ -1,17 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Save, Loader2, Settings } from "lucide-react";
+import { Save, Loader2, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PublishSettingsPanel } from "./PublishSettingsPanel";
 import { FullscreenPreviewButton } from "./FullscreenPreviewButton";
 import { DeployToVercelButton } from "./DeployToVercelButton";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 export interface EditorTopBarProps {
   title: string;
@@ -46,8 +40,6 @@ export function EditorTopBar({
   publishLoading,
   onPublishUpdated,
 }: EditorTopBarProps) {
-  const [publishSettingsOpen, setPublishSettingsOpen] = useState(false);
-
   return (
     <div className="sticky top-14 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto max-w-7xl px-4">
@@ -103,26 +95,24 @@ export function EditorTopBar({
             {/* Deploy to Vercel Button */}
             <DeployToVercelButton className="hidden lg:flex" />
 
-            {/* Publish Settings Toggle */}
-            <Collapsible
-              open={publishSettingsOpen}
-              onOpenChange={setPublishSettingsOpen}
-            >
-              <CollapsibleTrigger asChild>
+            {/* Publish Settings Popover */}
+            <PublishSettingsPanel
+              trigger={
                 <Button
                   variant="outline"
                   size="sm"
-                  className={cn(
-                    "min-h-[44px] md:min-h-0",
-                    publishSettingsOpen && "bg-accent"
-                  )}
-                  aria-label="Toggle publish settings"
+                  className="min-h-[44px] md:min-h-0 flex items-center gap-1.5"
+                  aria-label="Publish settings"
                 >
-                  <Settings className="h-4 w-4" aria-hidden="true" />
+                  <Globe className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden md:inline">Publish</span>
                 </Button>
-              </CollapsibleTrigger>
-            </Collapsible>
+              }
+              initialUsername={publishUsername}
+              initialAccessMode={publishAccessMode}
+              isLoading={publishLoading}
+              onSettingsUpdate={onPublishUpdated}
+            />
 
             {/* Save Button */}
             {onSave && (
@@ -165,23 +155,6 @@ export function EditorTopBar({
             )}
           </div>
         </div>
-
-        {/* Collapsible Publish Settings Panel */}
-        <Collapsible
-          open={publishSettingsOpen}
-          onOpenChange={setPublishSettingsOpen}
-        >
-          <CollapsibleContent>
-            <div className="pb-6 pt-2">
-              <PublishSettingsPanel
-                initialUsername={publishUsername}
-                initialAccessMode={publishAccessMode}
-                isLoading={publishLoading}
-                onSettingsUpdate={onPublishUpdated}
-              />
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
       </div>
     </div>
   );
