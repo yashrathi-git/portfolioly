@@ -61,4 +61,11 @@ export * from "./utils/debug";
 export { cn } from "./lib/utils";
 export { typography } from "./lib/typography";
 
+// Export animation constants
+export * from "./lib/constants/animations";
+
+// Export shared components
+export * from "./components/shared/ProjectsSection";
+export * from "./components/shared/WorkExperienceSection";
+
 import "./styles.css";

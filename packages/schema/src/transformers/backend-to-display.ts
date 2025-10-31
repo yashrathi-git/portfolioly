@@ -88,6 +88,7 @@ export function mapBackendToDisplay(
       summary: personalInfo?.summary ?? undefined,
       avatarUrl: personalInfo?.profile_photo_url ?? undefined,
       socials: mapProfilesToSocials(personalInfo?.profiles),
+      tags: personalInfo?.tags,
     },
     projects: (backendData.projects || []).map(mapProject),
     education: (backendData.education || []).map(mapEducation),

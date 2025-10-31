@@ -1,0 +1,27 @@
+# Shared Components Directory
+
+This directory contains shared components that are reused across different portfolio layouts (traditional and chat/widget layouts).
+
+## Purpose
+
+- Maximize code reuse between traditional portfolio and chat widgets
+- Maintain visual consistency across layouts
+- Reduce code duplication and maintenance burden
+- Ensure bug fixes and improvements apply to all contexts
+
+## Components
+
+Shared components will be created here as part of the chat widgets UI revamp:
+
+- `ProjectsSection.tsx` - Shared projects display component
+- `WorkExperienceSection.tsx` - Shared work experience display component
+- Additional shared components as needed
+
+## Usage Pattern
+
+Shared components accept a `variant` prop to adapt their styling and layout for different contexts:
+
+```typescript
+<SharedComponent variant="traditional" />  // For traditional portfolio
+<SharedComponent variant="widget" />       // For chat widgets
+```

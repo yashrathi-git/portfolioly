@@ -45,6 +45,7 @@ export interface DisplayPortfolioProfile {
   summary?: string;
   email?: string;
   socials?: SocialLink[];
+  tags?: string[];
 }
 
 /**

@@ -41,6 +41,7 @@ const prepareWidgetData = (
             location: portfolioData.profile.location,
             profile_photo_url: portfolioData.profile.avatarUrl,
             avatarUrl: portfolioData.profile.avatarUrl, // Keep for backward compatibility
+            skills: portfolioData.profile.tags,
           }
         : null;
 

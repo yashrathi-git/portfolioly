@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useAuthenticatedPortfolio } from "@/hooks/useAuthenticatedPortfolio";
@@ -9,6 +9,7 @@ import { env } from "@/lib/env";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
+import { fetchUsernameAndToken } from "@/lib/api/publicToken";
 
 // Dynamic import to avoid SSR issues with Portfolio component
 const Portfolio = dynamic(
@@ -24,6 +25,9 @@ export default function PreviewPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { data, isLoading, error, refetch } = useAuthenticatedPortfolio();
+  const [username, setUsername] = useState<string | undefined>();
+  const [publicToken, setPublicToken] = useState<string | undefined>();
+  const [tokenLoading, setTokenLoading] = useState(false);
 
   // Redirect to sign-in if not authenticated
   useEffect(() => {
@@ -31,6 +35,30 @@ export default function PreviewPage() {
       router.push("/auth/sign-in?redirect=/preview");
     }
   }, [user, authLoading, router]);
+
+  // Fetch username and public token for chat functionality
+  useEffect(() => {
+    const fetchTokenData = async () => {
+      if (!user) return;
+
+      try {
+        setTokenLoading(true);
+        const authToken = await user.getIdToken();
+        const { username: fetchedUsername, publicToken: fetchedToken } =
+          await fetchUsernameAndToken(user.uid, authToken);
+        setUsername(fetchedUsername);
+        setPublicToken(fetchedToken);
+      } catch (err) {
+        console.error("Failed to fetch username and token:", err);
+        // Don't block the preview if token fetch fails
+        // Chat functionality just won't work
+      } finally {
+        setTokenLoading(false);
+      }
+    };
+
+    fetchTokenData();
+  }, [user]);
 
   // Show loading state while checking authentication
   if (authLoading) {
@@ -49,8 +77,8 @@ export default function PreviewPage() {
     return null;
   }
 
-  // Show loading state while fetching portfolio data
-  if (isLoading) {
+  // Show loading state while fetching portfolio data or token
+  if (isLoading || tokenLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex items-center gap-2">
@@ -112,14 +140,6 @@ export default function PreviewPage() {
   // Transform backend data to display format
   const displayData = mapPortfolioDataToTemplate(data);
 
-  // Get auth token for authenticated API calls
-  const getAuthToken = async () => {
-    if (user) {
-      return await user.getIdToken();
-    }
-    return undefined;
-  };
-
   // Render portfolio in fullscreen mode
   return (
     <div className="h-full w-full">
@@ -129,6 +149,8 @@ export default function PreviewPage() {
         isOwner={true}
         isPreview={false}
         apiBaseUrl={env.API_BASE_URL}
+        username={username}
+        publicToken={publicToken}
       />
     </div>
   );

@@ -28,13 +28,13 @@ export class PublicPortfolioError extends Error {
  * 3. Fetches the portfolio data using the public token
  *
  * @param username - The portfolio username
- * @returns Portfolio data
+ * @returns Portfolio data and public token
  * @throws PublicPortfolioError with status 404 if portfolio not found or is private
  * @throws PublicPortfolioError for other errors
  */
 export async function fetchPublicPortfolio(
   username: string
-): Promise<PortfolioData> {
+): Promise<{ data: PortfolioData; publicToken: string }> {
   try {
     // Step 1: Get public token by calling ensure-token with username only
     const tokenResponse = await fetch(
@@ -86,7 +86,7 @@ export async function fetchPublicPortfolio(
     }
 
     const portfolioData = await portfolioResponse.json();
-    return portfolioData;
+    return { data: portfolioData, publicToken: token };
   } catch (error) {
     if (error instanceof PublicPortfolioError) {
       throw error;

@@ -35,6 +35,7 @@ export default function PublicPortfolioPage({
 }: PublicPortfolioPageProps) {
   const router = useRouter();
   const [data, setData] = useState<PortfolioData | null>(null);
+  const [publicToken, setPublicToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,8 +47,10 @@ export default function PublicPortfolioPage({
         setIsLoading(true);
         setError(null);
 
-        const portfolioData = await fetchPublicPortfolio(username);
+        const { data: portfolioData, publicToken: token } =
+          await fetchPublicPortfolio(username);
         setData(portfolioData);
+        setPublicToken(token);
       } catch (err) {
         if (err instanceof PublicPortfolioError) {
           if (err.statusCode === 404) {
@@ -146,6 +149,7 @@ export default function PublicPortfolioPage({
         isPreview={false}
         username={username}
         apiBaseUrl={env.API_BASE_URL}
+        publicToken={publicToken || undefined}
       />
     </div>
   );
