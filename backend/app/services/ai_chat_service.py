@@ -38,6 +38,9 @@ class AIChatService:
     # Token counting configuration (reused from AIProcessor)
     MODEL_ENCODING = "cl100k_base"
 
+    # Gemini configuration
+    GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
     def __init__(
         self,
         endpoint: Optional[str] = None,
@@ -48,23 +51,36 @@ class AIChatService:
         Initialize the AI chat service.
 
         Args:
-            endpoint: Azure AI endpoint URL
-            api_key: Azure AI API key
+            endpoint: Azure AI endpoint URL or Gemini base URL
+            api_key: Azure AI API key or Gemini API key
             model_name: Model name to use
         """
-        self.endpoint = endpoint or settings.azure_ai_endpoint
-        self.api_key = api_key or settings.azure_ai_api_key
         self.model_name = model_name
 
-        # Initialize OpenAI client with Azure configuration
+        # Determine if we're using Gemini based on model name
+        self.is_gemini = "gemini" in self.model_name.lower()
+
+        # Set endpoint and API key based on model type
+        if self.is_gemini:
+            self.endpoint = endpoint or self.GEMINI_BASE_URL
+            self.api_key = api_key or settings.gemini_api_key
+        else:
+            self.endpoint = endpoint or settings.azure_ai_endpoint
+            self.api_key = api_key or settings.azure_ai_api_key
+
+        # Initialize OpenAI-compatible client
         if self.endpoint and self.api_key:
             self.client = AsyncOpenAI(
                 base_url=self.endpoint,
                 api_key=self.api_key,
-                # api_version="2024-02-01",  # Use stable API version
+            )
+            logger.info(
+                f"Initialized AI chat client with model: {self.model_name} ({'Gemini' if self.is_gemini else 'Azure AI'})"
             )
         else:
-            logger.warning("Azure AI credentials not provided, client not initialized")
+            logger.warning(
+                f"AI credentials not provided for {self.model_name}, client not initialized"
+            )
             self.client = None
 
     async def close(self):

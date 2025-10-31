@@ -20,6 +20,8 @@ from ..core.config import settings
 from ..schemas.portfolio import PortfolioData
 from ..schemas.upload import GitHubRepoData, PDFData
 from ..constants.chat_config import ChatConfig
+from ..constants.extraction_prompts import PORTFOLIO_EXTRACTION_PROMPT
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,13 +42,16 @@ class AIProcessor:
     """
     Modular AI processor for portfolio data extraction.
 
-    This class handles Azure AI Inference integration with structured response
-    formatting, token counting, and intelligent text truncation.
+    This class handles Azure AI Inference and Google Gemini integration with
+    structured response formatting, token counting, and intelligent text truncation.
     """
 
     # Token counting configuration
     MAX_TOKENS_PER_REQUEST = 50000  # Default token limit
     MODEL_ENCODING = "cl100k_base"  # Default encoding for GPT models
+
+    # Gemini configuration
+    GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
     def __init__(
         self,
@@ -59,18 +64,27 @@ class AIProcessor:
         Initialize the AI processor.
 
         Args:
-            endpoint: Azure AI endpoint URL
-            api_key: Azure AI API key
+            endpoint: Azure AI endpoint URL or Gemini base URL
+            api_key: Azure AI API key or Gemini API key
             model_name: Model name to use
             max_tokens: Maximum tokens per request (overrides default)
         """
-        self.endpoint = endpoint or settings.azure_ai_endpoint
-        self.api_key = api_key or settings.azure_ai_api_key
         default_model = (
             settings.azure_ai_processor_model or ChatConfig.PROCESSOR_MODEL_NAME
         )
         self.model_name = model_name or default_model
         self.max_tokens = max_tokens or self.MAX_TOKENS_PER_REQUEST
+
+        # Determine if we're using Gemini based on model name
+        self.is_gemini = "gemini" in self.model_name.lower()
+
+        # Set endpoint and API key based on model type
+        if self.is_gemini:
+            self.endpoint = endpoint or self.GEMINI_BASE_URL
+            self.api_key = api_key or settings.gemini_api_key
+        else:
+            self.endpoint = endpoint or settings.azure_ai_endpoint
+            self.api_key = api_key or settings.azure_ai_api_key
 
         # Initialize prompt cache directory
         self.prompt_cache_dir = Path(__file__).parent / "prompt_cache"
@@ -89,8 +103,13 @@ class AIProcessor:
                 base_url=self.endpoint,
                 api_key=self.api_key,
             )
+            logger.info(
+                f"Initialized AI client with model: {self.model_name} ({'Gemini' if self.is_gemini else 'Azure AI'})"
+            )
         else:
-            logger.warning("Azure AI credentials not provided, client not initialized")
+            logger.warning(
+                f"AI credentials not provided for {self.model_name}, client not initialized"
+            )
             self.client = None
 
     def count_tokens(self, text: str) -> int:
@@ -259,9 +278,6 @@ class AIProcessor:
                 },
             }
 
-            # Load extraction prompt
-            from ..constants.extraction_prompts import PORTFOLIO_EXTRACTION_PROMPT
-
             # Create messages
             messages = [
                 {"role": "system", "content": PORTFOLIO_EXTRACTION_PROMPT.strip()},
@@ -269,7 +285,7 @@ class AIProcessor:
             ]
 
             # Cache the final prompt for debugging
-            self._cache_final_prompt(PORTFOLIO_EXTRACTION_PROMPT, input_text)
+            # self._cache_final_prompt(PORTFOLIO_EXTRACTION_PROMPT, input_text)
 
             # Call Azure AI with structured output
             response = await self.client.chat.completions.create(

@@ -91,6 +91,9 @@ class Settings(BaseSettings):
     azure_ai_api_key: Optional[str] = None
     azure_ai_processor_model: Optional[str] = None
 
+    # Google Gemini settings
+    gemini_api_key: Optional[str] = None
+
     # Azure Blob Storage settings
     azure_storage_connection_string: Optional[str] = None
     azure_storage_account_url: Optional[str] = None
