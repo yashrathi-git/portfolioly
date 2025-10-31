@@ -67,15 +67,7 @@ const prepareWidgetData = (
       return portfolioData.skills?.length
         ? {
             heading: "Skills",
-            categories: [
-              {
-                title: "Skills",
-                items: portfolioData.skills.map((skill: string) => ({
-                  name: skill,
-                  chip: true,
-                })),
-              },
-            ],
+            skills: portfolioData.skills,
           }
         : null;
 
