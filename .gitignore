@@ -9,7 +9,8 @@ node_modules/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
+# random_testing
+random_testing/*.json
 # package manager lockfiles (keep only root yarn.lock)
 package-lock.json
 pnpm-lock.yaml
