@@ -4,8 +4,10 @@ import type { DisplayWorkExperience } from "@portfolioly/schema";
 
 const BLUR_FADE_DELAY = 0.04;
 
+type WorkExperienceItem = DisplayWorkExperience & { logoUrl?: string };
+
 export type WorkExperienceProps = {
-  items?: DisplayWorkExperience[];
+  items?: WorkExperienceItem[];
 };
 
 function formatPeriod(start?: string | null, end?: string | null) {
@@ -79,7 +81,7 @@ export function WorkExperience({ items = [] }: WorkExperienceProps) {
               delay={BLUR_FADE_DELAY * 6 + idx * 0.05}
             >
               <ResumeCard
-                logoUrl={""} // logoUrl removed from display schema
+                logoUrl={work.logoUrl ?? undefined}
                 altText={work.companyName ?? "Company"}
                 title={work.companyName ?? ""}
                 subtitle={work.role ?? undefined}

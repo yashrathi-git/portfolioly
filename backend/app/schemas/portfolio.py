@@ -63,6 +63,8 @@ class WorkExperience(BaseModel):
     title: Optional[str] = None
     location: Optional[str] = None
     logo_url: Optional[str] = None
+    brandfetch_logo_url: Optional[str] = None
+    brandfetch_domain: Optional[str] = None
     start_date: Optional[DateInfo] = None
     end_date: Optional[DateInfo] = None
     is_current: Optional[bool] = None
@@ -111,6 +113,8 @@ class Education(BaseModel):
     degree: Optional[str] = None
     branch: Optional[str] = None
     logo_url: Optional[str] = None
+    brandfetch_logo_url: Optional[str] = None
+    brandfetch_domain: Optional[str] = None
     start_date: Optional[DateInfo] = None
     end_date: Optional[DateInfo] = None
     is_current: Optional[bool] = None

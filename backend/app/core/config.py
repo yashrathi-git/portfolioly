@@ -66,6 +66,16 @@ class UploadSettings(BaseModel):
         return bool((self.GITHUB_API_TOKEN or "").strip())
 
 
+class BrandfetchSettings(BaseModel):
+    """Configuration for Brandfetch logo enrichment."""
+
+    enabled: bool = False
+    client_id: Optional[str] = None
+    base_url: str = "https://api.brandfetch.io/v2"
+    search_timeout_seconds: float = 3.0
+    max_search_results: int = 1
+
+
 class Settings(BaseSettings):
     """Application settings."""
 
@@ -101,6 +111,7 @@ class Settings(BaseSettings):
 
     # Nested groups
     upload: UploadSettings = UploadSettings()
+    brandfetch: BrandfetchSettings = BrandfetchSettings()
 
     # SettingsConfig (pydantic v2)
     model_config = SettingsConfigDict(

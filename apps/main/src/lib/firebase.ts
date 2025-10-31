@@ -5,10 +5,12 @@ import {
   type FirebaseOptions,
 } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
 import { env, validateEnv } from "./env";
 
 let appInstance: ReturnType<typeof initializeApp> | null = null;
 let authInstance: Auth | null = null;
+let firestoreInstance: Firestore | null = null;
 
 function getConfig(): FirebaseOptions {
   // Validate environment variables first
@@ -49,6 +51,13 @@ export function getFirebaseAuth(): Auth {
   }
 
   return authInstance;
+}
+
+export function getFirestoreDb(): Firestore {
+  if (firestoreInstance) return firestoreInstance;
+  const app = getFirebaseApp();
+  firestoreInstance = getFirestore(app);
+  return firestoreInstance;
 }
 
 export async function getIdToken(forceRefresh = false) {

@@ -79,6 +79,7 @@ export interface DisplayEducation {
   end?: string;
   location?: string;
   grade?: string;
+  logoUrl?: string;
 }
 
 /**
@@ -96,6 +97,7 @@ export interface DisplayWorkExperience {
   /** Markdown string with work highlights */
   points?: string;
   technologies?: string[];
+  logoUrl?: string;
 }
 
 /**

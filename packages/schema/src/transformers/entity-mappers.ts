@@ -47,6 +47,7 @@ export function mapWorkExperience(exp: WorkExperience): DisplayWorkExperience {
     end: exp.is_current ? "Present" : formatDateInfo(exp.end_date),
     points: exp.highlights ?? undefined,
     technologies: exp.technologies,
+    logoUrl: exp.logo_url ?? undefined,
   };
 }
 
@@ -141,5 +142,6 @@ export function mapEducation(edu: Education): DisplayEducation {
     end: edu.is_current ? "Present" : formatDateInfo(edu.end_date),
     location: edu.location ?? undefined,
     grade: edu.grade ?? undefined,
+    logoUrl: edu.logo_url ?? undefined,
   };
 }

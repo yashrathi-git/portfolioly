@@ -5,8 +5,10 @@ import { GraduationCap } from "lucide-react";
 
 const BLUR_FADE_DELAY = 0.04;
 
+type EducationItem = DisplayEducation & { logoUrl?: string };
+
 export type EducationSectionProps = {
-  items?: DisplayEducation[];
+  items?: EducationItem[];
 };
 
 function formatPeriod(start?: string | null, end?: string | null) {
@@ -51,8 +53,6 @@ export function Education({ items = [] }: EducationSectionProps) {
   if (visibleItems.length === 0) {
     return null;
   }
-  console.log(visibleItems[0]);
-
   return (
     <section id="education" className="px-6 pb-16">
       <div className="mx-auto w-full max-w-2xl space-y-4">
@@ -66,7 +66,7 @@ export function Education({ items = [] }: EducationSectionProps) {
               delay={BLUR_FADE_DELAY * 8 + idx * 0.05}
             >
               <ResumeCard
-                logoUrl={""} // logoUrl removed from display schema
+                logoUrl={education.logoUrl ?? undefined}
                 altText={education.school ?? "Education"}
                 title={education.school ?? ""}
                 subtitle={education.degree ?? undefined}

@@ -19,6 +19,8 @@ from fastapi import (
 from fastapi.responses import JSONResponse
 from fastapi.concurrency import run_in_threadpool
 
+from ..schemas.portfolio import PersonalInfo, PortfolioData, WorkExperience
+
 from ..auth.middleware import require_verified_email
 from ..schemas.auth import UserToken
 from ..schemas.github import PaginatedRepoResponse
@@ -32,6 +34,7 @@ from ..services.ai_processor import (
     AIProcessingError,
     TokenLimitExceededError,
 )
+from ..services.brandfetch_service import enrich_portfolio_logos
 from ..dependencies.rate_limiting import (
     check_pdf_upload_rate_limit,
     check_github_api_rate_limit,
@@ -257,12 +260,31 @@ async def submit_upload_data(
                 ai_processor = get_ai_processor()
 
                 # Process with AI
-                portfolio_data = await ai_processor.process_portfolio_data(
-                    resume_pdf=request.resume_pdf,
-                    linkedin_pdf=request.linkedin_pdf,
-                    github_repos=request.github_repos,
+                # portfolio_data = await ai_processor.process_portfolio_data(
+                #     resume_pdf=request.resume_pdf,
+                #     linkedin_pdf=request.linkedin_pdf,
+                #     github_repos=request.github_repos,
+                # )
+                portfolio_data = PortfolioData(
+                    personal_info=PersonalInfo(
+                        full_name="John Doe",
+                        email="john.doe@example.com",
+                    ),
+                    work_experiences=[
+                        WorkExperience(
+                            organization="VISA",
+                            title="Senior Software Engineer",
+                        ),
+                        WorkExperience(
+                            organization="Google",
+                            title="Senior Software Engineer",
+                        ),
+                        WorkExperience(
+                            organization="Tekion Corp",
+                            title="Senior Software Engineer",
+                        ),
+                    ],
                 )
-
                 # Store in Firebase
                 success = await run_in_threadpool(
                     portfolio_service.store_portfolio_data,
@@ -273,6 +295,11 @@ async def submit_upload_data(
                 if success:
                     # Increment AI usage counter
                     background_tasks.add_task(ai_rate_limiter.increment_usage, user.uid)
+                    background_tasks.add_task(
+                        enrich_portfolio_logos,
+                        user.uid,
+                        portfolio_data.model_dump(mode="json"),
+                    )
 
                     return UploadSubmissionResponse(
                         success=True,

@@ -140,7 +140,8 @@ export function EducationForm({ value, onChange }: EducationFormProps) {
                 placeholder="https://example.com/logo.png"
               />
               <p className="text-sm text-muted-foreground">
-                URL to the institution logo image
+                Auto-filled when available. Add your own URL to override the
+                suggested logo.
               </p>
             </div>
 

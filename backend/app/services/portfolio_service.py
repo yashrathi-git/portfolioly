@@ -5,8 +5,9 @@ This service handles storing and retrieving portfolio data in Firestore,
 as well as direct mapping of GitHub-only data to the portfolio schema.
 """
 
+import asyncio
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Sequence, TYPE_CHECKING
 from datetime import datetime
 
 import firebase_admin
@@ -16,6 +17,9 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from ..core.config import settings
 from ..schemas.portfolio import PortfolioData, PersonalInfo, Project, PortfolioMetadata
 from ..schemas.upload import GitHubRepoData
+
+if TYPE_CHECKING:
+    from .brandfetch_service import LogoUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -85,8 +89,14 @@ class PortfolioService:
             # Add timestamp
             data_dict["updated_at"] = datetime.utcnow()
 
-            # Store in Firestore at portfolios/{userId}
+            # Preserve Brandfetch fields from existing portfolio if not provided
             doc_ref = self.db.collection("portfolios").document(user_id)
+            existing_doc = doc_ref.get()
+            if existing_doc.exists:
+                existing_data = existing_doc.to_dict() or {}
+                self._preserve_brandfetch_metadata(data_dict, existing_data)
+
+            # Store in Firestore at portfolios/{userId}
             doc_ref.set(data_dict)
 
             logger.info(f"Portfolio data stored successfully for user {user_id}")
@@ -334,6 +344,156 @@ class PortfolioService:
                 f"Failed to delete portfolio data for user {user_id}: {str(e)}"
             )
             return False
+
+    async def apply_brandfetch_logo_updates(
+        self, user_id: str, updates: Sequence["LogoUpdate"]
+    ) -> None:
+        """Apply Brandfetch logo updates to specific portfolio entries."""
+
+        if not updates:
+            return
+
+        await asyncio.to_thread(
+            self._apply_brandfetch_logo_updates_sync, user_id, updates
+        )
+
+    def _apply_brandfetch_logo_updates_sync(
+        self, user_id: str, updates: Sequence["LogoUpdate"]
+    ) -> None:
+        doc_ref = self.db.collection("portfolios").document(user_id)
+        doc = doc_ref.get()
+
+        if not doc.exists:
+            logger.info(
+                "Skipping Brandfetch updates for user %s: portfolio not found",
+                user_id,
+            )
+            return
+
+        data = doc.to_dict() or {}
+
+        batch_updates: Dict[str, Any] = {}
+
+        for update in updates:
+            section_items = data.get(update.section) or []
+
+            if not isinstance(section_items, list):
+                continue
+
+            if update.index < 0 or update.index >= len(section_items):
+                continue
+
+            entry = section_items[update.index]
+            if not isinstance(entry, dict):
+                entry = {}
+                section_items[update.index] = entry
+
+            current_logo = entry.get("brandfetch_logo_url")
+            current_domain = entry.get("brandfetch_domain")
+
+            entry_changed = False
+
+            if current_logo != update.brandfetch_logo_url:
+                entry["brandfetch_logo_url"] = update.brandfetch_logo_url
+                entry_changed = True
+
+            if current_domain != update.brandfetch_domain:
+                entry["brandfetch_domain"] = update.brandfetch_domain
+                entry_changed = True
+
+            existing_logo_value = entry.get("logo_url")
+            has_primary_logo = False
+            if isinstance(existing_logo_value, str):
+                has_primary_logo = bool(existing_logo_value.strip())
+            else:
+                has_primary_logo = bool(existing_logo_value)
+
+            if (
+                not has_primary_logo
+                and update.brandfetch_logo_url
+                and existing_logo_value != update.brandfetch_logo_url
+            ):
+                entry["logo_url"] = update.brandfetch_logo_url
+                entry_changed = True
+
+            if not entry_changed:
+                continue
+
+            batch_updates[update.section] = section_items
+
+        if not batch_updates:
+            return
+
+        batch_updates["updated_at"] = datetime.utcnow()
+
+        doc_ref.update(batch_updates)
+
+    @staticmethod
+    def _normalize_name(value: Optional[str]) -> Optional[str]:
+        if not isinstance(value, str):
+            return None
+        normalized = value.strip().lower()
+        return normalized or None
+
+    def _preserve_brandfetch_metadata(
+        self, new_data: Dict[str, Any], existing_data: Dict[str, Any]
+    ) -> None:
+        self._merge_brandfetch_section(
+            new_data,
+            existing_data,
+            section="work_experiences",
+            name_key="organization",
+        )
+        self._merge_brandfetch_section(
+            new_data,
+            existing_data,
+            section="education",
+            name_key="institution",
+        )
+
+    def _merge_brandfetch_section(
+        self,
+        new_data: Dict[str, Any],
+        existing_data: Dict[str, Any],
+        *,
+        section: str,
+        name_key: str,
+    ) -> None:
+        new_items = new_data.get(section)
+        existing_items = existing_data.get(section)
+
+        if not isinstance(new_items, list) or not isinstance(existing_items, list):
+            return
+
+        lookup_by_index = {idx: item for idx, item in enumerate(existing_items)}
+
+        lookup_by_name = {}
+        for idx, item in enumerate(existing_items):
+            if not isinstance(item, dict):
+                continue
+            name_value = self._normalize_name(item.get(name_key))
+            if name_value and name_value not in lookup_by_name:
+                lookup_by_name[name_value] = item
+
+        for idx, entry in enumerate(new_items):
+            if not isinstance(entry, dict):
+                continue
+
+            existing_entry = lookup_by_index.get(idx)
+            if not existing_entry:
+                name_value = self._normalize_name(entry.get(name_key))
+                if name_value:
+                    existing_entry = lookup_by_name.get(name_value)
+
+            if not existing_entry:
+                continue
+
+            for field in ("brandfetch_logo_url", "brandfetch_domain"):
+                current_value = entry.get(field)
+                if current_value in (None, ""):
+                    preserved_value = existing_entry.get(field)
+                    if preserved_value not in (None, ""):
+                        entry[field] = preserved_value
 
     async def update_profile_photo(
         self, user_id: str, photo_url: Optional[str]

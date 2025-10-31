@@ -103,7 +103,8 @@ export function WorkExperienceForm({
                   placeholder="https://example.com/logo.png"
                 />
                 <p className="text-xs text-muted-foreground">
-                  URL to the company logo image
+                  Auto-filled when available. Add your own URL to override the
+                  suggested logo.
                 </p>
               </div>
             </div>

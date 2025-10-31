@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import withAuth from "@/lib/auth/withAuth";
 import { toast } from "sonner";
@@ -23,6 +23,9 @@ import {
   saveUserPortfolio,
   PortfolioAPIError,
 } from "@/lib/api/portfolio";
+import { doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
+import { getFirestoreDb } from "@/lib/firebase";
+import { validatePortfolioData } from "@portfolioly/schema";
 
 function EditPage() {
   const { user } = useAuth();
@@ -33,6 +36,11 @@ function EditPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+
+  useEffect(() => {
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+  }, [hasUnsavedChanges]);
 
   // Load portfolio data on mount
   useEffect(() => {
@@ -59,6 +67,63 @@ function EditPage() {
       loadPortfolio();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      return undefined;
+    }
+
+    let unsubscribe: Unsubscribe | undefined;
+
+    const subscribeToUpdates = async () => {
+      try {
+        const db = getFirestoreDb();
+        const portfolioDoc = doc(db, "portfolios", user.uid);
+
+        unsubscribe = onSnapshot(portfolioDoc, (snapshot) => {
+          if (!snapshot.exists()) {
+            return;
+          }
+
+          const snapshotData = snapshot.data();
+          if (!snapshotData) {
+            return;
+          }
+
+          const { updated_at: _updatedAt, ...rest } = snapshotData;
+
+          try {
+            const validated = validatePortfolioData(rest);
+
+            if (hasUnsavedChangesRef.current) {
+              return;
+            }
+
+            setPortfolioData(validated);
+            setHasUnsavedChanges(false);
+          } catch (validationError) {
+            console.error(
+              "Failed to validate portfolio snapshot:",
+              validationError
+            );
+          }
+        });
+      } catch (subscriptionError) {
+        console.error(
+          "Failed to subscribe to portfolio updates:",
+          subscriptionError
+        );
+      }
+    };
+
+    subscribeToUpdates();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [user?.uid]);
 
   // Handle portfolio data changes
   const handlePortfolioChange = (newData: PortfolioData) => {
