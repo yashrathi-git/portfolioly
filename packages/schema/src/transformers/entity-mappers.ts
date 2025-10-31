@@ -38,7 +38,26 @@ import { formatDateInfo } from "./date-formatter";
  * // }
  * ```
  */
+type WithBrandfetchLogo = {
+  brandfetch_logo_url?: string | null;
+};
+
+function resolveLogoUrl(
+  manualLogo?: string | null,
+  brandfetchLogo?: string | null
+): string | undefined {
+  const manual = typeof manualLogo === "string" ? manualLogo.trim() : "";
+  if (manual) {
+    return manual;
+  }
+
+  const auto = typeof brandfetchLogo === "string" ? brandfetchLogo.trim() : "";
+  return auto || undefined;
+}
+
 export function mapWorkExperience(exp: WorkExperience): DisplayWorkExperience {
+  const brandfetchLogo = (exp as WorkExperience & WithBrandfetchLogo)
+    .brandfetch_logo_url;
   return {
     companyName: exp.organization ?? undefined,
     role: exp.title ?? undefined,
@@ -47,7 +66,7 @@ export function mapWorkExperience(exp: WorkExperience): DisplayWorkExperience {
     end: exp.is_current ? "Present" : formatDateInfo(exp.end_date),
     points: exp.highlights ?? undefined,
     technologies: exp.technologies,
-    logoUrl: exp.logo_url ?? undefined,
+    logoUrl: resolveLogoUrl(exp.logo_url, brandfetchLogo),
   };
 }
 
@@ -128,6 +147,8 @@ export function mapProject(project: Project): DisplayProject {
  * ```
  */
 export function mapEducation(edu: Education): DisplayEducation {
+  const brandfetchLogo = (edu as Education & WithBrandfetchLogo)
+    .brandfetch_logo_url;
   // Combine degree and branch
   const degreeParts = [edu.degree, edu.branch].filter(Boolean);
   const degree =
@@ -142,6 +163,6 @@ export function mapEducation(edu: Education): DisplayEducation {
     end: edu.is_current ? "Present" : formatDateInfo(edu.end_date),
     location: edu.location ?? undefined,
     grade: edu.grade ?? undefined,
-    logoUrl: edu.logo_url ?? undefined,
+    logoUrl: resolveLogoUrl(edu.logo_url, brandfetchLogo),
   };
 }

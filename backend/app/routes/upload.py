@@ -260,31 +260,31 @@ async def submit_upload_data(
                 ai_processor = get_ai_processor()
 
                 # Process with AI
-                # portfolio_data = await ai_processor.process_portfolio_data(
-                #     resume_pdf=request.resume_pdf,
-                #     linkedin_pdf=request.linkedin_pdf,
-                #     github_repos=request.github_repos,
-                # )
-                portfolio_data = PortfolioData(
-                    personal_info=PersonalInfo(
-                        full_name="John Doe",
-                        email="john.doe@example.com",
-                    ),
-                    work_experiences=[
-                        WorkExperience(
-                            organization="VISA",
-                            title="Senior Software Engineer",
-                        ),
-                        WorkExperience(
-                            organization="Google",
-                            title="Senior Software Engineer",
-                        ),
-                        WorkExperience(
-                            organization="Tekion Corp",
-                            title="Senior Software Engineer",
-                        ),
-                    ],
+                portfolio_data = await ai_processor.process_portfolio_data(
+                    resume_pdf=request.resume_pdf,
+                    linkedin_pdf=request.linkedin_pdf,
+                    github_repos=request.github_repos,
                 )
+                # portfolio_data = PortfolioData(
+                #     personal_info=PersonalInfo(
+                #         full_name="John Doe",
+                #         email="john.doe@example.com",
+                #     ),
+                #     work_experiences=[
+                #         WorkExperience(
+                #             organization="VISA",
+                #             title="Senior Software Engineer",
+                #         ),
+                #         WorkExperience(
+                #             organization="Google",
+                #             title="Senior Software Engineer",
+                #         ),
+                #         WorkExperience(
+                #             organization="Tekion Corp",
+                #             title="Senior Software Engineer",
+                #         ),
+                #     ],
+                # )
                 # Store in Firebase
                 success = await run_in_threadpool(
                     portfolio_service.store_portfolio_data,

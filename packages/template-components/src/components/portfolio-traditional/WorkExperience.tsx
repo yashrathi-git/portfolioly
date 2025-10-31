@@ -4,10 +4,8 @@ import type { DisplayWorkExperience } from "@portfolioly/schema";
 
 const BLUR_FADE_DELAY = 0.04;
 
-type WorkExperienceItem = DisplayWorkExperience & { logoUrl?: string };
-
 export type WorkExperienceProps = {
-  items?: WorkExperienceItem[];
+  items?: DisplayWorkExperience[];
 };
 
 function formatPeriod(start?: string | null, end?: string | null) {
