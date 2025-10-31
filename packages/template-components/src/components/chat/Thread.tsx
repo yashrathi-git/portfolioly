@@ -72,50 +72,22 @@ const prepareWidgetData = (
         : null;
 
     case "contact": {
-      const contactItems: any[] = [];
-      if (portfolioData.profile?.email) {
-        contactItems.push({
-          id: "email",
-          kind: "email",
-          label: portfolioData.profile.email,
-          href: `mailto:${portfolioData.profile.email}`,
-          sub: "Email",
-        });
-      }
-      portfolioData.profile?.socials?.forEach((link: any, index: number) => {
-        const id = `${link.type}-${index}`;
-        if (link.type === "github") {
-          contactItems.push({
-            id,
-            kind: "github",
-            label: link.label || link.href,
-            href: link.href,
-            sub: "GitHub",
-          });
-        } else if (link.type === "linkedin") {
-          contactItems.push({
-            id,
-            kind: "linkedin",
-            label: link.label || link.href,
-            href: link.href,
-            sub: "LinkedIn",
-          });
-        } else {
-          contactItems.push({
-            id,
-            kind: "website",
-            label: link.label || link.href,
-            href: link.href,
-            sub: link.type,
-          });
-        }
-      });
-      return contactItems.length
-        ? {
-            heading: "Contact",
-            items: contactItems,
-          }
-        : null;
+      const email = portfolioData.profile?.email;
+      const socials = portfolioData.profile?.socials || [];
+
+      // Find LinkedIn and GitHub from socials
+      const linkedin = socials.find((s: any) => s.type === "linkedin")?.href;
+      const github = socials.find((s: any) => s.type === "github")?.href;
+
+      // Only return if at least one contact method exists
+      if (!email && !linkedin && !github) return null;
+
+      return {
+        heading: "Get in Touch",
+        email,
+        linkedin,
+        github,
+      };
     }
 
     case "experience":
