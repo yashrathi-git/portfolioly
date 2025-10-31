@@ -6,12 +6,12 @@ from unstructured PDF text and GitHub repository information using
 Azure AI Inference with cost controls and intelligent text truncation.
 """
 
+import asyncio
 import json
 import logging
-import os
-from typing import Optional, Dict, Any, List
 from datetime import datetime
 from pathlib import Path
+from typing import Optional, List
 
 import tiktoken
 from openai import AsyncOpenAI
@@ -50,6 +50,9 @@ class AIProcessor:
     MAX_TOKENS_PER_REQUEST = 50000  # Default token limit
     MODEL_ENCODING = "cl100k_base"  # Default encoding for GPT models
 
+    # Request configuration
+    DEFAULT_REQUEST_TIMEOUT = 150  # Seconds
+
     # Gemini configuration
     GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
@@ -59,6 +62,7 @@ class AIProcessor:
         api_key: Optional[str] = None,
         model_name: Optional[str] = None,
         max_tokens: Optional[int] = None,
+        request_timeout: Optional[float] = None,
     ):
         """
         Initialize the AI processor.
@@ -74,6 +78,12 @@ class AIProcessor:
         )
         self.model_name = model_name or default_model
         self.max_tokens = max_tokens or self.MAX_TOKENS_PER_REQUEST
+        self.request_timeout = float(
+            request_timeout
+            if request_timeout is not None
+            else getattr(settings, "azure_ai_request_timeout", None)
+            or self.DEFAULT_REQUEST_TIMEOUT
+        )
 
         # Determine if we're using Gemini based on model name
         self.is_gemini = "gemini" in self.model_name.lower()
@@ -102,6 +112,8 @@ class AIProcessor:
             self.client = AsyncOpenAI(
                 base_url=self.endpoint,
                 api_key=self.api_key,
+                timeout=self.request_timeout,
+                max_retries=1,
             )
             logger.info(
                 f"Initialized AI client with model: {self.model_name} ({'Gemini' if self.is_gemini else 'Azure AI'})"
@@ -288,11 +300,15 @@ class AIProcessor:
             # self._cache_final_prompt(PORTFOLIO_EXTRACTION_PROMPT, input_text)
 
             # Call Azure AI with structured output
-            response = await self.client.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                response_format=response_format,
-                temperature=0,
+            response = await asyncio.wait_for(
+                self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=messages,
+                    response_format=response_format,
+                    # temperature=0,
+                    # reasoning_effort="low",
+                ),
+                timeout=self.request_timeout * 3,
             )
 
             # Extract and validate response
@@ -304,6 +320,13 @@ class AIProcessor:
 
         except TokenLimitExceededError:
             raise
+        except asyncio.TimeoutError as e:
+            logger.error(
+                "AI processing timed out after %.2f seconds", self.request_timeout
+            )
+            raise AIProcessingError(
+                "AI processing timed out. Please try again later."
+            ) from e
         except Exception as e:
             logger.error(f"AI processing failed: {str(e)}")
             raise AIProcessingError(f"AI processing failed: {str(e)}")

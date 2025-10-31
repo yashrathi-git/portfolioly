@@ -44,6 +44,7 @@ export enum ErrorCode {
 
   // Rate limiting errors
   RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED",
+  AI_RATE_LIMIT_EXCEEDED = "AI_RATE_LIMIT_EXCEEDED",
 
   // Repository import errors
   TOO_MANY_REPOS = "TOO_MANY_REPOS",
@@ -262,6 +263,14 @@ const ERROR_MESSAGES: Record<ErrorCode, Partial<StructuredError>> = {
     actionable: true,
     suggestedAction: "Wait before trying again",
   },
+  [ErrorCode.AI_RATE_LIMIT_EXCEEDED]: {
+    severity: ErrorSeverity.MEDIUM,
+    retryable: false,
+    userMessage:
+      "You've reached the monthly AI processing limit. Please try again after it resets.",
+    actionable: true,
+    suggestedAction: "Check back after the monthly reset",
+  },
 
   // Repository import errors
   [ErrorCode.TOO_MANY_REPOS]: {
@@ -319,13 +328,30 @@ export function parseError(error: unknown): StructuredError {
   if (errorCode) {
     const template = ERROR_MESSAGES[errorCode];
 
+    let userMessage =
+      template?.userMessage || e.details?.message || "An error occurred";
+    if (errorCode === ErrorCode.AI_RATE_LIMIT_EXCEEDED) {
+      const monthlyLimit = e?.details?.monthly_limit;
+      const resetInfo = e?.details?.reset_info;
+
+      if (typeof monthlyLimit === "number") {
+        userMessage = `You've used all ${monthlyLimit} monthly AI extractions.`;
+        if (typeof resetInfo === "string" && resetInfo.trim().length > 0) {
+          userMessage += ` ${resetInfo}`;
+        } else {
+          userMessage += " Please try again after the limit resets.";
+        }
+      } else if (typeof resetInfo === "string" && resetInfo.trim().length > 0) {
+        userMessage = `${userMessage} ${resetInfo}`.trim();
+      }
+    }
+
     return {
       code: errorCode,
       message: e.message || e.details?.message || "Unknown error",
       severity: template?.severity || ErrorSeverity.MEDIUM,
       retryable: template?.retryable || false,
-      userMessage:
-        template?.userMessage || e.details?.message || "An error occurred",
+      userMessage,
       actionable: template?.actionable || false,
       suggestedAction: template?.suggestedAction,
       details: e.details,

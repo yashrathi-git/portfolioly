@@ -5,21 +5,24 @@ This module provides API endpoints for PDF upload and GitHub integration
 functionality in the upload onboarding flow.
 """
 
-from typing import Literal, List, Optional
+from typing import Literal
 from datetime import datetime
-from fastapi import APIRouter, UploadFile, File, Query, Depends, HTTPException
+from fastapi import (
+    APIRouter,
+    UploadFile,
+    File,
+    Query,
+    Depends,
+    HTTPException,
+    BackgroundTasks,
+)
 from fastapi.responses import JSONResponse
+from fastapi.concurrency import run_in_threadpool
 
 from ..auth.middleware import require_verified_email
 from ..schemas.auth import UserToken
-from ..schemas.pdf import PDFParseResult
 from ..schemas.github import PaginatedRepoResponse
-from ..schemas.upload import (
-    GitHubRepoData,
-    PDFData,
-    UploadSubmissionRequest,
-    UploadSubmissionResponse,
-)
+from ..schemas.upload import UploadSubmissionRequest, UploadSubmissionResponse
 from ..services.pdf_processor import get_pdf_processor
 from ..services.github_service import get_github_service
 from ..services.portfolio_service import get_portfolio_service
@@ -203,7 +206,9 @@ async def get_github_repos(
 
 @router.post("/submit", response_model=UploadSubmissionResponse)
 async def submit_upload_data(
-    request: UploadSubmissionRequest, user: UserToken = Depends(require_verified_email)
+    request: UploadSubmissionRequest,
+    background_tasks: BackgroundTasks,
+    user: UserToken = Depends(require_verified_email),
 ) -> UploadSubmissionResponse:
     """
     Submit complete upload data including PDFs and GitHub repositories.
@@ -245,7 +250,9 @@ async def submit_upload_data(
             try:
                 # Check AI processing rate limit
                 ai_rate_limiter = get_ai_rate_limiter()
-                rate_limit_info = ai_rate_limiter.check_rate_limit(user.uid)
+                _rate_limit_info = await run_in_threadpool(
+                    ai_rate_limiter.check_rate_limit, user.uid
+                )
 
                 ai_processor = get_ai_processor()
 
@@ -257,13 +264,15 @@ async def submit_upload_data(
                 )
 
                 # Store in Firebase
-                success = portfolio_service.store_portfolio_data(
-                    user.uid, portfolio_data
+                success = await run_in_threadpool(
+                    portfolio_service.store_portfolio_data,
+                    user.uid,
+                    portfolio_data,
                 )
 
                 if success:
                     # Increment AI usage counter
-                    ai_rate_limiter.increment_usage(user.uid)
+                    background_tasks.add_task(ai_rate_limiter.increment_usage, user.uid)
 
                     return UploadSubmissionResponse(
                         success=True,
@@ -317,13 +326,16 @@ async def submit_upload_data(
         else:
             # Path 2: GitHub-only data - direct mapping
             if request.github_repos:
-                portfolio_data = portfolio_service.map_github_only_data(
-                    request.github_repos
+                portfolio_data = await run_in_threadpool(
+                    portfolio_service.map_github_only_data,
+                    request.github_repos,
                 )
 
                 # Store in Firebase
-                success = portfolio_service.store_portfolio_data(
-                    user.uid, portfolio_data
+                success = await run_in_threadpool(
+                    portfolio_service.store_portfolio_data,
+                    user.uid,
+                    portfolio_data,
                 )
 
                 if success:

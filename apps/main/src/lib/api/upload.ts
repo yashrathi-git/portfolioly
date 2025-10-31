@@ -447,7 +447,7 @@ export async function checkUploadHealth(): Promise<Record<string, unknown>> {
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  maxRetries: number = 3,
+  maxRetries: number = 1,
   baseDelay: number = 1000
 ): Promise<T> {
   let lastError: Error;
