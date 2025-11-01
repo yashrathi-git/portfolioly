@@ -8,8 +8,10 @@ import BlurFade from "../magicui/blur-fade";
 import BlurFadeText from "../magicui/blur-fade-text";
 import type { DisplayPortfolioProfile } from "@portfolioly/schema";
 import { SocialIcon } from "./SocialIcon";
-
-const BLUR_FADE_DELAY = 0.08;
+import {
+  BLUR_FADE_DELAY,
+  SECTION_DELAYS,
+} from "../../lib/constants/animations";
 
 export type HeroProps = {
   profile: DisplayPortfolioProfile;
@@ -49,7 +51,7 @@ export const Hero = ({ profile }: HeroProps) => {
             <div className="flex flex-1 flex-col space-y-1.5">
               {firstName && (
                 <BlurFadeText
-                  delay={BLUR_FADE_DELAY}
+                  delay={BLUR_FADE_DELAY * SECTION_DELAYS.hero}
                   className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none"
                   yOffset={8}
                   text={`Hi, I'm ${firstName} 👋`}
@@ -58,13 +60,13 @@ export const Hero = ({ profile }: HeroProps) => {
               {headline && (
                 <BlurFadeText
                   className="max-w-[600px] md:text-xl text-muted-foreground"
-                  delay={BLUR_FADE_DELAY * 1.5}
+                  delay={BLUR_FADE_DELAY * SECTION_DELAYS.avatar}
                   text={headline}
                 />
               )}
             </div>
             {(avatarSrc || initials) && (
-              <BlurFade delay={BLUR_FADE_DELAY * 1.5}>
+              <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.avatar}>
                 <Avatar className="size-28 border">
                   {avatarSrc && (
                     <AvatarImage
@@ -81,7 +83,7 @@ export const Hero = ({ profile }: HeroProps) => {
           </div>
 
           {hasSocials && (
-            <BlurFade delay={BLUR_FADE_DELAY * 2}>
+            <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.socials}>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 {profile.socials?.map((s) => (
                   <a
@@ -109,10 +111,10 @@ export const Hero = ({ profile }: HeroProps) => {
       {summary && (
         <section id="about" className="px-6 pb-16">
           <div className="mx-auto w-full max-w-2xl space-y-4">
-            <BlurFade delay={BLUR_FADE_DELAY * 3}>
+            <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.about}>
               <h2 className="text-xl font-bold">About</h2>
             </BlurFade>
-            <BlurFade delay={BLUR_FADE_DELAY * 4}>
+            <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.aboutContent}>
               <Markdown className="prose max-w-full text-pretty font-sans text-sm text-muted-foreground dark:prose-invert">
                 {summary}
               </Markdown>

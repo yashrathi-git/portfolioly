@@ -2,8 +2,11 @@ import BlurFade from "../magicui/blur-fade";
 import { ResumeCard } from "../resume-card";
 import type { DisplayWorkExperience } from "@portfolioly/schema";
 import { cn } from "../../lib/utils";
-
-const BLUR_FADE_DELAY = 0.04;
+import {
+  BLUR_FADE_DELAY,
+  SECTION_DELAYS,
+  WIDGET_ANIMATION,
+} from "../../lib/constants/animations";
 
 export interface WorkExperienceSectionProps {
   items?: DisplayWorkExperience[];
@@ -88,7 +91,12 @@ export function WorkExperienceSection({
           {visibleItems.map((work, idx) => (
             <BlurFade
               key={`${work.companyName ?? "experience"}-${idx}`}
-              delay={BLUR_FADE_DELAY + idx * 0.05}
+              delay={
+                WIDGET_ANIMATION.delay + idx * WIDGET_ANIMATION.staggerDelay
+              }
+              duration={WIDGET_ANIMATION.duration}
+              yOffset={WIDGET_ANIMATION.yOffset}
+              blur={WIDGET_ANIMATION.blur}
             >
               <ResumeCard
                 logoUrl={work.logoUrl ?? undefined}
@@ -111,13 +119,16 @@ export function WorkExperienceSection({
     <section id="work" className={cn("px-6 pb-16", className)}>
       <div className="mx-auto w-full max-w-2xl space-y-4">
         <div className="flex min-h-0 flex-col gap-y-3">
-          <BlurFade delay={BLUR_FADE_DELAY * 5}>
+          <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.workExperience}>
             <h2 className="text-xl font-bold">{heading}</h2>
           </BlurFade>
           {visibleItems.map((work, idx) => (
             <BlurFade
               key={`${work.companyName ?? "experience"}-${idx}`}
-              delay={BLUR_FADE_DELAY * 6 + idx * 0.05}
+              delay={
+                BLUR_FADE_DELAY * (SECTION_DELAYS.workExperience + 1) +
+                idx * 0.05
+              }
             >
               <ResumeCard
                 logoUrl={work.logoUrl ?? undefined}

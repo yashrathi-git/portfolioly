@@ -2,8 +2,10 @@ import BlurFade from "../magicui/blur-fade";
 import { ResumeCard } from "../resume-card";
 import type { DisplayEducation } from "@portfolioly/schema";
 import { GraduationCap } from "lucide-react";
-
-const BLUR_FADE_DELAY = 0.04;
+import {
+  BLUR_FADE_DELAY,
+  SECTION_DELAYS,
+} from "../../lib/constants/animations";
 
 type EducationItem = DisplayEducation & { logoUrl?: string };
 
@@ -57,13 +59,15 @@ export function Education({ items = [] }: EducationSectionProps) {
     <section id="education" className="px-6 pb-16">
       <div className="mx-auto w-full max-w-2xl space-y-4">
         <div className="flex min-h-0 flex-col gap-y-3">
-          <BlurFade delay={BLUR_FADE_DELAY * 7}>
+          <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.education}>
             <h2 className="text-xl font-bold">Education</h2>
           </BlurFade>
           {visibleItems.map((education, idx) => (
             <BlurFade
               key={`${education.school ?? "education"}-${idx}`}
-              delay={BLUR_FADE_DELAY * 8 + idx * 0.05}
+              delay={
+                BLUR_FADE_DELAY * (SECTION_DELAYS.education + 1) + idx * 0.05
+              }
             >
               <ResumeCard
                 logoUrl={education.logoUrl ?? undefined}

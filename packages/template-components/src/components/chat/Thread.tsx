@@ -165,11 +165,6 @@ export const Thread = ({
             ? parseMessageContent(m.content)
             : [{ type: "text" as const, content: m.content }];
 
-        // Check if there's any text content to show
-        const hasTextContent = parts.some(
-          (p) => p.type === "text" && p.content.trim()
-        );
-
         return (
           <div key={m.id} className="flex gap-3">
             {m.role === "assistant" ? (
@@ -197,10 +192,10 @@ export const Thread = ({
                     <div
                       key={idx}
                       className={cn(
-                        "rounded-2xl px-5 py-3.5 md:py-4 shadow-sm",
+                        "rounded-2xl px-5 py-3.5 md:py-4 shadow-sm border",
                         m.role === "assistant"
-                          ? "bg-[var(--secondary)] text-[color:var(--secondary-foreground)] rounded-tl-none"
-                          : "bg-[oklch(0.74_0.15_310)] text-white rounded-tr-none"
+                          ? "bg-card/80 backdrop-blur-sm border-border rounded-tl-none"
+                          : "bg-primary/10 backdrop-blur-sm border-primary/30 rounded-tr-none"
                       )}
                     >
                       <MarkdownContent
@@ -270,7 +265,7 @@ export const Thread = ({
           </div>
           <div
             className={cn(
-              "rounded-2xl rounded-tl-none px-5 py-3.5 md:py-4 bg-[var(--secondary)] text-[color:var(--secondary-foreground)] shadow-sm",
+              "rounded-2xl rounded-tl-none px-5 py-3.5 md:py-4 border shadow-sm bg-card/80 backdrop-blur-sm border-border",
               typography.content.responsive
             )}
           >

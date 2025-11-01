@@ -12,6 +12,7 @@ import {
   requiresExternalData,
   useComponentDataTracking,
 } from "../utils/component-flags";
+import { BLUR_FADE_DELAY } from "../lib/constants/animations";
 
 export type TraditionalPortfolioProps = {
   data?: DisplayPortfolioData | null;
@@ -117,10 +118,10 @@ const TraditionalPortfolioComponent = ({
           effectiveData.achievements.length > 0 && (
             <section id="achievements" className="px-6 pb-16">
               <div className="mx-auto w-full max-w-2xl space-y-4">
-                <BlurFade delay={0.04 * 11}>
+                <BlurFade delay={BLUR_FADE_DELAY * 11}>
                   <h2 className="text-xl font-bold">Achievements</h2>
                 </BlurFade>
-                <BlurFade delay={0.04 * 12}>
+                <BlurFade delay={BLUR_FADE_DELAY * 12}>
                   <Markdown className="prose prose-sm max-w-full text-pretty font-sans text-muted-foreground dark:prose-invert prose-ul:list-disc prose-ul:pl-5 prose-li:text-muted-foreground">
                     {effectiveData.achievements.join("\n")}
                   </Markdown>
@@ -133,10 +134,10 @@ const TraditionalPortfolioComponent = ({
           effectiveData.certificates.length > 0 && (
             <section id="certificates" className="px-6 pb-16">
               <div className="mx-auto w-full max-w-2xl space-y-4">
-                <BlurFade delay={0.04 * 13}>
+                <BlurFade delay={BLUR_FADE_DELAY * 13}>
                   <h2 className="text-xl font-bold">Certificates</h2>
                 </BlurFade>
-                <BlurFade delay={0.04 * 14}>
+                <BlurFade delay={BLUR_FADE_DELAY * 14}>
                   <ul className="grid gap-3 sm:grid-cols-2">
                     {effectiveData.certificates.map((c, idx) => (
                       <li
