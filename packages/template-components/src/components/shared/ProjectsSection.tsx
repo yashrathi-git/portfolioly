@@ -583,30 +583,37 @@ export const ProjectsSection = ({
   // Widget Layout (Chat Portfolio)
   return (
     <>
-      <div
-        className={cn(
-          "rounded-2xl border bg-card/80 backdrop-blur-sm shadow-sm",
-          className
-        )}
+      <BlurFade
+        delay={WIDGET_ANIMATION.delay}
+        duration={WIDGET_ANIMATION.duration}
+        yOffset={WIDGET_ANIMATION.yOffset}
+        blur={WIDGET_ANIMATION.blur}
       >
-        <div className="p-5 sm:p-6">
-          <h3
-            className={cn("font-semibold mb-4", typography.heading.secondary)}
-          >
-            {heading}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {visibleItems.map((p, idx) => (
-              <WidgetProjectCard
-                key={(p.github || p.live_link || p.name || "") + idx}
-                project={p}
-                index={idx}
-                onClick={() => setSelectedProject(p)}
-              />
-            ))}
+        <div
+          className={cn(
+            "rounded-2xl border bg-card/80 backdrop-blur-sm shadow-sm",
+            className
+          )}
+        >
+          <div className="p-5 sm:p-6">
+            <h3
+              className={cn("font-semibold mb-4", typography.heading.secondary)}
+            >
+              {heading}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {visibleItems.map((p, idx) => (
+                <WidgetProjectCard
+                  key={(p.github || p.live_link || p.name || "") + idx}
+                  project={p}
+                  index={idx}
+                  onClick={() => setSelectedProject(p)}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </BlurFade>
 
       {/* Project Overlay */}
       {selectedProject && (

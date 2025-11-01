@@ -7,6 +7,7 @@ import {
   SECTION_DELAYS,
   WIDGET_ANIMATION,
 } from "../../lib/constants/animations";
+import { typography } from "../../lib/typography";
 
 export interface WorkExperienceSectionProps {
   items?: DisplayWorkExperience[];
@@ -80,25 +81,27 @@ export function WorkExperienceSection({
 
   if (variant === "widget") {
     return (
-      <div
-        className={cn(
-          "rounded-2xl border bg-card/80 backdrop-blur-sm p-5 sm:p-6 shadow-sm",
-          className
-        )}
+      <BlurFade
+        delay={WIDGET_ANIMATION.delay}
+        duration={WIDGET_ANIMATION.duration}
+        yOffset={WIDGET_ANIMATION.yOffset}
+        blur={WIDGET_ANIMATION.blur}
       >
-        <h3 className="font-semibold mb-4">{heading}</h3>
-        <div className="space-y-3">
-          {visibleItems.map((work, idx) => (
-            <BlurFade
-              key={`${work.companyName ?? "experience"}-${idx}`}
-              delay={
-                WIDGET_ANIMATION.delay + idx * WIDGET_ANIMATION.staggerDelay
-              }
-              duration={WIDGET_ANIMATION.duration}
-              yOffset={WIDGET_ANIMATION.yOffset}
-              blur={WIDGET_ANIMATION.blur}
-            >
+        <div
+          className={cn(
+            "rounded-2xl border bg-card/80 backdrop-blur-sm p-5 sm:p-6 shadow-sm",
+            className
+          )}
+        >
+          <h3
+            className={cn("font-semibold mb-4", typography.heading.secondary)}
+          >
+            {heading}
+          </h3>
+          <div className="space-y-3">
+            {visibleItems.map((work, idx) => (
               <ResumeCard
+                key={`${work.companyName ?? "experience"}-${idx}`}
                 logoUrl={work.logoUrl ?? undefined}
                 altText={work.companyName ?? "Company"}
                 title={work.companyName ?? ""}
@@ -107,10 +110,10 @@ export function WorkExperienceSection({
                 period={formatPeriod(work.start, work.end)}
                 description={normalizeDescription(work.points)}
               />
-            </BlurFade>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </BlurFade>
     );
   }
 

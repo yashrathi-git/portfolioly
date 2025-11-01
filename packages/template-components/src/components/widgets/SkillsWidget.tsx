@@ -31,18 +31,10 @@ export const SkillsWidget = ({
           {heading}
         </h3>
         <div className="flex flex-wrap gap-1.5">
-          {skills.map((skill, idx) => (
-            <BlurFade
-              key={skill}
-              delay={
-                WIDGET_ANIMATION.delay + idx * WIDGET_ANIMATION.staggerDelay
-              }
-              duration={WIDGET_ANIMATION.duration}
-              yOffset={WIDGET_ANIMATION.yOffset}
-              blur={WIDGET_ANIMATION.blur}
-            >
-              <Badge variant="secondary">{skill}</Badge>
-            </BlurFade>
+          {skills.map((skill) => (
+            <Badge key={skill} variant="secondary">
+              {skill}
+            </Badge>
           ))}
         </div>
       </div>
