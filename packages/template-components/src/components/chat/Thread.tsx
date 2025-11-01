@@ -101,6 +101,8 @@ const prepareWidgetData = (
               start: exp.start,
               end: exp.end,
               points: exp.points,
+              technologies: exp.technologies,
+              logoUrl: exp.logoUrl,
             })),
           }
         : null;
@@ -115,6 +117,8 @@ const prepareWidgetData = (
               start: edu.start,
               end: edu.end,
               location: edu.location,
+              grade: edu.grade,
+              logoUrl: edu.logoUrl,
             })),
           }
         : null;

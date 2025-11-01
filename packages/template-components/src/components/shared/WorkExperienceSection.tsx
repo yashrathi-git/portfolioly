@@ -74,7 +74,6 @@ export function WorkExperienceSection({
   className,
 }: WorkExperienceSectionProps) {
   const visibleItems = items.filter(hasRequiredProps);
-
   if (visibleItems.length === 0) {
     return null;
   }
