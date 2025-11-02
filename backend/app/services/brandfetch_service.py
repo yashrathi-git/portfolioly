@@ -6,7 +6,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import httpx
 
@@ -65,6 +65,19 @@ class BrandfetchService:
     @property
     def is_enabled(self) -> bool:
         return bool(self._settings.enabled and self._settings.client_id)
+
+    def build_logo_url(self, domain: Optional[str]) -> Optional[str]:
+        """Construct a stable CDN logo URL from a domain identifier."""
+
+        if not self.is_enabled or not domain:
+            return None
+
+        normalized = _normalize_domain_identifier(domain)
+        if not normalized:
+            return None
+
+        encoded = quote(normalized, safe="")
+        return f"https://cdn.brandfetch.io/{encoded}?c={self._settings.client_id}"
 
     async def search_company(self, name: str) -> Optional[BrandfetchSearchResult]:
         """Search for a company logo using Brandfetch search API."""
@@ -145,6 +158,21 @@ def _extract_latest_date(obj: WorkExperience | Education) -> tuple[int, int]:
 
 def _normalize_name(name: str) -> str:
     return name.strip().lower()
+
+
+def _normalize_domain_identifier(domain: Optional[str]) -> Optional[str]:
+    if not domain:
+        return None
+
+    candidate = domain.strip()
+    if not candidate:
+        return None
+
+    parsed = urlparse(candidate if "://" in candidate else f"https://{candidate}")
+    host = parsed.netloc or parsed.path
+    normalized = host.strip().strip("/").lower()
+
+    return normalized or None
 
 
 def _collect_candidates(
@@ -285,12 +313,23 @@ async def enrich_portfolio_logos(user_id: str, portfolio_snapshot: dict) -> None
             continue
 
         result = results.get(display_name)
-        if not result or not result.icon:
+        if not result:
             continue
 
+        cdn_logo_url = service.build_logo_url(result.domain)
+        logo_url = cdn_logo_url or result.icon
+
+        if not logo_url:
+            continue
+
+        existing_domain = _normalize_domain_identifier(
+            candidate.existing_brandfetch_domain
+        )
+        new_domain = _normalize_domain_identifier(result.domain)
+
         if (
-            candidate.existing_brandfetch_logo == result.icon
-            and candidate.existing_brandfetch_domain == result.domain
+            candidate.existing_brandfetch_logo == logo_url
+            and existing_domain == new_domain
         ):
             continue
 
@@ -298,8 +337,8 @@ async def enrich_portfolio_logos(user_id: str, portfolio_snapshot: dict) -> None
             LogoUpdate(
                 section=candidate.section,
                 index=candidate.index,
-                brandfetch_logo_url=result.icon,
-                brandfetch_domain=result.domain,
+                brandfetch_logo_url=logo_url,
+                brandfetch_domain=new_domain,
                 has_user_logo=bool((candidate.existing_logo_url or "").strip()),
             )
         )
