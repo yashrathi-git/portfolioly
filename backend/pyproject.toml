@@ -21,6 +21,7 @@ dependencies = [
     "openai>=2.6.1",
     "azure-storage-blob>=12.26.0",
     "pillow>=11.3.0",
+    "linkedin-extractor @ file:///${PROJECT_ROOT}/../packages/pdf_parser",
 ]
 
 [dependency-groups]
