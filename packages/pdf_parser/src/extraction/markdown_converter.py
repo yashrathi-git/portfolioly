@@ -8,42 +8,11 @@ input, making it flexible for various use cases.
 from pathlib import Path
 from typing import Union
 import io
+import pymupdf4llm
+import pymupdf
 
 
 def convert_pdf_to_markdown(pdf_source: Union[Path, bytes, str]) -> str:
-    """
-    Convert PDF to markdown using pymupdf4llm.
-
-    This function converts PDF documents to markdown format optimized for
-    parsing and LLM processing. It handles both file paths and byte streams,
-    making it suitable for both local file processing and web upload scenarios.
-
-    Args:
-        pdf_source: Either a Path object, string path to PDF file, or PDF bytes
-
-    Returns:
-        Markdown text optimized for parsing
-
-    Raises:
-        ValueError: If PDF conversion fails or input is invalid
-        ImportError: If pymupdf4llm is not installed
-
-    Example:
-        >>> # From file path
-        >>> markdown = convert_pdf_to_markdown(Path("profile.pdf"))
-        >>>
-        >>> # From bytes
-        >>> with open("profile.pdf", "rb") as f:
-        ...     pdf_bytes = f.read()
-        >>> markdown = convert_pdf_to_markdown(pdf_bytes)
-    """
-    try:
-        import pymupdf4llm
-    except ImportError as e:
-        raise ImportError(
-            "pymupdf4llm is required for PDF conversion. "
-            "Install it with: pip install pymupdf4llm==0.1.8"
-        ) from e
 
     if not pdf_source:
         raise ValueError("PDF source cannot be empty or None")
@@ -51,9 +20,10 @@ def convert_pdf_to_markdown(pdf_source: Union[Path, bytes, str]) -> str:
     try:
         # Handle different input types
         if isinstance(pdf_source, bytes):
-            # pymupdf4llm.to_markdown can handle bytes directly via a file-like object
-            pdf_stream = io.BytesIO(pdf_source)
-            markdown_text = pymupdf4llm.to_markdown(pdf_stream)
+            # Open PDF from bytes using pymupdf, then convert to markdown
+            doc = pymupdf.open(stream=pdf_source, filetype="pdf")
+            markdown_text = pymupdf4llm.to_markdown(doc)
+            doc.close()
         elif isinstance(pdf_source, (Path, str)):
             # Handle Path objects and string paths
             pdf_path = str(pdf_source) if isinstance(pdf_source, Path) else pdf_source

@@ -16,7 +16,7 @@ PDF_PARSER_PATH = (
 )
 sys.path.insert(0, str(PDF_PARSER_PATH))
 
-from extraction.api import parse_profile_from_pdf
+from extraction.api import parse_profile
 from ..schemas.portfolio import (
     PortfolioData,
     PersonalInfo,
@@ -34,27 +34,26 @@ from ..schemas.github import GitHubRepo
 
 
 class LinkedInExtractor:
-    """Service for extracting structured data from LinkedIn PDFs."""
+    """Service for extracting structured data from LinkedIn markdown."""
 
-    async def extract_from_pdf(
-        self, pdf_bytes: bytes, github_repos: Optional[List[GitHubRepo]] = None
+    async def extract_from_markdown(
+        self, markdown_text: str, github_repos: Optional[List[GitHubRepo]] = None
     ) -> PortfolioData:
         """
-        Extract portfolio data from LinkedIn PDF and optionally merge with GitHub repos.
+        Extract portfolio data from LinkedIn markdown and optionally merge with GitHub repos.
 
         Args:
-            pdf_bytes: LinkedIn PDF file content
+            markdown_text: LinkedIn PDF content already converted to markdown
             github_repos: Optional list of GitHub repositories to merge
 
         Returns:
             PortfolioData object with extracted and merged information
 
         Raises:
-            ValueError: If PDF parsing fails
+            ValueError: If parsing fails
         """
-        # Step 1: Parse PDF using pdf_parser package
-        # parse_profile_from_pdf handles both conversion and parsing
-        profile_data = parse_profile_from_pdf(pdf_bytes)
+        # Step 1: Parse markdown using pdf_parser package
+        profile_data = parse_profile(markdown_text)
 
         # Step 2: Map to PortfolioData schema
         portfolio_data = self._map_to_portfolio_data(profile_data)

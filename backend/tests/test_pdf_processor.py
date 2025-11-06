@@ -4,6 +4,7 @@ Unit tests for PDF processing functionality.
 
 import pytest
 import io
+from pathlib import Path
 from unittest.mock import Mock, patch, AsyncMock
 from fastapi import UploadFile, HTTPException
 
@@ -148,75 +149,49 @@ class TestPDFProcessor:
         assert result == expected
 
     @pytest.mark.asyncio
-    @patch("app.services.pdf_processor.fitz.open")
-    async def test_extract_text_with_pymupdf_success(
-        self, mock_fitz_open, pdf_processor
-    ):
-        """Test successful text extraction."""
-        # Mock PyMuPDF objects
-        mock_page = Mock()
-        mock_page.get_text.return_value = "Sample PDF text content"
+    async def test_extract_text_with_pymupdf_success(self, pdf_processor):
+        """Test successful text extraction with real PDF."""
+        # Load real PDF file
+        pdf_path = Path(__file__).parent / "assets" / "test_pdf.pdf"
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
 
-        mock_doc = Mock()
-        mock_doc.page_count = 1
-        mock_doc.load_page.return_value = mock_page
-        mock_doc.close = Mock()
+        result = await pdf_processor._extract_text_with_pymupdf(pdf_bytes, "resume")
 
-        mock_fitz_open.return_value = mock_doc
-
-        pdf_bytes = b"%PDF-1.4 sample content"
-        result = await pdf_processor._extract_text_with_pymupdf(pdf_bytes)
-
-        assert result == "Sample PDF text content"
-        mock_doc.close.assert_called_once()
+        # Should return markdown text
+        assert result is not None
+        assert len(result) > 0
+        assert isinstance(result, str)
 
     @pytest.mark.asyncio
-    @patch("app.services.pdf_processor.fitz.open")
-    async def test_extract_text_with_pymupdf_no_text(
-        self, mock_fitz_open, pdf_processor
-    ):
+    @patch("app.services.pdf_processor.convert_pdf_to_markdown")
+    async def test_extract_text_with_pymupdf_no_text(self, mock_convert, pdf_processor):
         """Test handling of PDFs with no extractable text."""
-        # Mock PyMuPDF objects with empty text
-        mock_page = Mock()
-        mock_page.get_text.return_value = "   \n\n   "  # Only whitespace
-
-        mock_doc = Mock()
-        mock_doc.page_count = 1
-        mock_doc.load_page.return_value = mock_page
-        mock_doc.close = Mock()
-
-        mock_fitz_open.return_value = mock_doc
+        # Mock markdown converter to return empty string
+        mock_convert.return_value = "   \n\n   "  # Only whitespace
 
         pdf_bytes = b"%PDF-1.4 sample content"
 
         with pytest.raises(HTTPException) as exc_info:
-            await pdf_processor._extract_text_with_pymupdf(pdf_bytes)
+            await pdf_processor._extract_text_with_pymupdf(pdf_bytes, "resume")
 
         assert exc_info.value.status_code == 422
         assert "NO_TEXT_EXTRACTED" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
-    @patch("app.services.pdf_processor.fitz.open")
-    async def test_extract_text_multiple_pages(self, mock_fitz_open, pdf_processor):
+    @patch("app.services.pdf_processor.convert_pdf_to_markdown")
+    async def test_extract_text_multiple_pages(self, mock_convert, pdf_processor):
         """Test text extraction from multiple pages."""
-        # Mock PyMuPDF objects for multiple pages
-        mock_page1 = Mock()
-        mock_page1.get_text.return_value = "Page 1 content"
-
-        mock_page2 = Mock()
-        mock_page2.get_text.return_value = "Page 2 content"
-
-        mock_doc = Mock()
-        mock_doc.page_count = 2
-        mock_doc.load_page.side_effect = [mock_page1, mock_page2]
-        mock_doc.close = Mock()
-
-        mock_fitz_open.return_value = mock_doc
+        # Mock markdown converter to return multi-page content
+        mock_convert.return_value = (
+            "# Page 1\n\nPage 1 content\n\n# Page 2\n\nPage 2 content"
+        )
 
         pdf_bytes = b"%PDF-1.4 sample content"
-        result = await pdf_processor._extract_text_with_pymupdf(pdf_bytes)
+        result = await pdf_processor._extract_text_with_pymupdf(pdf_bytes, "resume")
 
-        assert result == "Page 1 content\nPage 2 content"
+        assert "Page 1 content" in result
+        assert "Page 2 content" in result
 
     @pytest.mark.asyncio
     @patch("app.services.pdf_processor.fitz.open")
@@ -277,41 +252,23 @@ class TestPDFProcessor:
             assert preview == "Preview not available"
 
     @pytest.mark.asyncio
-    @patch("app.services.pdf_processor.magic.from_buffer")
-    @patch("app.services.pdf_processor.fitz.open")
-    async def test_parse_pdf_success(
-        self, mock_fitz_open, mock_magic, pdf_processor, mock_upload_file
-    ):
-        """Test successful PDF parsing."""
-        # Mock magic detection
-        mock_magic.return_value = "application/pdf"
+    async def test_parse_pdf_success(self, pdf_processor):
+        """Test successful PDF parsing with real PDF."""
+        # Load real PDF file
+        pdf_path = Path(__file__).parent / "assets" / "test_pdf.pdf"
+        with open(pdf_path, "rb") as f:
+            pdf_content = f.read()
 
-        # Mock PyMuPDF for validation
-        mock_doc_validate = Mock()
-        mock_doc_validate.page_count = 2
-        mock_doc_validate.close = Mock()
+        # Create upload file
+        file_like = io.BytesIO(pdf_content)
+        upload_file = UploadFile(filename="test.pdf", file=file_like)
 
-        # Mock PyMuPDF for text extraction
-        mock_page = Mock()
-        mock_page.get_text.return_value = "Sample PDF content"
-
-        mock_doc_extract = Mock()
-        mock_doc_extract.page_count = 2
-        mock_doc_extract.load_page.return_value = mock_page
-        mock_doc_extract.close = Mock()
-
-        mock_fitz_open.side_effect = [
-            mock_doc_validate,
-            mock_doc_extract,
-            mock_doc_extract,
-        ]
-
-        result = await pdf_processor.parse_pdf(mock_upload_file, "linkedin")
+        result = await pdf_processor.parse_pdf(upload_file, "linkedin")
 
         assert result.success is True
-        assert result.text == "Sample PDF content"
+        assert len(result.text) > 0
         assert result.metadata.source == "linkedin"
-        assert result.metadata.pages == 2
+        assert result.metadata.pages > 0
         assert result.error_message is None
 
     @pytest.mark.asyncio
@@ -326,27 +283,22 @@ class TestPDFProcessor:
             await pdf_processor.parse_pdf(upload_file, "linkedin")
 
     @pytest.mark.asyncio
-    @patch("app.services.pdf_processor.magic.from_buffer")
-    @patch("app.services.pdf_processor.fitz.open")
-    async def test_parse_pdf_extraction_failure(
-        self, mock_fitz_open, mock_magic, pdf_processor, mock_upload_file
-    ):
+    @patch("app.services.pdf_processor.convert_pdf_to_markdown")
+    async def test_parse_pdf_extraction_failure(self, mock_convert, pdf_processor):
         """Test PDF parsing with text extraction failure."""
-        # Mock magic detection
-        mock_magic.return_value = "application/pdf"
+        # Load real PDF file for validation to pass
+        pdf_path = Path(__file__).parent / "assets" / "test_pdf.pdf"
+        with open(pdf_path, "rb") as f:
+            pdf_content = f.read()
 
-        # Mock PyMuPDF for validation (success)
-        mock_doc_validate = Mock()
-        mock_doc_validate.page_count = 1
-        mock_doc_validate.close = Mock()
+        # Create upload file
+        file_like = io.BytesIO(pdf_content)
+        upload_file = UploadFile(filename="test.pdf", file=file_like)
 
-        # Mock PyMuPDF for text extraction (failure)
-        mock_fitz_open.side_effect = [
-            mock_doc_validate,  # For validation
-            Exception("Text extraction failed"),  # For text extraction
-        ]
+        # Mock markdown converter to raise exception
+        mock_convert.side_effect = Exception("Text extraction failed")
 
-        result = await pdf_processor.parse_pdf(mock_upload_file, "linkedin")
+        result = await pdf_processor.parse_pdf(upload_file, "linkedin")
 
         assert result.success is False
         assert result.text == ""

@@ -7,6 +7,8 @@ functionality using PyMuPDF (fitz) for reliable PDF processing.
 
 import fitz  # PyMuPDF
 import io
+import sys
+from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 from fastapi import UploadFile, HTTPException
 
@@ -20,6 +22,14 @@ from ..core.config import settings
 
 # Import schemas from centralized location
 from ..schemas.pdf import PDFMetadata, PDFParseResult
+
+# Add pdf_parser package to path
+PDF_PARSER_PATH = (
+    Path(__file__).parent.parent.parent.parent / "packages" / "pdf_parser" / "src"
+)
+sys.path.insert(0, str(PDF_PARSER_PATH))
+
+from extraction.markdown_converter import convert_pdf_to_markdown
 
 
 class PDFProcessor:
@@ -51,8 +61,8 @@ class PDFProcessor:
             # Validate file
             self._validate_pdf_content(file_content, file.filename)
 
-            # Extract text using PyMuPDF
-            text = await self._extract_text_with_pymupdf(file_content)
+            # Extract text using markdown conversion for both LinkedIn and resume PDFs
+            text = await self._extract_text_with_pymupdf(file_content, source)
 
             # Get metadata
             metadata = await self._get_metadata(file_content, file.filename, source)
@@ -151,38 +161,36 @@ class PDFProcessor:
                 },
             )
 
-    async def _extract_text_with_pymupdf(self, pdf_bytes: bytes) -> str:
+    async def _extract_text_with_pymupdf(self, pdf_bytes: bytes, source: str) -> str:
         """
-        Extract text from PDF using PyMuPDF.
+        Extract text from PDF using markdown conversion.
+        Uses pymupdf4llm for both LinkedIn and resume PDFs to ensure consistency.
 
         Args:
             pdf_bytes: PDF file content as bytes
+            source: Source type ("linkedin" or "resume")
 
         Returns:
-            Extracted text content
+            Extracted markdown text content
         """
 
-        def extract_text():
-            doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-            text_parts = []
-
-            for page_num in range(doc.page_count):
-                page = doc.load_page(page_num)
-                text = page.get_text()
-                if text.strip():
-                    text_parts.append(text)
-
-            doc.close()
-            return "\n\n".join(text_parts)
+        def convert_to_markdown():
+            return convert_pdf_to_markdown(pdf_bytes)
 
         # Run in thread pool to avoid blocking
         loop = asyncio.get_event_loop()
-        text = await loop.run_in_executor(None, extract_text)
+        try:
+            markdown_text = await loop.run_in_executor(None, convert_to_markdown)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": f"Failed to convert PDF to markdown: {str(e)}",
+                    "error_code": "PDF_CONVERSION_FAILED",
+                },
+            )
 
-        # Clean up extracted text
-        text = self._clean_extracted_text(text)
-
-        if not text.strip():
+        if not markdown_text or not markdown_text.strip():
             raise HTTPException(
                 status_code=422,
                 detail={
@@ -191,7 +199,7 @@ class PDFProcessor:
                 },
             )
 
-        return text
+        return markdown_text
 
     def _clean_extracted_text(self, text: str) -> str:
         """
@@ -272,19 +280,22 @@ class PDFProcessor:
         """
         return source in ["linkedin", "resume"]
 
-    async def get_pdf_preview(self, pdf_bytes: bytes, max_chars: int = 500) -> str:
+    async def get_pdf_preview(
+        self, pdf_bytes: bytes, source: str = "resume", max_chars: int = 500
+    ) -> str:
         """
         Get a preview of PDF text content.
 
         Args:
             pdf_bytes: PDF file content as bytes
+            source: Source type ("linkedin" or "resume")
             max_chars: Maximum characters to return
 
         Returns:
             Preview text
         """
         try:
-            full_text = await self._extract_text_with_pymupdf(pdf_bytes)
+            full_text = await self._extract_text_with_pymupdf(pdf_bytes, source)
             if len(full_text) <= max_chars:
                 return full_text
 

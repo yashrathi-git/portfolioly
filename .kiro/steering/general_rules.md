@@ -1,0 +1,3 @@
+- Do not write too many comments and huge docstring.
+  - Be concise with docstrings.
+  - Leave out the obvious part in comments and docstrings both.
