@@ -5,7 +5,7 @@ import Markdown from "markdown-to-jsx";
 import { cn } from "../lib/utils";
 
 type MarkdownContentProps = {
-  content: string | string[];
+  content: string | string[] | null | undefined;
   className?: string;
   overrides?: Record<
     string,
@@ -227,7 +227,14 @@ const defaultOverrides = {
 
 const bulletPrefixRegex = /^\s*([-*+]\s+|\d+\.\s+)/;
 
-function normalizeContent(content: string | string[]): string {
+function normalizeContent(
+  content: string | string[] | null | undefined
+): string {
+  // Handle null/undefined early
+  if (content == null) {
+    return "";
+  }
+
   if (Array.isArray(content)) {
     const lines = content
       .filter((item) => typeof item === "string" && item.trim().length > 0)

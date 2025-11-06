@@ -42,7 +42,13 @@ export const PROFILE_TO_SOCIAL_MAP: Record<ProfileType, SocialType> = {
  * // ]
  * ```
  */
-export function mapProfilesToSocials(profiles: Profile[] = []): SocialLink[] {
+export function mapProfilesToSocials(
+  profiles?: Profile[] | null
+): SocialLink[] {
+  if (!profiles || !Array.isArray(profiles)) {
+    return [];
+  }
+
   return profiles
     .filter((profile) => profile.url && profile.type)
     .map((profile) => ({

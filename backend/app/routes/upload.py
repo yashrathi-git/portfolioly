@@ -35,6 +35,7 @@ from ..services.ai_processor import (
     TokenLimitExceededError,
 )
 from ..services.brandfetch_service import enrich_portfolio_logos
+from ..services.linkedin_extractor import get_linkedin_extractor
 from ..dependencies.rate_limiting import (
     check_pdf_upload_rate_limit,
     check_github_api_rate_limit,
@@ -219,9 +220,16 @@ async def submit_upload_data(
     This endpoint accepts all the upload data from the onboarding flow
     and processes it for the user's portfolio.
 
+    Processing Path Logic:
+    1. If resume PDF present -> AI processing (existing path)
+    2. If only LinkedIn markdown + GitHub -> Direct extraction (new path)
+    3. If only GitHub -> GitHub-only mapping (existing path)
+    4. If only LinkedIn markdown -> Direct extraction (new path)
+
     Args:
         request: Complete upload submission data
         user: Authenticated user with verified email
+        background_tasks: FastAPI background tasks
 
     Returns:
         Success response with submission details
@@ -243,163 +251,51 @@ async def submit_upload_data(
         # Get services
         portfolio_service = get_portfolio_service()
 
-        # Determine processing path
-        has_pdf_data = (
-            request.linkedin_pdf is not None or request.resume_pdf is not None
-        )
+        # Determine processing path based on data sources
+        has_linkedin_pdf = request.linkedin_pdf is not None
+        has_resume_pdf = request.resume_pdf is not None
+        has_github_repos = len(request.github_repos) > 0
 
-        if has_pdf_data:
-            # Path 1: PDF data present - use AI processing
-            try:
-                # Check AI processing rate limit
-                ai_rate_limiter = get_ai_rate_limiter()
-                _rate_limit_info = await run_in_threadpool(
-                    ai_rate_limiter.check_rate_limit, user.uid
-                )
+        # Decision logic: whenever resume is involved, AI processing is necessary
+        if has_resume_pdf:
+            # Path 1: AI Processing (resume PDF present)
+            print(f"[ROUTING] Selected path: AI_PROCESSING")
+            print(f"[ROUTING] Reason: Resume PDF present")
+            return await _process_with_ai(
+                request, user, portfolio_service, background_tasks
+            )
 
-                ai_processor = get_ai_processor()
+        elif has_linkedin_pdf:
+            # Path 2: Direct Extraction (LinkedIn markdown only, no resume)
+            print(f"[ROUTING] Selected path: DIRECT_EXTRACTION")
+            print(f"[ROUTING] Reason: LinkedIn PDF present without resume")
+            print(f"[ROUTING] GitHub repos included: {has_github_repos}")
+            return await _process_with_direct_extraction(
+                request, user, portfolio_service, background_tasks
+            )
 
-                # Process with AI
-                portfolio_data = await ai_processor.process_portfolio_data(
-                    resume_pdf=request.resume_pdf,
-                    linkedin_pdf=request.linkedin_pdf,
-                    github_repos=request.github_repos,
-                )
-                # portfolio_data = PortfolioData(
-                #     personal_info=PersonalInfo(
-                #         full_name="John Doe",
-                #         email="john.doe@example.com",
-                #     ),
-                #     work_experiences=[
-                #         WorkExperience(
-                #             organization="VISA",
-                #             title="Senior Software Engineer",
-                #         ),
-                #         WorkExperience(
-                #             organization="Google",
-                #             title="Senior Software Engineer",
-                #         ),
-                #         WorkExperience(
-                #             organization="Tekion Corp",
-                #             title="Senior Software Engineer",
-                #         ),
-                #     ],
-                # )
-                # Store in Firebase
-                success = await run_in_threadpool(
-                    portfolio_service.store_portfolio_data,
-                    user.uid,
-                    portfolio_data,
-                )
+        elif has_github_repos:
+            # Path 3: GitHub-only mapping
+            print(f"[ROUTING] Selected path: GITHUB_ONLY")
+            print(f"[ROUTING] Reason: Only GitHub repos provided")
+            return await _process_github_only(request, user, portfolio_service)
 
-                if success:
-                    # Increment AI usage counter
-                    background_tasks.add_task(ai_rate_limiter.increment_usage, user.uid)
-                    background_tasks.add_task(
-                        enrich_portfolio_logos,
-                        user.uid,
-                        portfolio_data.model_dump(mode="json"),
-                    )
-
-                    return UploadSubmissionResponse(
-                        success=True,
-                        message="Portfolio data processed and stored successfully using AI extraction",
-                        data={
-                            "user_id": user.uid,
-                            "processing_type": "ai_extraction",
-                            "linkedin_pdf_submitted": request.linkedin_pdf is not None,
-                            "resume_pdf_submitted": request.resume_pdf is not None,
-                            "github_repos_count": len(request.github_repos),
-                            "submitted_at": datetime.utcnow().isoformat() + "Z",
-                        },
-                    )
-                else:
-                    raise HTTPException(
-                        status_code=500,
-                        detail={
-                            "message": "Failed to store portfolio data",
-                            "error_code": "STORAGE_FAILED",
-                        },
-                    )
-
-            except AIRateLimitError as e:
-                # Rate limit exceeded - return error
-                raise HTTPException(
-                    status_code=429,
-                    detail={
-                        "message": str(e),
-                        "error_code": "AI_RATE_LIMIT_EXCEEDED",
-                        "monthly_limit": 10,
-                        "reset_info": "Limit resets on the first day of each month",
-                    },
-                )
-            except (AIProcessingError, TokenLimitExceededError) as e:
-                # AI processing failed - proceed to placeholder screen
-                print(f"[AI PROCESSING FAILED] {str(e)}")
-                return UploadSubmissionResponse(
-                    success=False,  # Still success, but with placeholder
-                    message="AI services unavailable, please try again later.",
-                    data={
-                        "user_id": user.uid,
-                        "processing_type": "placeholder",
-                        "ai_processing_failed": True,
-                        "error_message": "AI processing temporarily unavailable",
-                        "linkedin_pdf_submitted": request.linkedin_pdf is not None,
-                        "resume_pdf_submitted": request.resume_pdf is not None,
-                        "github_repos_count": len(request.github_repos),
-                        "submitted_at": datetime.utcnow().isoformat() + "Z",
-                    },
-                )
         else:
-            # Path 2: GitHub-only data - direct mapping
-            if request.github_repos:
-                portfolio_data = await run_in_threadpool(
-                    portfolio_service.map_github_only_data,
-                    request.github_repos,
-                )
-
-                # Store in Firebase
-                success = await run_in_threadpool(
-                    portfolio_service.store_portfolio_data,
-                    user.uid,
-                    portfolio_data,
-                )
-
-                if success:
-                    return UploadSubmissionResponse(
-                        success=True,
-                        message="GitHub repository data processed and stored successfully",
-                        data={
-                            "user_id": user.uid,
-                            "processing_type": "github_only",
-                            "linkedin_pdf_submitted": False,
-                            "resume_pdf_submitted": False,
-                            "github_repos_count": len(request.github_repos),
-                            "submitted_at": datetime.utcnow().isoformat() + "Z",
-                        },
-                    )
-                else:
-                    raise HTTPException(
-                        status_code=500,
-                        detail={
-                            "message": "Failed to store GitHub data",
-                            "error_code": "STORAGE_FAILED",
-                        },
-                    )
-            else:
-                # No data provided
-                return UploadSubmissionResponse(
-                    success=True,
-                    message="No data provided for processing",
-                    data={
-                        "user_id": user.uid,
-                        "processing_type": "no_data",
-                        "linkedin_pdf_submitted": False,
-                        "resume_pdf_submitted": False,
-                        "github_repos_count": 0,
-                        "submitted_at": datetime.utcnow().isoformat() + "Z",
-                    },
-                )
+            # No data provided
+            print(f"[ROUTING] Selected path: NO_DATA")
+            print(f"[ROUTING] Reason: No data sources provided")
+            return UploadSubmissionResponse(
+                success=True,
+                message="No data provided for processing",
+                data={
+                    "user_id": user.uid,
+                    "processing_type": "no_data",
+                    "linkedin_pdf_submitted": False,
+                    "resume_pdf_submitted": False,
+                    "github_repos_count": 0,
+                    "submitted_at": datetime.utcnow().isoformat() + "Z",
+                },
+            )
 
     except Exception as e:
         print(f"[UPLOAD SUBMISSION ERROR] {str(e)}")
@@ -409,6 +305,237 @@ async def submit_upload_data(
                 "message": "Internal server error during upload submission",
                 "error_code": "INTERNAL_ERROR",
                 "details": str(e),
+            },
+        )
+
+
+async def _process_with_ai(
+    request: UploadSubmissionRequest,
+    user: UserToken,
+    portfolio_service,
+    background_tasks: BackgroundTasks,
+) -> UploadSubmissionResponse:
+    """Process with AI extraction (resume PDF present)."""
+    print(f"[AI PROCESSING] User: {user.uid}")
+    print(f"[AI PROCESSING] LinkedIn PDF: {'Yes' if request.linkedin_pdf else 'No'}")
+    print(f"[AI PROCESSING] Resume PDF: {'Yes' if request.resume_pdf else 'No'}")
+    print(f"[AI PROCESSING] GitHub Repos: {len(request.github_repos)}")
+
+    try:
+        # Check AI processing rate limit
+        ai_rate_limiter = get_ai_rate_limiter()
+        _rate_limit_info = await run_in_threadpool(
+            ai_rate_limiter.check_rate_limit, user.uid
+        )
+
+        ai_processor = get_ai_processor()
+
+        # Process with AI
+        portfolio_data = await ai_processor.process_portfolio_data(
+            resume_pdf=request.resume_pdf,
+            linkedin_pdf=request.linkedin_pdf,
+            github_repos=request.github_repos,
+        )
+
+        # Store in Firebase
+        success = await run_in_threadpool(
+            portfolio_service.store_portfolio_data,
+            user.uid,
+            portfolio_data,
+        )
+
+        if success:
+            # Increment AI usage counter
+            background_tasks.add_task(ai_rate_limiter.increment_usage, user.uid)
+            background_tasks.add_task(
+                enrich_portfolio_logos,
+                user.uid,
+                portfolio_data.model_dump(mode="json"),
+            )
+
+            return UploadSubmissionResponse(
+                success=True,
+                message="Portfolio data processed and stored successfully using AI extraction",
+                data={
+                    "user_id": user.uid,
+                    "processing_type": "ai_extraction",
+                    "linkedin_pdf_submitted": request.linkedin_pdf is not None,
+                    "resume_pdf_submitted": request.resume_pdf is not None,
+                    "github_repos_count": len(request.github_repos),
+                    "submitted_at": datetime.utcnow().isoformat() + "Z",
+                },
+            )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": "Failed to store portfolio data",
+                    "error_code": "STORAGE_FAILED",
+                },
+            )
+
+    except AIRateLimitError as e:
+        # Rate limit exceeded - return error
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "message": str(e),
+                "error_code": "AI_RATE_LIMIT_EXCEEDED",
+                "monthly_limit": 10,
+                "reset_info": "Limit resets on the first day of each month",
+            },
+        )
+    except (AIProcessingError, TokenLimitExceededError) as e:
+        # AI processing failed - proceed to placeholder screen
+        print(f"[AI PROCESSING FAILED] {str(e)}")
+        return UploadSubmissionResponse(
+            success=False,
+            message="AI services unavailable, please try again later.",
+            data={
+                "user_id": user.uid,
+                "processing_type": "placeholder",
+                "ai_processing_failed": True,
+                "error_message": "AI processing temporarily unavailable",
+                "linkedin_pdf_submitted": request.linkedin_pdf is not None,
+                "resume_pdf_submitted": request.resume_pdf is not None,
+                "github_repos_count": len(request.github_repos),
+                "submitted_at": datetime.utcnow().isoformat() + "Z",
+            },
+        )
+
+
+async def _process_with_direct_extraction(
+    request: UploadSubmissionRequest,
+    user: UserToken,
+    portfolio_service,
+    background_tasks: BackgroundTasks,
+) -> UploadSubmissionResponse:
+    """Process LinkedIn markdown with direct extraction (no AI)."""
+    print(f"[DIRECT EXTRACTION] User: {user.uid}")
+    print(f"[DIRECT EXTRACTION] LinkedIn markdown: Yes")
+    print(f"[DIRECT EXTRACTION] GitHub Repos: {len(request.github_repos)}")
+
+    try:
+        # Get LinkedIn extractor service
+        linkedin_extractor = get_linkedin_extractor()
+
+        # Extract markdown text from PDFData object
+        linkedin_markdown = request.linkedin_pdf.text
+
+        # Convert GitHubRepoData to GitHubRepo schema if needed
+        github_repos = None
+        if request.github_repos:
+            from ..schemas.github import GitHubRepo
+
+            github_repos = [
+                GitHubRepo(
+                    id=repo.id,
+                    name=repo.name,
+                    description=repo.description,
+                    stars=repo.stars,
+                    url=repo.url,
+                    language=repo.language,
+                    fork=repo.fork,
+                    private=repo.private,
+                    created_at=repo.created_at,
+                    updated_at=repo.updated_at,
+                )
+                for repo in request.github_repos
+            ]
+
+        # Extract portfolio data from LinkedIn markdown
+        portfolio_data = await linkedin_extractor.extract_from_markdown(
+            markdown_text=linkedin_markdown,
+            github_repos=github_repos,
+        )
+
+        # Store in Firebase
+        success = await run_in_threadpool(
+            portfolio_service.store_portfolio_data,
+            user.uid,
+            portfolio_data,
+        )
+
+        if success:
+            # Enrich logos in background
+            background_tasks.add_task(
+                enrich_portfolio_logos,
+                user.uid,
+                portfolio_data.model_dump(mode="json"),
+            )
+
+            return UploadSubmissionResponse(
+                success=True,
+                message="Portfolio data processed and stored successfully using direct extraction",
+                data={
+                    "user_id": user.uid,
+                    "processing_type": "direct_extraction",
+                    "linkedin_pdf_submitted": True,
+                    "resume_pdf_submitted": False,
+                    "github_repos_count": len(request.github_repos),
+                    "submitted_at": datetime.utcnow().isoformat() + "Z",
+                },
+            )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": "Failed to store portfolio data",
+                    "error_code": "STORAGE_FAILED",
+                },
+            )
+
+    except ValueError as e:
+        # PDF parsing failed
+        print(f"[DIRECT EXTRACTION FAILED] {str(e)}")
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Failed to extract data from LinkedIn PDF",
+                "error_code": "EXTRACTION_FAILED",
+                "details": str(e),
+            },
+        )
+
+
+async def _process_github_only(
+    request: UploadSubmissionRequest, user: UserToken, portfolio_service
+) -> UploadSubmissionResponse:
+    """Process GitHub-only data with direct mapping."""
+    print(f"[GITHUB ONLY] User: {user.uid}")
+    print(f"[GITHUB ONLY] GitHub Repos: {len(request.github_repos)}")
+
+    portfolio_data = await run_in_threadpool(
+        portfolio_service.map_github_only_data,
+        request.github_repos,
+    )
+
+    # Store in Firebase
+    success = await run_in_threadpool(
+        portfolio_service.store_portfolio_data,
+        user.uid,
+        portfolio_data,
+    )
+
+    if success:
+        return UploadSubmissionResponse(
+            success=True,
+            message="GitHub repository data processed and stored successfully",
+            data={
+                "user_id": user.uid,
+                "processing_type": "github_only",
+                "linkedin_pdf_submitted": False,
+                "resume_pdf_submitted": False,
+                "github_repos_count": len(request.github_repos),
+                "submitted_at": datetime.utcnow().isoformat() + "Z",
+            },
+        )
+    else:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Failed to store GitHub data",
+                "error_code": "STORAGE_FAILED",
             },
         )
 

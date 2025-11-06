@@ -77,8 +77,8 @@ export function mapWorkExperience(exp: WorkExperience): DisplayWorkExperience {
  * @param highlights - Markdown string with highlights
  * @returns First line without markdown markers, or undefined if no highlights
  */
-function getFirstLine(highlights?: string): string | undefined {
-  if (!highlights) return undefined;
+function getFirstLine(highlights?: string | null): string | undefined {
+  if (!highlights || typeof highlights !== "string") return undefined;
   const lines = highlights.split("\n").filter((line) => line.trim());
   return lines[0]?.replace(/^[-*+]\s+/, "").trim() || undefined;
 }
