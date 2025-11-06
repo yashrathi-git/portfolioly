@@ -27,6 +27,38 @@ import { doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { getFirestoreDb } from "@/lib/firebase";
 import { validatePortfolioData } from "@portfolioly/schema";
 
+type SnapshotPortfolio = Record<string, unknown> & {
+  work_experiences?: Array<Record<string, unknown> | null | undefined>;
+  education?: Array<Record<string, unknown> | null | undefined>;
+};
+
+function stripBackendOnlyFields(snapshotData: SnapshotPortfolio) {
+  const transformEntries = (
+    entries?: Array<Record<string, unknown> | null | undefined>
+  ) =>
+    Array.isArray(entries)
+      ? entries.map((entry) => {
+          if (!entry || typeof entry !== "object") {
+            return entry ?? undefined;
+          }
+
+          const {
+            brandfetch_logo_url: _brandfetchLogoUrl,
+            brandfetch_domain: _brandfetchDomain,
+            ...rest
+          } = entry;
+
+          return rest;
+        })
+      : entries;
+
+  return {
+    ...snapshotData,
+    work_experiences: transformEntries(snapshotData.work_experiences),
+    education: transformEntries(snapshotData.education),
+  };
+}
+
 function EditPage() {
   const { user } = useAuth();
   const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(
@@ -93,7 +125,8 @@ function EditPage() {
           const { updated_at: _updatedAt, ...rest } = snapshotData;
 
           try {
-            const validated = validatePortfolioData(rest);
+            const sanitized = stripBackendOnlyFields(rest);
+            const validated = validatePortfolioData(sanitized);
 
             if (hasUnsavedChangesRef.current) {
               return;
