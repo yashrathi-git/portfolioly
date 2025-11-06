@@ -5,9 +5,11 @@ LinkedIn profile from markdown text. It orchestrates the base extraction
 and all section-specific parsers with comprehensive error handling.
 """
 
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 from .markdown_extractor import extract_markdown_from_text, ExtractionResult
+from .markdown_converter import convert_pdf_to_markdown
 from .parsers.contact import parse_contact_section
 from .parsers.top_skills import parse_top_skills_section
 from .parsers.languages import parse_languages_section
@@ -160,4 +162,47 @@ def parse_profile(markdown_text: str) -> Dict[str, Any]:
     return profile
 
 
-__all__ = ["parse_profile", "safe_parse"]
+def parse_profile_from_pdf(pdf_source: Union[Path, bytes, str]) -> Dict[str, Any]:
+    """
+    Parse LinkedIn profile directly from PDF.
+
+    This function provides a convenient way to parse LinkedIn profiles directly
+    from PDF files without manually converting to markdown first. It handles
+    the conversion internally and then uses the standard parsing pipeline.
+
+    Args:
+        pdf_source: Either a Path object, string path to PDF file, or PDF bytes
+
+    Returns:
+        Dictionary with complete profile structure (same as parse_profile)
+
+    Raises:
+        ValueError: If PDF conversion or parsing fails
+        ImportError: If pymupdf4llm is not installed
+
+    Example:
+        >>> # From file path
+        >>> profile = parse_profile_from_pdf(Path("linkedin.pdf"))
+        >>> print(profile["name"])
+        >>>
+        >>> # From bytes (e.g., from web upload)
+        >>> profile = parse_profile_from_pdf(pdf_bytes)
+        >>> print(profile["contact"]["email"])
+    """
+    # Step 1: Convert PDF to markdown
+    try:
+        markdown_text = convert_pdf_to_markdown(pdf_source)
+    except (ValueError, ImportError) as e:
+        # Re-raise with additional context
+        raise ValueError(f"PDF conversion failed: {str(e)}") from e
+
+    # Step 2: Parse markdown using existing function
+    try:
+        profile = parse_profile(markdown_text)
+    except Exception as e:
+        raise ValueError(f"Failed to parse LinkedIn profile from PDF: {str(e)}") from e
+
+    return profile
+
+
+__all__ = ["parse_profile", "parse_profile_from_pdf", "safe_parse"]

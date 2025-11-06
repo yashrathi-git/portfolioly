@@ -1,6 +1,7 @@
 """Extraction helpers for parsing LinkedIn markdown artifacts."""
 
-from .api import parse_profile, safe_parse
+from .api import parse_profile, parse_profile_from_pdf, safe_parse
+from .markdown_converter import convert_pdf_to_markdown
 from .markdown_extractor import (
     ExtractionResult,
     SectionData,
@@ -19,7 +20,10 @@ from .parsers.top_skills import parse_top_skills_section
 __all__ = [
     # Unified API
     "parse_profile",
+    "parse_profile_from_pdf",
     "safe_parse",
+    # PDF conversion
+    "convert_pdf_to_markdown",
     # Base extraction
     "ExtractionResult",
     "SectionData",

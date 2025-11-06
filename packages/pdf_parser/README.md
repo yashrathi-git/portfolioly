@@ -5,17 +5,27 @@ A Python library for parsing LinkedIn PDF exports into structured JSON data. Des
 ## Quick Start
 
 ```bash
-# Install as package
+# Install with uv (recommended)
+uv pip install -e .
+
+# Or with pip
 pip install -e .
 
 # Use in Python
-from extraction.api import parse_profile
+from extraction import parse_profile, parse_profile_from_pdf
 
+# From markdown
 markdown_text = open("profile.md").read()
 profile = parse_profile(markdown_text)
 
+# Or directly from PDF
+profile = parse_profile_from_pdf("profile.pdf")
+
 print(profile["name"])
 print(profile["experience"])
+
+# Or use the CLI
+linkedin-extract profile.pdf --pretty
 ```
 
 See [INTEGRATION_RECOMMENDATIONS.md](INTEGRATION_RECOMMENDATIONS.md) for integration guidance.
@@ -26,17 +36,27 @@ This module converts LinkedIn profile PDFs (via markdown preprocessing) into str
 
 ## Installation
 
-### As a Standalone Module
+### As a Standalone Package
 
 ```bash
-pip install -r requirements-test.txt
+# Using uv (recommended for faster installation)
+uv pip install -e .
+
+# Or using pip
+pip install -e .
+
+# Install with dev dependencies
+uv pip install -e ".[dev]"
 ```
 
 ### Integration into Parent Application
 
-1. Copy the `src/extraction/` directory into your application's source tree
-2. Install dependencies: `pymupdf`, `pytest` (for testing)
-3. Import the API: `from extraction.api import parse_profile`
+1. Add to your project's dependencies:
+   ```toml
+   dependencies = ["linkedin-extractor @ file:///path/to/packages/pdf_parser"]
+   ```
+2. Or install directly: `uv pip install -e /path/to/packages/pdf_parser`
+3. Import the API: `from extraction import parse_profile, parse_profile_from_pdf`
 
 ## API Reference
 
