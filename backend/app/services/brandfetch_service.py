@@ -176,7 +176,7 @@ def _normalize_domain_identifier(domain: Optional[str]) -> Optional[str]:
 
 
 def _collect_candidates(
-    portfolio: PortfolioData, limit: int = 8
+    portfolio: PortfolioData, limit: int = 20
 ) -> List[LogoCandidate]:
     candidates: List[LogoCandidate] = []
 
