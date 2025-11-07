@@ -2,7 +2,13 @@
 
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, SkipForward } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type StepContainerProps = {
   title: string;
@@ -11,6 +17,7 @@ type StepContainerProps = {
   onBack?: () => void;
   onSkip?: () => void;
   onNext?: () => void;
+  onAddAnother?: () => void;
   nextLabel?: string;
   nextDisabled?: boolean;
   loadingText?: string | null;
@@ -23,7 +30,8 @@ export function StepContainer({
   onBack,
   onSkip,
   onNext,
-  nextLabel = "Next",
+  onAddAnother,
+  nextLabel = "Save & Continue",
   nextDisabled,
   loadingText,
 }: StepContainerProps) {
@@ -38,33 +46,30 @@ export function StepContainer({
 
       <div className="px-1 sm:px-0">{children}</div>
 
-      <div className="mt-2 border-t pt-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {onBack ? (
-            <Button
-              variant="outline"
-              onClick={onBack}
-              type="button"
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-          ) : (
-            <div />
-          )}
+      <div className="mt-2 border-t pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 order-2 sm:order-1">
+          {/* Empty space for alignment */}
         </div>
-        <div className="flex items-center gap-2">
-          {onSkip && (
-            <Button
-              variant="ghost"
-              onClick={onSkip}
-              type="button"
-              className="gap-2"
-            >
-              <SkipForward className="h-4 w-4" />
-              Skip
-            </Button>
+        <div className="flex items-center gap-2 order-1 sm:order-2 justify-end">
+          {onAddAnother && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    onClick={onAddAnother}
+                    type="button"
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add more sources
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Import data from additional sources like LinkedIn, GitHub, or Resume</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           <Button
             onClick={onNext}

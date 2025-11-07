@@ -2,14 +2,12 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import ProgressIndicator from "./ProgressIndicator";
 import PDFUploadStep from "./PDFUploadStep";
 import GithubRepoStep from "./GithubRepoStep";
+import SourceSelectionStep, { type SourceType } from "./SourceSelectionStep";
 import { LoadingScreen } from "./LoadingScreen";
 import { useUpload } from "@/hooks/useUpload";
 import { handleError, handleSuccess } from "@/lib/utils/simpleErrorHandler";
-
-const TOTAL_STEPS = 3;
 
 export type UploadWizardProps = {
   disableClientValidation?: boolean;
@@ -20,17 +18,18 @@ export function UploadWizard({
   disableClientValidation = false,
   acceptOverride,
 }: UploadWizardProps) {
-  const [step, setStep] = useState(1);
+  const [selectedSource, setSelectedSource] = useState<SourceType>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const upload = useUpload({ disableClientValidation });
   const router = useRouter();
 
-  const goNext = useCallback(
-    () => setStep((s) => Math.min(TOTAL_STEPS, s + 1)),
-    []
-  );
-  const goBack = useCallback(() => setStep((s) => Math.max(1, s - 1)), []);
-  const skip = useCallback(() => goNext(), [goNext]);
+  const handleSelectSource = useCallback((source: SourceType) => {
+    setSelectedSource(source);
+  }, []);
+
+  const handleAddAnother = useCallback(() => {
+    setSelectedSource(null);
+  }, []);
 
   const handleFinish = useCallback(async () => {
     setIsProcessing(true);
@@ -58,6 +57,16 @@ export function UploadWizard({
     }
   }, [upload, router]);
 
+  const handleSkip = useCallback(async () => {
+    // If user has uploaded anything, submit it before redirecting
+    if (upload.linkedin.result || upload.resume.result || upload.github.selectedRepoIds.length > 0) {
+      await handleFinish();
+    } else {
+      // No data uploaded, just redirect
+      router.push("/edit");
+    }
+  }, [upload, handleFinish, router]);
+
   const content = useMemo(() => {
     if (isProcessing) {
       return (
@@ -65,14 +74,33 @@ export function UploadWizard({
       );
     }
 
-    switch (step) {
-      case 1:
+    // Determine which sources have been imported
+    const importedSources = {
+      linkedin: !!upload.linkedin.result,
+      resume: !!upload.resume.result,
+      github: upload.github.selectedRepoIds.length > 0,
+    };
+
+    // Show source selection if no source is selected
+    if (!selectedSource) {
+      return (
+        <SourceSelectionStep
+          onSelectSource={handleSelectSource}
+          onSkip={handleSkip}
+          importedSources={importedSources}
+        />
+      );
+    }
+
+    // Show appropriate import screen based on selected source
+    switch (selectedSource) {
+      case "linkedin":
         return (
           <PDFUploadStep
             stepIndex={1}
-            totalSteps={TOTAL_STEPS}
-            label="Upload LinkedIn PDF (optional)"
-            description="We will parse headline, experience and skills."
+            totalSteps={1}
+            label="Import LinkedIn Profile"
+            description="Upload your LinkedIn PDF to automatically extract your experience, skills, and headline."
             helpTitle="Where to export LinkedIn PDF?"
             source="linkedin"
             uploadState={upload.linkedin}
@@ -81,71 +109,62 @@ export function UploadWizard({
             config={upload.config}
             accept={acceptOverride}
             onBack={undefined}
-            onSkip={skip}
-            onNext={goNext}
+            onSkip={handleSkip}
+            onNext={handleFinish}
+            onAddAnother={handleAddAnother}
           />
         );
-      case 2:
+      case "resume":
         return (
           <PDFUploadStep
-            stepIndex={2}
-            totalSteps={TOTAL_STEPS}
-            label="Upload Resume PDF (optional)"
-            description="Attach your current resume to enhance matching."
+            stepIndex={1}
+            totalSteps={1}
+            label="Upload Resume"
+            description="Upload your resume PDF to extract your professional experience and projects."
             source="resume"
             uploadState={upload.resume}
             onUpload={upload.uploadResumePDF}
             onClear={upload.clearResumeUpload}
             config={upload.config}
             accept={acceptOverride}
-            onBack={goBack}
-            onSkip={skip}
-            onNext={goNext}
+            onBack={undefined}
+            onSkip={handleSkip}
+            onNext={handleFinish}
+            onAddAnother={handleAddAnother}
           />
         );
-      case 3:
+      case "github":
         return (
           <GithubRepoStep
-            label="Connect GitHub (optional)"
-            description="Search by username, select up to 10 repositories."
+            label="Connect GitHub"
+            description="Search by username and select up to 10 repositories to showcase your best work."
             githubState={upload.github}
             onSearch={upload.searchGitHubRepos}
             onLoadMore={upload.loadMoreRepos}
             onToggleSelection={upload.toggleRepoSelection}
             onClearSelection={upload.clearRepoSelection}
             config={upload.config}
-            onBack={goBack}
-            onSkip={handleFinish}
+            onBack={undefined}
+            onSkip={handleSkip}
             onNext={handleFinish}
+            onAddAnother={handleAddAnother}
           />
         );
       default:
         return null;
     }
   }, [
-    step,
+    selectedSource,
     isProcessing,
     upload,
-    goBack,
-    goNext,
-    skip,
+    handleSelectSource,
+    handleAddAnother,
     handleFinish,
+    handleSkip,
     acceptOverride,
   ]);
 
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      {!isProcessing && step <= TOTAL_STEPS && (
-        <>
-          <ProgressIndicator currentStep={step} totalSteps={TOTAL_STEPS} />
-          <p className="text-center text-sm text-muted-foreground -mt-1">
-            These steps help pre‑fill your profile. All steps are optional.
-          </p>
-        </>
-      )}
-      {content}
-    </div>
-  );
+  return <div className="space-y-4 sm:space-y-6">{content}</div>;
 }
 
 export default UploadWizard;

@@ -7,15 +7,15 @@ import UploadWizard from "@/components/upload/UploadWizard";
 /**
  * Upload onboarding page component.
  *
- * This page provides a 3-step wizard for users to auto-populate their portfolio
- * by uploading LinkedIn PDFs, resume PDFs, and selecting GitHub repositories.
+ * This page provides a streamlined way for users to auto-populate their portfolio
+ * by importing data from LinkedIn, GitHub, or their Resume.
  *
  * Features:
  * - Protected route requiring email verification
- * - 3-step wizard interface with progress indication
- * - PDF upload with text extraction
- * - GitHub repository selection
- * - Completion redirect to dashboard
+ * - Source selection with card-based UI
+ * - Single-step import process per source
+ * - Option to add multiple sources
+ * - Completion redirect to edit page
  */
 export default function UploadPage() {
   const { loading } = useAuth();
@@ -37,10 +37,10 @@ export default function UploadPage() {
             {/* Page Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">
-                Add information from your LinkedIn/Resume/GitHub
+                Import Your Professional Data
               </h1>
               <p className="text-lg text-muted-foreground">
-                You can skip any or all step
+                Choose a source to get started—quick and easy. You can add more anytime.
               </p>
             </div>
 

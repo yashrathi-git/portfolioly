@@ -43,6 +43,7 @@ export type PDFUploadStepProps = {
   onNext?: () => void;
   onBack?: () => void;
   onSkip?: () => void;
+  onAddAnother?: () => void;
 };
 
 export function PDFUploadStep(props: PDFUploadStepProps) {
@@ -60,6 +61,7 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
     onNext,
     onBack,
     onSkip,
+    onAddAnother,
   } = props;
 
   const handleFileChange = useCallback(
@@ -83,8 +85,9 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
         onBack={onBack}
         onSkip={onSkip}
         onNext={onNext}
+        onAddAnother={onAddAnother}
         loadingText={uploadState.uploading ? "Processing PDF…" : undefined}
-        nextLabel="Next"
+        nextLabel="Save & Continue"
         nextDisabled={false}
       >
         <div className="space-y-4">

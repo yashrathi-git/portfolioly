@@ -32,6 +32,7 @@ export type GithubRepoStepProps = {
   onBack?: () => void;
   onSkip?: () => void;
   onNext?: () => void;
+  onAddAnother?: () => void;
 };
 
 export function GithubRepoStep({
@@ -46,6 +47,7 @@ export function GithubRepoStep({
   onBack,
   onSkip,
   onNext,
+  onAddAnother,
 }: GithubRepoStepProps) {
   const [username, setUsername] = useState("");
 
@@ -78,7 +80,8 @@ export function GithubRepoStep({
         onBack={onBack}
         onSkip={onSkip}
         onNext={onNext}
-        nextLabel="Next"
+        onAddAnother={onAddAnother}
+        nextLabel="Save & Continue"
         nextDisabled={githubState.loading}
         loadingText={
           githubState.loading && githubState.repos.length === 0
