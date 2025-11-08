@@ -199,6 +199,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "pygithub" },
     { name = "pymupdf" },
+    { name = "pymupdf4llm" },
     { name = "python-dotenv" },
     { name = "python-magic" },
     { name = "python-multipart" },
@@ -225,7 +226,8 @@ requires-dist = [
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.9" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
     { name = "pygithub", specifier = ">=2.4.0" },
-    { name = "pymupdf", specifier = ">=1.24.0" },
+    { name = "pymupdf", specifier = "==1.26.6" },
+    { name = "pymupdf4llm", specifier = "==0.1.8" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
     { name = "python-magic", specifier = ">=0.4.27" },
     { name = "python-multipart", specifier = ">=0.0.20" },
@@ -1056,11 +1058,13 @@ name = "linkedin-extractor"
 version = "0.2.0"
 source = { directory = "../packages/pdf_parser" }
 dependencies = [
+    { name = "pymupdf" },
     { name = "pymupdf4llm" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "pymupdf", specifier = "==1.26.6" },
     { name = "pymupdf4llm", specifier = "==0.1.8" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },

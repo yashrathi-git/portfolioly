@@ -21,6 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "pymupdf4llm==0.1.8",
+    "pymupdf==1.26.6",
 ]
 
 [project.optional-dependencies]
