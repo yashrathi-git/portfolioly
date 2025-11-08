@@ -80,7 +80,11 @@ function coercePortfolioData(snapshotData: SnapshotPortfolio): PortfolioData {
   const toArray = (value: unknown) => (Array.isArray(value) ? value : []);
 
   return {
-    personal_info: partial.personal_info,
+    personal_info:
+      (partial.personal_info as PortfolioData["personal_info"]) ?? {
+        profiles: [],
+        tags: [],
+      },
     work_experiences: toArray(
       partial.work_experiences
     ) as PortfolioData["work_experiences"],
@@ -89,9 +93,13 @@ function coercePortfolioData(snapshotData: SnapshotPortfolio): PortfolioData {
     certifications: toArray(
       partial.certifications
     ) as PortfolioData["certifications"],
-    text_blobs: partial.text_blobs,
-    metadata: partial.metadata,
-    layout_settings: partial.layout_settings,
+    text_blobs: (partial.text_blobs as PortfolioData["text_blobs"]) ?? {},
+    metadata: (partial.metadata as PortfolioData["metadata"]) ?? {},
+    layout_settings:
+      (partial.layout_settings as PortfolioData["layout_settings"]) ?? {
+        layout_mode: "both",
+        default_layout: "chat",
+      },
   };
 }
 

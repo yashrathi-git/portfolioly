@@ -21,10 +21,17 @@ export interface PortfolioEditorProps {
 }
 
 const emptyPortfolioData: PortfolioData = {
+  personal_info: { profiles: [], tags: [] },
   work_experiences: [],
   projects: [],
   education: [],
   certifications: [],
+  text_blobs: {},
+  metadata: {},
+  layout_settings: {
+    layout_mode: "both",
+    default_layout: "chat",
+  },
 };
 
 export function PortfolioEditor({
@@ -234,7 +241,7 @@ function renderSectionContent(
     case "personal":
       return (
         <SectionComponent
-          value={data.personal_info || { profiles: [], tags: [] }}
+          value={data.personal_info}
           onChange={(v: any) => update({ personal_info: v })}
         />
       );
@@ -254,7 +261,7 @@ function renderSectionContent(
               onChange={(url: string | null) =>
                 update({
                   personal_info: {
-                    ...(data.personal_info || { profiles: [], tags: [] }),
+                    ...data.personal_info,
                     profile_photo_url: url || undefined,
                   },
                 })
@@ -267,7 +274,7 @@ function renderSectionContent(
     case "profiles":
       return (
         <SectionComponent
-          value={data.personal_info || { profiles: [], tags: [] }}
+          value={data.personal_info}
           onChange={(v: any) => update({ personal_info: v })}
         />
       );
@@ -307,7 +314,7 @@ function renderSectionContent(
     case "context":
       return (
         <SectionComponent
-          value={data.text_blobs || {}}
+          value={data.text_blobs}
           onChange={(v: any) => update({ text_blobs: v })}
         />
       );
@@ -315,12 +322,7 @@ function renderSectionContent(
     case "layout":
       return (
         <SectionComponent
-          value={
-            data.layout_settings || {
-              layout_mode: "both",
-              default_layout: "chat",
-            }
-          }
+          value={data.layout_settings}
           onChange={(v: any) => update({ layout_settings: v })}
         />
       );

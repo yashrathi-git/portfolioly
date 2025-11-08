@@ -438,6 +438,26 @@ import { type PortfolioData } from '@portfolioly/schema';
 interface PortfolioData { ... }
 ```
 
+### 5. Rely on Container Defaults
+
+- `personal_info`, `text_blobs`, `metadata`, and `layout_settings` now default to empty objects during validation. Treat them as always-present containers instead of guarding with `|| {}` fallbacks.
+- Nested list fields (`profiles`, `tags`, `projects`, `education`, etc.) already normalize to empty arrays, so components can annotate against non-null collections.
+- When constructing new portfolio state, prefer spreading the validated data rather than recreating ad-hoc defaults—this keeps the frontend aligned with backend factories.
+
+### 6. Normalize Empty Strings to `null`
+
+- Optional text fields accept either a meaningful string or `null`. Converting user-cleared inputs (`""`) to `null` keeps Firestore and FastAPI payloads consistent with the backend's `Optional[...]` semantics.
+- A simple helper keeps this logic centralized:
+
+```typescript
+const normalizeText = (value: string | null | undefined) => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+};
+```
+
+- Apply `normalizeText` (or an equivalent) before persisting form state so both the Zod schemas and Pydantic models see the same intent.
+
 ## Troubleshooting
 
 ### Build Errors

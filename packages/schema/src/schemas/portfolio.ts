@@ -40,7 +40,7 @@ import {
  * ```
  */
 export const PortfolioDataSchema = z.object({
-  personal_info: PersonalInfoSchema.optional(),
+  personal_info: PersonalInfoSchema.default({}),
   work_experiences: z
     .preprocess(
       (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
@@ -69,9 +69,9 @@ export const PortfolioDataSchema = z.object({
     )
     .optional()
     .default([]),
-  text_blobs: TextBlobsSchema.optional(),
-  metadata: PortfolioMetadataSchema.optional(),
-  layout_settings: LayoutSettingsSchema.optional(),
+  text_blobs: TextBlobsSchema.default({}),
+  metadata: PortfolioMetadataSchema.default({}),
+  layout_settings: LayoutSettingsSchema.default({}),
 });
 
 export type PortfolioData = z.infer<typeof PortfolioDataSchema>;
