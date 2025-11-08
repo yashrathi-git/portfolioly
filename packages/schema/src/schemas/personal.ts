@@ -23,10 +23,12 @@ export const PersonalInfoSchema = z.object({
       (val) => (Array.isArray(val) ? val : []),
       z.array(ProfileSchema)
     )
+    .catch([])
     .optional()
     .default([]),
   tags: z
     .preprocess((val) => (Array.isArray(val) ? val : []), z.array(z.string()))
+    .catch([])
     .optional()
     .default([]),
 });

@@ -20,15 +20,25 @@ export type TextBlobs = z.infer<typeof TextBlobsSchema>;
  * Layout preference settings for portfolio display.
  * Controls which layouts are available and which is shown by default.
  */
-export const LayoutSettingsSchema = z.object({
-  /** Available layout modes: chat-only, traditional-only, both */
-  layout_mode: z
-    .enum(["chat-only", "traditional-only", "both"])
-    .optional()
-    .default("both"),
-  /** Default layout when both are available: chat, traditional */
-  default_layout: z.enum(["chat", "traditional"]).optional().default("chat"),
-});
+export const LayoutSettingsSchema = z
+  .object({
+    /** Available layout modes: chat-only, traditional-only, both */
+    layout_mode: z
+      .enum(["chat-only", "traditional-only", "both"])
+      .catch("both")
+      .optional()
+      .default("both"),
+    /** Default layout when both are available: chat, traditional */
+    default_layout: z
+      .enum(["chat", "traditional"])
+      .catch("chat")
+      .optional()
+      .default("chat"),
+  })
+  .catch({
+    layout_mode: "both",
+    default_layout: "chat",
+  });
 
 export type LayoutSettings = z.infer<typeof LayoutSettingsSchema>;
 

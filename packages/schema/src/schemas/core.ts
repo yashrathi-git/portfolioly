@@ -111,7 +111,7 @@ export type ProfileType = z.infer<typeof ProfileTypeSchema>;
  * User profile/social media link information.
  */
 export const ProfileSchema = z.object({
-  type: ProfileTypeSchema.nullable().optional(),
+  type: ProfileTypeSchema.catch("other").nullable().optional(),
   url: z.string().nullable().optional(),
   label: z.string().nullable().optional(),
 });

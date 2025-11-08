@@ -18,9 +18,12 @@ from openai import AsyncOpenAI
 
 from ..core.config import settings
 from ..schemas.portfolio import PortfolioData
+from ..schemas.extraction import PortfolioExtractionData
 from ..schemas.upload import GitHubRepoData, PDFData
 from ..constants.chat_config import ChatConfig
 from ..constants.extraction_prompts import PORTFOLIO_EXTRACTION_PROMPT
+from .extraction_processor import get_extraction_processor
+from .linkedin_formatter import format_linkedin_for_ai
 
 
 logger = logging.getLogger(__name__)
@@ -150,8 +153,8 @@ class AIProcessor:
         Intelligently truncate input text to fit within token limits.
 
         Prioritizes resume content over LinkedIn content. GitHub data is
-        always included as it's minimal. Sends raw text to AI for proper
-        content extraction and segregation.
+        always included as it's minimal. LinkedIn text is pre-processed
+        for better structured extraction.
 
         Args:
             resume_text: Resume PDF text
@@ -173,9 +176,14 @@ class AIProcessor:
         if resume_text:
             content_blocks.append(("Resume", resume_text.strip()))
 
-        # LinkedIn content (lower priority) - send raw text
+        # LinkedIn content (lower priority) - pre-process for better extraction
         if linkedin_text:
-            content_blocks.append(("LinkedIn Profile", linkedin_text.strip()))
+            try:
+                formatted_linkedin = format_linkedin_for_ai(linkedin_text)
+                content_blocks.append(("LinkedIn Profile", formatted_linkedin.strip()))
+            except Exception as e:
+                logger.warning(f"Failed to format LinkedIn data: {str(e)}, using raw text")
+                content_blocks.append(("LinkedIn Profile", linkedin_text.strip()))
 
         # Build final content within token limits
         final_content = []
@@ -279,8 +287,8 @@ class AIProcessor:
                     f"Input still exceeds token limit after truncation: {final_tokens} > {self.max_tokens}"
                 )
 
-            # Create structured response format
-            schema = PortfolioData.model_json_schema()
+            # Create structured response format using extraction schema
+            schema = PortfolioExtractionData.model_json_schema()
             response_format = {
                 "type": "json_schema",
                 "json_schema": {
@@ -313,7 +321,16 @@ class AIProcessor:
 
             # Extract and validate response
             response_content = response.choices[0].message.content or ""
-            portfolio_data = self.validate_response(response_content)
+            extraction_data = self.validate_extraction_response(response_content)
+
+            # Post-process extraction data to full portfolio data
+            processor = get_extraction_processor()
+            portfolio_data = processor.process_extraction(
+                extraction_data=extraction_data,
+                resume_pdf=resume_pdf,
+                linkedin_pdf=linkedin_pdf,
+                github_repos=github_repos,
+            )
 
             logger.info("Successfully processed portfolio data with AI")
             return portfolio_data
@@ -331,9 +348,43 @@ class AIProcessor:
             logger.error(f"AI processing failed: {str(e)}")
             raise AIProcessingError(f"AI processing failed: {str(e)}")
 
+    def validate_extraction_response(self, response_content: str) -> PortfolioExtractionData:
+        """
+        Validate AI extraction response and convert to PortfolioExtractionData.
+
+        Args:
+            response_content: JSON response from AI
+
+        Returns:
+            PortfolioExtractionData: Validated extraction data
+
+        Raises:
+            AIProcessingError: If validation fails
+        """
+        try:
+            # Parse JSON response
+            response_dict = json.loads(response_content)
+
+            # Convert to PortfolioExtractionData using Pydantic validation
+            extraction_data = PortfolioExtractionData.model_validate(response_dict)
+
+            # Additional validation
+            if not self.validate_extraction_data(extraction_data):
+                logger.warning("Extraction data validation warnings detected")
+
+            return extraction_data
+
+        except json.JSONDecodeError as e:
+            raise AIProcessingError(f"Invalid JSON response from AI: {str(e)}")
+        except Exception as e:
+            raise AIProcessingError(f"Response validation failed: {str(e)}")
+    
     def validate_response(self, response_content: str) -> PortfolioData:
         """
         Validate AI response and convert to PortfolioData.
+        
+        DEPRECATED: Use validate_extraction_response instead.
+        Kept for backwards compatibility.
 
         Args:
             response_content: JSON response from AI
@@ -362,9 +413,49 @@ class AIProcessor:
         except Exception as e:
             raise AIProcessingError(f"Response validation failed: {str(e)}")
 
+    def validate_extraction_data(self, data: PortfolioExtractionData) -> bool:
+        """
+        Validate extraction data completeness and quality.
+
+        Args:
+            data: Extraction data to validate
+
+        Returns:
+            bool: True if data passes quality checks
+        """
+        warnings = []
+
+        # Check if we have any meaningful data
+        has_personal_info = data.personal_info and (
+            data.personal_info.full_name or data.personal_info.email
+        )
+        has_work_experience = data.work_experiences and len(data.work_experiences) > 0
+        has_projects = data.projects and len(data.projects) > 0
+        has_education = data.education and len(data.education) > 0
+
+        if not any(
+            [has_personal_info, has_work_experience, has_projects, has_education]
+        ):
+            warnings.append("No meaningful data extracted")
+
+        # Check for common extraction issues
+        if data.personal_info and data.personal_info.full_name:
+            if len(data.personal_info.full_name) < 2:
+                warnings.append("Full name seems too short")
+
+        # Log warnings
+        if warnings:
+            logger.warning(f"Extraction data validation warnings: {', '.join(warnings)}")
+            return False
+
+        return True
+    
     def validate_portfolio_data(self, data: PortfolioData) -> bool:
         """
         Validate portfolio data completeness and quality.
+        
+        DEPRECATED: Use validate_extraction_data instead.
+        Kept for backwards compatibility.
 
         Args:
             data: Portfolio data to validate

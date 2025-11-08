@@ -11,164 +11,95 @@ MODEL_ENCODING = "cl100k_base"  # Default encoding for GPT models
 
 # Main portfolio extraction prompt
 PORTFOLIO_EXTRACTION_PROMPT = """
-You are an expert at extracting structured portfolio information from unstructured text data. You will be provided with data from multiple sources that may include:
+Extract structured portfolio information from the provided text (resume, LinkedIn profile, or GitHub data).
 
-1. Resume PDF text
-2. LinkedIn PDF text  
-3. GitHub repository information
+## KEY RULES:
+1. Extract ONLY information present in the source - never invent data
+2. All fields are optional - omit if not found
+3. Resume data takes priority over LinkedIn when there are conflicts
+4. Return valid JSON only - no explanatory text
+5. **Generate headlines and summaries from content if not explicitly provided**
+6. **Clean company names** - extract only the company name, remove annotations like "– YC backed", "– Series A", parenthetical info, etc.
 
-## IMPORTANT INSTRUCTIONS:
-
-### Data Source Priority Rules:
-- **Resume information takes priority over LinkedIn** when there are conflicts
-- **GitHub repository data takes priority over PDF-extracted projects** 
-- Combine information intelligently from multiple sources
-- If information is repeated across sources, merge it thoughtfully
-
-### Data Quality Guidelines:
-- **All fields are optional** - only extract information you can confidently identify
-- **If data is irrelevant or insufficient, return empty structured output** rather than hallucinating
-- Preserve exact names, dates, and technical terms as written
-- For dates, extract numeric month (1-12) and 4-digit year when possible
-- If month is unclear, omit it and include only the year
-
-### Field Extraction Guidelines:
+## WHAT TO EXTRACT:
 
 **Personal Info:**
-- Extract full name, professional headline, summary, contact details
-- Include social/professional profile URLs with appropriate types
-- Location should be city, state/country format when possible
-- **Profile photo is uploaded separately** - do NOT extract profile_photo_url from PDFs
+- Name, headline, summary, email, phone, location
+- **If headline is missing, generate one from job titles** (e.g., "Senior Software Engineer at Google")
+- **If summary is missing, generate a brief one from work experience** (2-3 sentences highlighting key experience)
+- Social/professional URLs (just the URL and optional label - don't worry about the type)
+- Skills/technologies as tags
 
 **Work Experience:**
-- Extract organization, job title, location, dates, key achievements
-- Use is_current=true for current positions (no end_date needed)
-- Include technologies/skills used in each role
-- **Format highlights as a markdown string** with bullet points (NOT an array)
-- Each highlight should be on its own line starting with "- "
-- Example: "- Led team of 5 engineers\n- Improved performance by 40%\n- Migrated to microservices"
+- **Organization: Extract ONLY the company name** 
+  - Examples: "Writesonic – YCombinator backed startup" → "Writesonic"
+  - "Meta (formerly Facebook)" → "Meta"
+  - "Google Inc." → "Google Inc."
+- Title, location, dates
+- Use is_current=true for current positions
+- Format highlights as markdown bullet points: "- Point one\n- Point two"
+- List technologies used
 
 **Projects:**
-- Prioritize GitHub repository data over PDF mentions
-- Extract project name, key highlights, technologies used
-- **Do NOT extract a "role" field** - this field has been removed from the schema
-- **Format highlights as a markdown string** with bullet points (NOT an array)
-- Each highlight should be on its own line starting with "- "
-- Example: "- Built real-time chat feature\n- Implemented OAuth authentication\n- Deployed to AWS"
-- Include GitHub URLs and live links when available
-- **Extract demo_video field** if a YouTube link is mentioned for the project
-- The more_context field supports markdown formatting for detailed descriptions
-- **Images are uploaded separately by users** - do NOT attempt to extract image URLs from PDFs
+- Name, highlights (as markdown bullets), technologies
+- GitHub URL, live link, demo video (if YouTube link mentioned)
+- Use more_context for detailed descriptions
 
 **Education:**
-- Extract institution, degree type, field of study (branch)
-- Include dates, location, GPA/grades when mentioned
-- Use is_current=true for ongoing education
+- Institution, degree, field of study (branch)
+- Dates, location, grades
+- Use is_current=true if currently enrolled
 
 **Certifications:**
-- Extract certification names and verification links when available
-- **Extract the issuer/organization** that provided the certification
-- Examples of issuers: "Coursera", "Udemy", "AWS", "Google", "Microsoft", "LinkedIn Learning"
-- If the issuer is not explicitly mentioned, try to infer it from context
+- Name, issuing organization, verification link
 
 **Text Blobs:**
-- Use for achievements, awards, or other unstructured information
-- **Format achievements as markdown bullet points** (NOT an array)
-- Each achievement should be on its own line starting with "- "
-- Example: "- Won Best Innovation Award 2023\n- Published 3 research papers\n- Speaker at Tech Conference"
-- Include additional context that doesn't fit other categories
+- Achievements/awards as markdown bullets: "- Achievement one\n- Achievement two"
+- Any additional context that doesn't fit elsewhere
 
-### Response Format:
-You MUST return ONLY a valid JSON object matching the PortfolioData schema. Do not include any explanatory text before or after the JSON. Ensure all dates use the structured format with numeric month and year fields.
+## DATE FORMAT:
+- Extract as {"month": 1-12, "year": 2020}
+- Omit month if unclear, include only year
+- Examples: "Jan 2020" → {"month": 1, "year": 2020}, "2020" → {"year": 2020}
 
-The JSON structure should be:
+## EXAMPLE OUTPUT:
 {
   "personal_info": {
-    "full_name": "string or null",
-    "headline": "string or null", 
-    "summary": "string or null",
-    "email": "string or null",
-    "phone": "string or null",
-    "location": "string or null",
-    "profile_photo_url": "string or null",
-    "profiles": []
+    "full_name": "Jane Doe",
+    "headline": "Software Engineer",
+    "email": "jane@example.com",
+    "profiles": [{"url": "https://github.com/janedoe"}],
+    "tags": ["Python", "React"]
   },
-  "work_experiences": [
-    {
-      "organization": "string or null",
-      "title": "string or null",
-      "location": "string or null",
-      "start_date": {"month": "number or null", "year": "number or null"},
-      "end_date": {"month": "number or null", "year": "number or null"},
-      "is_current": "boolean or null",
-      "highlights": "markdown string or null",
-      "technologies": ["string"],
-      "more_context": "string or null"
-    }
-  ],
-  "projects": [
-    {
-      "name": "string or null",
-      "highlights": "markdown string or null",
-      "technologies": ["string"],
-      "github": "string or null",
-      "live_link": "string or null",
-      "demo_video": "string or null",
-      "more_context": "string or null",
-      "images": []
-    }
-  ],
-  "education": [],
-  "certifications": [
-    {
-      "name": "string or null",
-      "issuer": "string or null",
-      "link": "string or null"
-    }
-  ],
+  "work_experiences": [{
+    "organization": "Tech Corp",
+    "title": "Senior Engineer",
+    "start_date": {"month": 1, "year": 2020},
+    "is_current": true,
+    "highlights": "- Led team of 5\n- Improved performance by 40%",
+    "technologies": ["Python", "AWS"]
+  }],
+  "projects": [{
+    "name": "Portfolio Site",
+    "highlights": "- Built with Next.js\n- Deployed to Vercel",
+    "technologies": ["Next.js", "TypeScript"],
+    "github": "https://github.com/janedoe/portfolio"
+  }],
+  "education": [{
+    "institution": "State University",
+    "degree": "Bachelor of Science",
+    "branch": "Computer Science",
+    "start_date": {"year": 2016},
+    "end_date": {"year": 2020}
+  }],
+  "certifications": [{
+    "name": "AWS Solutions Architect",
+    "issuer": "Amazon Web Services"
+  }],
   "text_blobs": {
-    "achievements": "markdown string or null",
-    "additional_context": "string or null"
-  },
-  "metadata": {
-    "source_type": "string",
-    "extracted_at": "ISO timestamp",
-    "notes": "string or null"
+    "achievements": "- Won hackathon 2023\n- Published research paper"
   }
 }
 
-### Examples of Good Extraction:
-- "January 2020" → {"month": 1, "year": 2020}
-- "Software Engineer at Google" → organization: "Google", title: "Software Engineer"
-- "Python, React, PostgreSQL" → technologies: ["Python", "React", "PostgreSQL"]
-- Work highlights → "- Led team of 5 engineers\n- Improved performance by 40%\n- Migrated to microservices"
-- Project highlights → "- Built real-time chat feature\n- Implemented OAuth authentication\n- Deployed to AWS"
-- Achievements → "- Won Best Innovation Award 2023\n- Published 3 research papers\n- Speaker at Tech Conference"
-- Certification → name: "AWS Solutions Architect", issuer: "Amazon Web Services"
-- Demo video → demo_video: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-
-### Conflict Resolution Guidelines:
-When you encounter conflicting information:
-1. **Dates**: If resume says "2020-2022" but LinkedIn says "2020-2023", prefer resume data
-2. **Job Titles**: If there are slight variations, use the more detailed/formal version from resume
-3. **Technologies**: Combine lists from both sources, removing duplicates
-4. **Project Details**: Always prefer GitHub repository information over PDF descriptions
-
-### Clarifying Questions to Consider:
-- Is this person's current role clearly indicated?
-- Are the dates consistent and logical (start before end dates)?
-- Do the technologies mentioned align with the job roles?
-- Are there any obvious gaps or inconsistencies in the timeline?
-
-### What NOT to do:
-- Don't hallucinate information not present in the source
-- Don't make assumptions about dates, locations, or technical details
-- Don't duplicate information across different sections
-- Don't include placeholder or example data
-- Don't create fake GitHub URLs or project links
-- Don't assume current employment status without clear indicators
-
-If you cannot extract meaningful information from the provided data, return a minimal structure with empty arrays and null values for optional fields.
-
-Now process the following data:
+Now extract data from the following:
 """

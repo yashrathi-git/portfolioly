@@ -40,12 +40,13 @@ import {
  * ```
  */
 export const PortfolioDataSchema = z.object({
-  personal_info: PersonalInfoSchema.default({}),
+  personal_info: PersonalInfoSchema.catch({}).default({}),
   work_experiences: z
     .preprocess(
       (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
       z.array(WorkExperienceSchema)
     )
+    .catch([])
     .optional()
     .default([]),
   projects: z
@@ -53,6 +54,7 @@ export const PortfolioDataSchema = z.object({
       (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
       z.array(ProjectSchema)
     )
+    .catch([])
     .optional()
     .default([]),
   education: z
@@ -60,6 +62,7 @@ export const PortfolioDataSchema = z.object({
       (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
       z.array(EducationSchema)
     )
+    .catch([])
     .optional()
     .default([]),
   certifications: z
@@ -67,11 +70,18 @@ export const PortfolioDataSchema = z.object({
       (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
       z.array(CertificationSchema)
     )
+    .catch([])
     .optional()
     .default([]),
-  text_blobs: TextBlobsSchema.default({}),
-  metadata: PortfolioMetadataSchema.default({}),
-  layout_settings: LayoutSettingsSchema.default({}),
+  text_blobs: TextBlobsSchema.catch({}).default({}),
+  metadata: PortfolioMetadataSchema.catch({}).default({}),
+  layout_settings: LayoutSettingsSchema.catch({
+    layout_mode: "both",
+    default_layout: "chat",
+  }).default({
+    layout_mode: "both",
+    default_layout: "chat",
+  }),
 });
 
 export type PortfolioData = z.infer<typeof PortfolioDataSchema>;
