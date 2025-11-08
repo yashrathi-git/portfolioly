@@ -139,6 +139,7 @@ class UploadProcessor:
                 self.portfolio_service.store_portfolio_data,
                 user.uid,
                 portfolio_data,
+                preserve_brandfetch=False,
             )
 
             if success:
@@ -246,6 +247,7 @@ class UploadProcessor:
                 self.portfolio_service.store_portfolio_data,
                 user.uid,
                 portfolio_data,
+                preserve_brandfetch=False,
             )
 
             if success:
@@ -322,6 +324,7 @@ class UploadProcessor:
             self.portfolio_service.store_portfolio_data,
             user.uid,
             portfolio_data,
+            preserve_brandfetch=False,
         )
 
         if success:

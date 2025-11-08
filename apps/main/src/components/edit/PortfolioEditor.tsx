@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Globe, Link, ShieldCheck, User } from "lucide-react";
@@ -38,6 +38,13 @@ export function PortfolioEditor({
   const [data, setData] = useState<PortfolioData>(
     () => initial || emptyPortfolioData
   );
+  useEffect(() => {
+    if (hasUnsavedChanges) {
+      return;
+    }
+
+    setData(initial || emptyPortfolioData);
+  }, [initial, hasUnsavedChanges]);
   const [activeSection, setActiveSection] = useState<string>(sections[0].id);
   const [activeMode, setActiveMode] = useState<"edit" | "preview">("edit");
   const {

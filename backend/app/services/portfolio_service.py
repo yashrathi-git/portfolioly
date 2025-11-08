@@ -68,7 +68,12 @@ class PortfolioService:
             self._initialize_firebase()
         return self._db
 
-    def store_portfolio_data(self, user_id: str, portfolio_data: PortfolioData) -> bool:
+    def store_portfolio_data(
+        self,
+        user_id: str,
+        portfolio_data: PortfolioData,
+        preserve_brandfetch: bool = True,
+    ) -> bool:
         """
         Store portfolio data in Firestore.
 
@@ -92,7 +97,7 @@ class PortfolioService:
             # Preserve Brandfetch fields from existing portfolio if not provided
             doc_ref = self.db.collection("portfolios").document(user_id)
             existing_doc = doc_ref.get()
-            if existing_doc.exists:
+            if preserve_brandfetch and existing_doc.exists:
                 existing_data = existing_doc.to_dict() or {}
                 self._preserve_brandfetch_metadata(data_dict, existing_data)
 
