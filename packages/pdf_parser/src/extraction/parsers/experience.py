@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 import re
 
+from .utils import normalise_bulleted_block
+
 # --- Regular expressions -----------------------------------------------------
 
 TIMELINE_RE = re.compile(
@@ -532,7 +534,11 @@ def _extract_location_and_highlights_between(
         highlights_start = first_content_idx + 1
 
     highlight_block = "\n".join(span_lines[highlights_start:]).strip()
-    highlight_text = highlight_block if highlight_block else None
+    if not highlight_block:
+        return location, None
+
+    normalized_highlights = normalise_bulleted_block(highlight_block)
+    highlight_text = normalized_highlights if normalized_highlights else None
     return location, highlight_text
 
 

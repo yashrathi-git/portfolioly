@@ -1,10 +1,8 @@
 """
-Shared utilities for parsing before_h1 sections.
+Shared utilities for parsing LinkedIn PDF exports.
 
-This module provides text normalization functions that handle linebreaks
-in LinkedIn PDF exports. The key pattern is:
-- Double linebreak (\\n\\n): separates distinct items
-- Single linebreak (\\n): indicates text continuation from narrow PDF column
+This module provides text normalization helpers for both before_h1 sections
+and general-purpose reflow of prose/bullet text where PDFs insert hard wraps.
 """
 
 from typing import List
@@ -110,8 +108,92 @@ def join_single_linebreaks(text: str) -> str:
     return joined.strip()
 
 
+def collapse_to_paragraph(text: str) -> str:
+    """
+    Convert arbitrary wrapped text into a single paragraph.
+
+    All line breaks are replaced with spaces while preserving word separation.
+    """
+    if not text:
+        return ""
+
+    tokens = [
+        line.strip() for line in text.replace("\r", "").split("\n") if line.strip()
+    ]
+    return " ".join(tokens)
+
+
+def normalise_bulleted_block(text: str) -> str:
+    """
+    Normalise text that may contain simple bullet lists.
+
+    Lines beginning with '-', '*', or common bullet symbols start a new bullet item.
+    Continuation lines are joined into the current bullet. Non-bullet text is
+    collapsed into plain paragraphs. Bullets and paragraphs are returned on
+    separate lines.
+    """
+    if not text:
+        return ""
+
+    bullet_markers = {"-", "*", "•", "‣", "∙", "◦"}
+    lines = text.replace("\r", "").split("\n")
+
+    result: List[str] = []
+    current_paragraph: List[str] = []
+    current_bullet: List[str] = []
+    current_marker: str | None = None
+
+    def flush_paragraph() -> None:
+        nonlocal current_paragraph
+        if current_paragraph:
+            result.append(" ".join(item.strip() for item in current_paragraph).strip())
+            current_paragraph = []
+
+    def flush_bullet() -> None:
+        nonlocal current_bullet, current_marker
+        if current_marker is not None and current_bullet:
+            content = " ".join(
+                segment.strip() for segment in current_bullet if segment.strip()
+            )
+            result.append(f"{current_marker} {content}".strip())
+        current_bullet = []
+        current_marker = None
+
+    for raw_line in lines:
+        stripped = raw_line.strip()
+
+        if not stripped:
+            if current_marker is not None:
+                # Allow blank lines within a bullet item (PDF artifacts)
+                continue
+            flush_bullet()
+            flush_paragraph()
+            continue
+
+        first_char = stripped[0]
+        if first_char in bullet_markers and (len(stripped) == 1 or stripped[1] == " "):
+            flush_bullet()
+            flush_paragraph()
+            current_marker = first_char
+            content = stripped[1:].strip() if len(stripped) > 1 else ""
+            current_bullet = [content] if content else []
+            continue
+
+        if current_marker is not None:
+            current_bullet.append(stripped)
+        else:
+            current_paragraph.append(stripped)
+
+    flush_bullet()
+    flush_paragraph()
+
+    return "\n".join(filter(None, result))
+
+
 __all__ = [
     "normalize_before_h1_text",
     "extract_items",
     "join_single_linebreaks",
+    "collapse_to_paragraph",
+    "normalise_bulleted_block",
 ]

@@ -124,27 +124,50 @@ class LinkedInExtractor:
     def _map_personal_info(self, profile_data: Dict[str, Any]) -> PersonalInfo:
         """Map profile data to PersonalInfo."""
         contact = profile_data.get("contact", {})
+        social_links = profile_data.get("social_links", [])
 
-        # Map profiles from contact info
+        # Map social_links to profiles with type validation
         profiles = []
-        if contact.get("linkedin"):
-            profiles.append(
-                Profile(
-                    type=ProfileType.LINKEDIN,
-                    url=contact["linkedin"],
-                    label="LinkedIn",
+        for link in social_links:
+            link_type = link.get("type", "").lower()
+            url = link.get("url")
+
+            if not url:
+                continue
+
+            # Map to valid ProfileType enum values
+            if link_type == "linkedin":
+                profiles.append(
+                    Profile(type=ProfileType.LINKEDIN, url=url, label="LinkedIn")
                 )
-            )
-        if contact.get("github"):
-            profiles.append(
-                Profile(type=ProfileType.GITHUB, url=contact["github"], label="GitHub")
-            )
-        if contact.get("website"):
-            profiles.append(
-                Profile(
-                    type=ProfileType.WEBSITE, url=contact["website"], label="Website"
+            elif link_type == "github":
+                profiles.append(
+                    Profile(type=ProfileType.GITHUB, url=url, label="GitHub")
                 )
-            )
+            elif link_type == "youtube":
+                profiles.append(
+                    Profile(type=ProfileType.YOUTUBE, url=url, label="YouTube")
+                )
+            elif link_type == "twitter":
+                profiles.append(
+                    Profile(type=ProfileType.TWITTER, url=url, label="Twitter")
+                )
+            elif link_type == "scholar":
+                profiles.append(
+                    Profile(type=ProfileType.SCHOLAR, url=url, label="Google Scholar")
+                )
+            elif link_type in {"website", "personal", "blog", "company"}:
+                profiles.append(
+                    Profile(type=ProfileType.WEBSITE, url=url, label="Website")
+                )
+            elif link_type in {"portfolio", "behance", "dribbble"}:
+                profiles.append(
+                    Profile(type=ProfileType.PORTFOLIO, url=url, label="Portfolio")
+                )
+            else:
+                # All other platforms map to OTHER
+                label = link_type.capitalize() if link_type else "Other"
+                profiles.append(Profile(type=ProfileType.OTHER, url=url, label=label))
 
         # Map skills to tags
         tags = profile_data.get("top_skills", [])

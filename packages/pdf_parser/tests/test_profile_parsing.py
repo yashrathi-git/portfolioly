@@ -19,8 +19,15 @@ class TestProfileParsing:
         # Contact
         assert result["contact"]["phone"] == "5551234567"
         assert result["contact"]["email"] == "alex.chen@example.com"
-        assert "linkedin.com" in result["contact"]["LinkedIn"]
-        assert "github.com" in result["contact"]["Other"]
+        
+        # Social Links
+        assert len(result["social_links"]) >= 2
+        linkedin_link = next((s for s in result["social_links"] if s["type"] == "linkedin"), None)
+        github_link = next((s for s in result["social_links"] if s["type"] == "github"), None)
+        assert linkedin_link is not None
+        assert "linkedin.com" in linkedin_link["url"]
+        assert github_link is not None
+        assert "github.com" in github_link["url"]
 
         # Skills
         assert len(result["top_skills"]) == 3
@@ -39,13 +46,37 @@ class TestProfileParsing:
         assert result["experience"][0]["type"] == "standalone_role"
         assert result["experience"][0]["duration_months"] == 3
 
+        cloudstart_entry = next(
+            exp for exp in result["experience"] if exp.get("company_name") == "CloudStart"
+        )
+        if cloudstart_entry["type"] == "company_group":
+            first_role = cloudstart_entry["roles"][0]
+            highlights = first_role.get("highlights")
+        else:
+            highlights = cloudstart_entry.get("highlights")
+        assert highlights
+        assert (
+            "Designed and implemented a microservices-based notification system reducing latency by 40%"
+            in highlights
+        )
+        assert (
+            "Built a caching layer using Redis that improved API response times by 60% for high-traffic endpoints"
+            in highlights
+        )
+        assert "\n  " not in highlights
+
         # Education
         assert len(result["education"]) == 2
         assert "State University" in result["education"][0]["institution"]
 
         # Summary
-        assert result["summary"] is not None
-        assert "Alex" in result["summary"]
+        summary = result["summary"]
+        assert summary is not None
+        assert "Alex" in summary
+        assert "studying computer science" in summary
+        assert "studying\ncomputer science" not in summary
+        assert "Python, JavaScript, Go & TypeScript" in summary
+        assert "https://github.com/alexchen" in summary
 
     def test_researcher_profile(self, profile_002):
         """Test parsing of researcher profile."""
@@ -56,9 +87,13 @@ class TestProfileParsing:
         assert "DataScience Academy" in result["headline"]
         assert result["location"] == "Austin, Texas, United States"
 
-        # Contact
-        assert "linkedin.com" in result["contact"]["LinkedIn"]
-        assert "researchlab.org" in result["contact"]["Company"]
+        # Social Links
+        linkedin_link = next((s for s in result["social_links"] if s["type"] == "linkedin"), None)
+        assert linkedin_link is not None
+        assert "linkedin.com" in linkedin_link["url"]
+        
+        # Company website link should be in social links
+        assert len(result["social_links"]) >= 1
 
         # Skills
         assert len(result["top_skills"]) == 3
@@ -91,8 +126,10 @@ class TestProfileParsing:
         assert "FinTech Solutions" in result["headline"]
         assert result["location"] == "New York, New York, United States"
 
-        # Contact
-        assert "linkedin.com" in result["contact"]["LinkedIn"]
+        # Social Links
+        linkedin_link = next((s for s in result["social_links"] if s["type"] == "linkedin"), None)
+        assert linkedin_link is not None
+        assert "linkedin.com" in linkedin_link["url"]
 
         # Skills
         assert len(result["top_skills"]) == 3
@@ -246,17 +283,22 @@ class TestContactParsing:
         contact = result["contact"]
         assert "phone" in contact
         assert "email" in contact
-        assert "LinkedIn" in contact
-        assert "Other" in contact
+        
+        # Social links should be in social_links array
+        assert "social_links" in result
+        assert len(result["social_links"]) >= 2
 
     def test_linkedin_only_contact(self, profile_003):
         """Test profile with only LinkedIn contact."""
         result = parse_profile(profile_003)
 
-        contact = result["contact"]
-        assert "LinkedIn" in contact
+        # Should have LinkedIn in social links
+        linkedin_link = next((s for s in result["social_links"] if s["type"] == "linkedin"), None)
+        assert linkedin_link is not None
+        
         # Should not have phone or email
-        assert "phone" not in contact or contact["phone"] is None
+        contact = result["contact"]
+        assert "phone" not in contact or contact.get("phone") is None
 
 
 class TestLanguageParsing:

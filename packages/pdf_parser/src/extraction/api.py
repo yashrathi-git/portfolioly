@@ -6,7 +6,7 @@ and all section-specific parsers with comprehensive error handling.
 """
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, Optional, TypeVar, Union
 
 from .markdown_extractor import extract_markdown_from_text, ExtractionResult
 from .markdown_converter import convert_pdf_to_markdown
@@ -17,6 +17,7 @@ from .parsers.certifications import parse_certifications_section
 from .parsers.honors_awards import parse_honors_awards_section
 from .parsers.experience import parse_experience_section
 from .parsers.education import parse_education_section
+from .parsers.utils import collapse_to_paragraph
 
 
 T = TypeVar("T")
@@ -66,7 +67,10 @@ def parse_profile(markdown_text: str) -> Dict[str, Any]:
             "name": str,
             "headline": Optional[str],
             "location": Optional[str],
-            "contact": Dict[str, str],
+            "contact": Dict[str, str],  # email, phone only
+            "social_links": List[Dict[str, str]],  # [{type, url}, ...]
+                # type is the raw platform name (linkedin, github, leetcode, etc.)
+                # Consumers should map to their schema's valid types
             "top_skills": List[str],
             "languages": List[Dict[str, Optional[str]]],
             "certifications": List[str],
@@ -108,7 +112,22 @@ def parse_profile(markdown_text: str) -> Dict[str, Any]:
     # Step 4: Parse before_h1 sections with error handling
     before_h1_sections = extraction.before_h1.sections
 
-    contact = safe_parse(parse_contact_section, before_h1_sections.get("Contact"), {})
+    contact_raw = safe_parse(
+        parse_contact_section, before_h1_sections.get("Contact"), {}
+    )
+
+    # Separate contact info into basic contact (email, phone) and social links
+    # The library extracts raw platform names; consumers should map to their schema
+    contact = {}
+    social_links = []
+
+    for key, value in contact_raw.items():
+        if key in {"email", "phone"}:
+            contact[key] = value
+        else:
+            # All other items are social/profile links
+            # Pass through the platform name as detected; consumer will validate/map
+            social_links.append({"type": key.lower(), "url": value})
 
     top_skills = safe_parse(
         parse_top_skills_section, before_h1_sections.get("Top Skills"), []
@@ -138,7 +157,8 @@ def parse_profile(markdown_text: str) -> Dict[str, Any]:
     )
 
     # Extract summary directly (no parsing needed)
-    summary = after_h1_sections.get("Summary")
+    summary_raw = after_h1_sections.get("Summary")
+    summary = collapse_to_paragraph(summary_raw) if summary_raw else summary_raw
 
     # Step 6: Build complete profile dictionary
     profile: Dict[str, Any] = {
@@ -146,6 +166,7 @@ def parse_profile(markdown_text: str) -> Dict[str, Any]:
         "headline": headline,
         "location": location,
         "contact": contact,
+        "social_links": social_links,
         "top_skills": top_skills,
         "languages": languages,
         "certifications": certifications,

@@ -7,6 +7,52 @@ including email, phone, and various platform URLs (LinkedIn, GitHub, etc.).
 
 import re
 from typing import Dict, Optional
+from urllib.parse import urlparse
+
+
+_HOST_PLATFORM_MAP = {
+    "linkedin.com": "LinkedIn",
+    "github.com": "GitHub",
+    "gitlab.com": "GitLab",
+    "bitbucket.org": "Bitbucket",
+    "leetcode.com": "LeetCode",
+    "leetcode.cn": "LeetCode",
+    "codeforces.com": "Codeforces",
+    "codechef.com": "CodeChef",
+    "hackerrank.com": "HackerRank",
+    "hackerearth.com": "HackerEarth",
+    "dev.to": "Dev.to",
+    "medium.com": "Medium",
+    "substack.com": "Substack",
+    "hashnode.com": "Hashnode",
+    "behance.net": "Behance",
+    "dribbble.com": "Dribbble",
+    "kaggle.com": "Kaggle",
+    "angel.co": "AngelList",
+    "twitter.com": "Twitter",
+    "x.com": "Twitter",
+    "facebook.com": "Facebook",
+    "instagram.com": "Instagram",
+    "youtube.com": "YouTube",
+    "t.me": "Telegram",
+    "telegram.me": "Telegram",
+    "notion.so": "Notion",
+    "notion.site": "Notion",
+    "cal.com": "Cal.com",
+    "gumroad.com": "Gumroad",
+    "patreon.com": "Patreon",
+}
+
+
+def _platform_from_host(url: str) -> Optional[str]:
+    parsed = urlparse(url)
+    host = parsed.netloc.lower()
+    if not host:
+        return None
+    for token, platform in _HOST_PLATFORM_MAP.items():
+        if token in host:
+            return platform
+    return None
 
 
 def parse_contact_section(raw_text: str) -> Dict[str, str]:
@@ -74,12 +120,14 @@ def parse_contact_section(raw_text: str) -> Dict[str, str]:
         label_only = re.match(r"^\s*\(([^)]+)\)\s*$", line)
         if label_only and last_url:
             # This is a label for the previous URL - replace the inferred platform
-            platform = label_only.group(1).strip()
+            inferred_platform = _infer_platform_from_url(
+                last_url, label_only.group(1).strip()
+            )
             # Remove the old entry with inferred platform
             if last_platform in contact_info:
                 del contact_info[last_platform]
             # Add with the explicit platform label
-            contact_info[platform] = last_url
+            contact_info[inferred_platform] = last_url
             last_url = None
             last_platform = None
             continue
@@ -215,15 +263,17 @@ def _extract_platform_url(line: str) -> Optional[tuple[str, str]]:
     # Pattern 1: Markdown link with label in text: [text (Platform)](url)
     markdown_with_label = re.search(r"\[([^\]]+)\s*\(([^)]+)\)\]\(([^\)]+)\)", line)
     if markdown_with_label:
-        platform = markdown_with_label.group(2).strip()
+        label = markdown_with_label.group(2).strip()
         url = markdown_with_label.group(3).strip()
+        platform = _infer_platform_from_url(url, label)
         return (platform, url)
 
     # Pattern 2: Markdown link followed by label: [text](url) (Platform)
     markdown_then_label = re.search(r"\[([^\]]+)\]\(([^\)]+)\)\s*\(([^)]+)\)", line)
     if markdown_then_label:
-        platform = markdown_then_label.group(3).strip()
+        label = markdown_then_label.group(3).strip()
         url = markdown_then_label.group(2).strip()
+        platform = _infer_platform_from_url(url, label)
         return (platform, url)
 
     # Pattern 3: Just label in parentheses (URL was on previous line, already processed)
@@ -244,7 +294,8 @@ def _extract_platform_url(line: str) -> Optional[tuple[str, str]]:
             # Extract the label
             label_match = re.match(r"^\(([^)]+)\)$", text)
             if label_match:
-                platform = label_match.group(1).strip()
+                label = label_match.group(1).strip()
+                platform = _infer_platform_from_url(url, label)
                 return (platform, url)
 
         # Otherwise, infer platform from domain
@@ -262,7 +313,7 @@ def _extract_platform_url(line: str) -> Optional[tuple[str, str]]:
     return None
 
 
-def _infer_platform_from_url(url: str) -> str:
+def _infer_platform_from_url(url: str, label: Optional[str] = None) -> str:
     """
     Infer platform name from URL domain.
 
@@ -272,31 +323,23 @@ def _infer_platform_from_url(url: str) -> str:
     Returns:
         Platform name (e.g., "LinkedIn", "GitHub", "Personal")
     """
-    url_lower = url.lower()
+    platform = _platform_from_host(url)
+    if platform:
+        return platform
 
-    if "linkedin.com" in url_lower:
-        return "LinkedIn"
-    elif "github.com" in url_lower:
-        return "GitHub"
-    elif "twitter.com" in url_lower or "x.com" in url_lower:
-        return "Twitter"
-    elif "facebook.com" in url_lower:
-        return "Facebook"
-    elif "instagram.com" in url_lower:
-        return "Instagram"
-    else:
-        # For other domains, try to extract a meaningful name
-        # or default to "Personal" or the domain name
-        domain_match = re.search(r"https?://(?:www\.)?([^/]+)", url)
-        if domain_match:
-            domain = domain_match.group(1)
-            # If it looks like a personal domain, use "Personal"
-            # Otherwise use the domain name
-            if domain.count(".") == 1:  # Simple domain like "example.com"
-                return "Personal"
-            else:
-                return domain
-        return "Personal"
+    if label:
+        return label
+
+    parsed = urlparse(url)
+    host = parsed.netloc.lower()
+    if host:
+        if host.startswith("www."):
+            host = host[4:]
+        if host.count(".") == 1:
+            return "Personal"
+        return host
+
+    return "Personal"
 
 
 __all__ = ["parse_contact_section"]

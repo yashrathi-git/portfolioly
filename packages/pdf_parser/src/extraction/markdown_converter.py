@@ -7,12 +7,18 @@ input, making it flexible for various use cases.
 
 from pathlib import Path
 from typing import Union
-import io
-import pymupdf4llm
-import pymupdf
 
 
 def convert_pdf_to_markdown(pdf_source: Union[Path, bytes, str]) -> str:
+
+    try:
+        import pymupdf4llm  # type: ignore
+        import pymupdf  # type: ignore
+    except ImportError as exc:
+        missing = "pymupdf4llm" if "pymupdf4llm" in str(exc) else "pymupdf"
+        raise ImportError(
+            f"{missing} is required for PDF to markdown conversion"
+        ) from exc
 
     if not pdf_source:
         raise ValueError("PDF source cannot be empty or None")
@@ -20,10 +26,15 @@ def convert_pdf_to_markdown(pdf_source: Union[Path, bytes, str]) -> str:
     try:
         # Handle different input types
         if isinstance(pdf_source, bytes):
-            # Open PDF from bytes using pymupdf, then convert to markdown
-            doc = pymupdf.open(stream=pdf_source, filetype="pdf")
-            markdown_text = pymupdf4llm.to_markdown(doc)
-            doc.close()
+            doc = None
+            try:
+                doc = pymupdf.open(stream=pdf_source, filetype="pdf")
+                markdown_text = pymupdf4llm.to_markdown(doc)
+            except Exception:
+                markdown_text = pymupdf4llm.to_markdown(pdf_source)
+            finally:
+                if doc is not None:
+                    doc.close()
         elif isinstance(pdf_source, (Path, str)):
             # Handle Path objects and string paths
             pdf_path = str(pdf_source) if isinstance(pdf_source, Path) else pdf_source
