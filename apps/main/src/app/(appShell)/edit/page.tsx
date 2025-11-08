@@ -25,37 +25,73 @@ import {
 } from "@/lib/api/portfolio";
 import { doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { getFirestoreDb } from "@/lib/firebase";
-import { validatePortfolioData } from "@portfolioly/schema";
+import { validatePortfolioDataSafe } from "@portfolioly/schema";
 
 type SnapshotPortfolio = Record<string, unknown> & {
   work_experiences?: Array<Record<string, unknown> | null | undefined>;
   education?: Array<Record<string, unknown> | null | undefined>;
 };
 
+type PlainObject = Record<string, unknown>;
+
 function stripBackendOnlyFields(snapshotData: SnapshotPortfolio) {
   const transformEntries = (
-    entries?: Array<Record<string, unknown> | null | undefined>
-  ) =>
-    Array.isArray(entries)
-      ? entries.map((entry) => {
-          if (!entry || typeof entry !== "object") {
-            return entry ?? undefined;
-          }
+    entries?: Array<PlainObject | null | undefined>
+  ) => {
+    if (!Array.isArray(entries)) {
+      return entries;
+    }
 
-          const {
-            brandfetch_logo_url: _brandfetchLogoUrl,
-            brandfetch_domain: _brandfetchDomain,
-            ...rest
-          } = entry;
+    return entries
+      .map((entry) => {
+        if (!entry || typeof entry !== "object") {
+          return null;
+        }
 
-          return rest;
-        })
-      : entries;
+        const { brandfetch_logo_url, brandfetch_domain, ...rest } = entry;
+        void brandfetch_logo_url;
+        void brandfetch_domain;
 
-  return {
+        return { ...rest };
+      })
+      .filter((entry): entry is PlainObject => Boolean(entry));
+  };
+
+  const sanitized: SnapshotPortfolio = {
     ...snapshotData,
     work_experiences: transformEntries(snapshotData.work_experiences),
     education: transformEntries(snapshotData.education),
+  } as SnapshotPortfolio;
+
+  // Remove keys whose value became undefined after transformation
+  Object.keys(sanitized).forEach((key) => {
+    const typedKey = key as keyof SnapshotPortfolio;
+    if (sanitized[typedKey] === undefined) {
+      delete sanitized[typedKey];
+    }
+  });
+
+  return sanitized;
+}
+
+function coercePortfolioData(snapshotData: SnapshotPortfolio): PortfolioData {
+  const partial = snapshotData as Partial<PortfolioData>;
+
+  const toArray = (value: unknown) => (Array.isArray(value) ? value : []);
+
+  return {
+    personal_info: partial.personal_info,
+    work_experiences: toArray(
+      partial.work_experiences
+    ) as PortfolioData["work_experiences"],
+    projects: toArray(partial.projects) as PortfolioData["projects"],
+    education: toArray(partial.education) as PortfolioData["education"],
+    certifications: toArray(
+      partial.certifications
+    ) as PortfolioData["certifications"],
+    text_blobs: partial.text_blobs,
+    metadata: partial.metadata,
+    layout_settings: partial.layout_settings,
   };
 }
 
@@ -122,24 +158,29 @@ function EditPage() {
             return;
           }
 
-          const { updated_at: _updatedAt, ...rest } = snapshotData;
+          const { updated_at: removedUpdatedAt, ...rest } = snapshotData;
+          void removedUpdatedAt;
 
-          try {
-            const sanitized = stripBackendOnlyFields(rest);
-            const validated = validatePortfolioData(sanitized);
+          const sanitized = stripBackendOnlyFields(rest);
+          const validationResult = validatePortfolioDataSafe(sanitized);
 
-            if (hasUnsavedChangesRef.current) {
-              return;
-            }
-
-            setPortfolioData(validated);
-            setHasUnsavedChanges(false);
-          } catch (validationError) {
-            console.error(
-              "Failed to validate portfolio snapshot:",
-              validationError
-            );
+          if (hasUnsavedChangesRef.current) {
+            return;
           }
+
+          if (validationResult.success) {
+            setPortfolioData(validationResult.data);
+            setHasUnsavedChanges(false);
+            return;
+          }
+
+          console.warn(
+            "Portfolio snapshot failed strict validation; using relaxed parsing.",
+            validationResult.error.issues
+          );
+
+          setPortfolioData(coercePortfolioData(sanitized));
+          setHasUnsavedChanges(false);
         });
       } catch (subscriptionError) {
         console.error(

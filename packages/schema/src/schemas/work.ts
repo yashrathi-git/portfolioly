@@ -18,8 +18,40 @@ export const WorkExperienceSchema = z.object({
   end_date: DateInfoSchema,
   is_current: z.boolean().nullable().optional(),
   /** Markdown-formatted highlights/achievements */
-  highlights: z.string().nullable().optional(),
-  technologies: z.array(z.string()).optional().default([]),
+  highlights: z
+    .preprocess((val) => {
+      if (val == null) return null;
+      if (typeof val === "string") return val;
+      if (Array.isArray(val)) {
+        const lines = val
+          .map((item) => (typeof item === "string" ? item.trim() : ""))
+          .filter((item) => item.length > 0);
+        return lines.length > 0 ? lines.join("\n") : null;
+      }
+      if (typeof val === "object") {
+        try {
+          return JSON.stringify(val);
+        } catch {
+          return null;
+        }
+      }
+      return String(val);
+    }, z.string().nullable())
+    .optional(),
+  technologies: z
+    .preprocess(
+      (val) =>
+        Array.isArray(val)
+          ? val
+          : val == null
+          ? []
+          : typeof val === "string"
+          ? [val]
+          : [],
+      z.array(z.string())
+    )
+    .optional()
+    .default([]),
   more_context: z.string().nullable().optional(),
 });
 

@@ -41,10 +41,34 @@ import {
  */
 export const PortfolioDataSchema = z.object({
   personal_info: PersonalInfoSchema.optional(),
-  work_experiences: z.array(WorkExperienceSchema).optional().default([]),
-  projects: z.array(ProjectSchema).optional().default([]),
-  education: z.array(EducationSchema).optional().default([]),
-  certifications: z.array(CertificationSchema).optional().default([]),
+  work_experiences: z
+    .preprocess(
+      (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
+      z.array(WorkExperienceSchema)
+    )
+    .optional()
+    .default([]),
+  projects: z
+    .preprocess(
+      (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
+      z.array(ProjectSchema)
+    )
+    .optional()
+    .default([]),
+  education: z
+    .preprocess(
+      (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
+      z.array(EducationSchema)
+    )
+    .optional()
+    .default([]),
+  certifications: z
+    .preprocess(
+      (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
+      z.array(CertificationSchema)
+    )
+    .optional()
+    .default([]),
   text_blobs: TextBlobsSchema.optional(),
   metadata: PortfolioMetadataSchema.optional(),
   layout_settings: LayoutSettingsSchema.optional(),

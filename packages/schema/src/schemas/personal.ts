@@ -18,8 +18,17 @@ export const PersonalInfoSchema = z.object({
   phone: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
   profile_photo_url: z.string().nullable().optional(),
-  profiles: z.array(ProfileSchema).optional().default([]),
-  tags: z.array(z.string()).optional().default([]),
+  profiles: z
+    .preprocess(
+      (val) => (Array.isArray(val) ? val : []),
+      z.array(ProfileSchema)
+    )
+    .optional()
+    .default([]),
+  tags: z
+    .preprocess((val) => (Array.isArray(val) ? val : []), z.array(z.string()))
+    .optional()
+    .default([]),
 });
 
 export type PersonalInfo = z.infer<typeof PersonalInfoSchema>;
