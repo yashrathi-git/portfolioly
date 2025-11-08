@@ -59,7 +59,11 @@ export function UploadWizard({
 
   const handleSkip = useCallback(async () => {
     // If user has uploaded anything, submit it before redirecting
-    if (upload.linkedin.result || upload.resume.result || upload.github.selectedRepoIds.length > 0) {
+    if (
+      upload.linkedin.result ||
+      upload.resume.result ||
+      upload.github.selectedRepoIds.length > 0
+    ) {
       await handleFinish();
     } else {
       // No data uploaded, just redirect
@@ -69,9 +73,7 @@ export function UploadWizard({
 
   const content = useMemo(() => {
     if (isProcessing) {
-      return (
-        <LoadingScreen message="Processing your data and generating your portfolio..." />
-      );
+      return <LoadingScreen />;
     }
 
     // Determine which sources have been imported
