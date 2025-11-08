@@ -119,6 +119,72 @@ class AzureBlobStorageService:
             )
             return None
 
+    async def upload_user_pdf_from_bytes(
+        self,
+        *,
+        user_id: str,
+        source: str,
+        file_bytes: bytes,
+        filename: str,
+    ) -> Optional[str]:
+        """Upload a PDF provided as raw bytes and return the blob URL if successful."""
+
+        if not self._config.enabled:
+            return None
+
+        if not file_bytes:
+            logger.warning(
+                "Skipping Azure upload for user %s - provided byte stream empty",
+                user_id,
+            )
+            return None
+
+        try:
+            container_client = await self._get_or_create_container_client(
+                settings.upload.CONTAINERS.resumes
+            )
+        except Exception:
+            logger.exception("Failed to initialize Azure container client")
+            return None
+
+        blob_name = self._build_blob_name(
+            user_id=user_id, source=source, filename=filename
+        )
+
+        metadata = {
+            "user_id": user_id,
+            "source": source,
+            "original_filename": filename or "",
+        }
+
+        content_settings = ContentSettings(
+            content_type="application/pdf",
+            content_disposition=self._format_content_disposition(filename),
+        )
+
+        try:
+            blob_client = container_client.get_blob_client(blob_name)
+            await blob_client.upload_blob(
+                data=file_bytes,
+                overwrite=True,
+                metadata=metadata,
+                content_settings=content_settings,
+            )
+            return blob_client.url
+        except AzureError as exc:
+            logger.warning(
+                "Azure Blob upload failed for user %s (source=%s): %s",
+                user_id,
+                source,
+                exc,
+            )
+            return None
+        except Exception:
+            logger.exception(
+                "Unexpected error during Azure Blob upload for user %s", user_id
+            )
+            return None
+
     async def upload_profile_photo(
         self,
         *,

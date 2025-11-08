@@ -39,6 +39,7 @@ router = APIRouter(prefix="/api", tags=["upload"])
 
 @router.post("/ingest/pdf", response_model=dict)
 async def upload_pdf(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     source: Literal["linkedin", "resume"] = Query(
         ..., description="Source type of the PDF"
@@ -145,31 +146,71 @@ async def upload_pdf(
             "success": True,
         }
 
-        try:
-            azure_storage = get_azure_blob_storage_service()
-            blob_url = await azure_storage.upload_user_pdf(
-                user_id=user.uid,
-                source=source,
-                upload_file=file,
-            )
-
-            if blob_url:
-                portfolio_service = get_portfolio_service()
-                portfolio_service.record_user_pdf_reference(
-                    user.uid,
-                    source=source,
-                    blob_url=blob_url,
-                    filename=result.metadata.filename,
-                    checksum=result.metadata.checksum,
+        async def _persist_pdf_to_azure(
+            user_id: str,
+            source_type: str,
+            file_bytes: bytes,
+            filename: str,
+            checksum: str,
+        ) -> None:
+            try:
+                azure_storage = get_azure_blob_storage_service()
+                blob_url = await azure_storage.upload_user_pdf_from_bytes(
+                    user_id=user_id,
+                    source=source_type,
+                    file_bytes=file_bytes,
+                    filename=filename,
                 )
-                logger.info(
-                    "PDF uploaded to Azure storage",
+                if blob_url:
+                    portfolio_service = get_portfolio_service()
+                    portfolio_service.record_user_pdf_reference(
+                        user_id,
+                        source=source_type,
+                        blob_url=blob_url,
+                        filename=filename,
+                        checksum=checksum,
+                    )
+                    logger.info(
+                        "PDF uploaded to Azure storage",
+                        extra={"user_id": user_id, "source": source_type},
+                    )
+            except Exception as background_error:
+                logger.warning(
+                    "Failed to upload PDF to Azure storage",
+                    extra={
+                        "user_id": user_id,
+                        "source": source_type,
+                        "error": str(background_error),
+                    },
+                )
+
+        file_bytes: bytes = b""
+        try:
+            await file.seek(0)
+            file_bytes = await file.read()
+        except Exception:
+            logger.warning(
+                "Failed to buffer file bytes for Azure upload background task",
+                extra={"user_id": user.uid, "source": source},
+            )
+            file_bytes = b""
+        finally:
+            try:
+                await file.close()
+            except Exception:
+                logger.debug(
+                    "Failed to close uploaded file after buffering",
                     extra={"user_id": user.uid, "source": source},
                 )
-        except Exception as e:
-            logger.warning(
-                "Failed to upload PDF to Azure storage",
-                extra={"user_id": user.uid, "error": str(e)},
+
+        if file_bytes:
+            background_tasks.add_task(
+                _persist_pdf_to_azure,
+                user.uid,
+                source,
+                file_bytes,
+                result.metadata.filename,
+                result.metadata.checksum,
             )
 
         return JSONResponse(status_code=200, content=response_data)
