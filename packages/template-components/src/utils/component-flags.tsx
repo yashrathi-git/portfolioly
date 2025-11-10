@@ -28,9 +28,10 @@ export function requiresExternalData(
     const WrappedComponent = (props: any) => {
       const { portfolioData, isLoading, error } = props;
 
-      // Development warnings
+      // Development warnings (only when not loading)
       if (process.env.NODE_ENV === "development") {
-        if (!portfolioData && !isLoading && !error) {
+        // Skip validation during loading state
+        if (!isLoading && !portfolioData && !error) {
           console.warn(
             `Component ${
               Component.displayName || Component.name
@@ -146,7 +147,8 @@ export function withDummyData<P extends FlaggedComponentProps>(
 export function validateComponentData(
   componentName: string,
   data: DisplayPortfolioData | null | undefined,
-  requirements: ComponentDataRequirements
+  requirements: ComponentDataRequirements,
+  isLoading?: boolean
 ): {
   isValid: boolean;
   warnings: string[];
@@ -155,11 +157,21 @@ export function validateComponentData(
   const warnings: string[] = [];
   const errors: string[] = [];
 
+  // Skip validation during loading state
+  if (isLoading) {
+    return {
+      isValid: true,
+      warnings: [],
+      errors: [],
+    };
+  }
+
   if (!data) {
     if (requirements.fallbackData) {
       warnings.push(`${componentName}: No data provided, using fallback data`);
     } else {
-      errors.push(
+      // Changed from error to warning - this is informational only
+      warnings.push(
         `${componentName}: No data provided and no fallback available`
       );
     }
@@ -168,8 +180,9 @@ export function validateComponentData(
   // Additional validation could be added here
   // e.g., checking for required fields based on component needs
 
+  // Always return valid - warnings don't block functionality
   return {
-    isValid: errors.length === 0,
+    isValid: true,
     warnings,
     errors,
   };
@@ -181,10 +194,16 @@ export function validateComponentData(
 export function useComponentDataTracking(
   componentName: string,
   data: DisplayPortfolioData | null | undefined,
-  requirements?: ComponentDataRequirements
+  requirements?: ComponentDataRequirements,
+  isLoading?: boolean
 ) {
   if (process.env.NODE_ENV === "development" && requirements) {
-    const validation = validateComponentData(componentName, data, requirements);
+    const validation = validateComponentData(
+      componentName,
+      data,
+      requirements,
+      isLoading
+    );
 
     if (validation.warnings.length > 0) {
       validation.warnings.forEach((warning) => console.warn(warning));

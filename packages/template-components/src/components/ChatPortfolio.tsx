@@ -45,12 +45,17 @@ const ChatPortfolioComponent = ({
   publicToken,
 }: ChatPortfolioProps) => {
   // Track component data usage in development
-  useComponentDataTracking("ChatPortfolio", portfolioData, {
-    requiresExternalData: true,
-    dataSource: "api",
-    description:
-      "Interactive chat-based portfolio requiring portfolio data for dynamic responses and widget content",
-  });
+  useComponentDataTracking(
+    "ChatPortfolio",
+    portfolioData,
+    {
+      requiresExternalData: true,
+      dataSource: "api",
+      description:
+        "Interactive chat-based portfolio requiring portfolio data for dynamic responses and widget content",
+    },
+    isLoading
+  );
 
   const [inlineMax, setInlineMax] = useState(5);
   const [conversationId, setConversationId] = useState<string | undefined>();

@@ -2,6 +2,7 @@
 export * from "./components/ChatPortfolio";
 export * from "./components/TraditionalPortfolio";
 export * from "./components/Portfolio";
+export * from "./components/PortfolioWrapper";
 export * from "./components/PortfolioLayoutContainer";
 export * from "./components/LayoutSwitcher";
 export * from "./components/ThemeToggle";
