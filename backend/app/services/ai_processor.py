@@ -6,7 +6,6 @@ from unstructured PDF text and GitHub repository information using
 Azure AI Inference with cost controls and intelligent text truncation.
 """
 
-import asyncio
 import json
 import logging
 from datetime import datetime
@@ -182,7 +181,9 @@ class AIProcessor:
                 formatted_linkedin = format_linkedin_for_ai(linkedin_text)
                 content_blocks.append(("LinkedIn Profile", formatted_linkedin.strip()))
             except Exception as e:
-                logger.warning(f"Failed to format LinkedIn data: {str(e)}, using raw text")
+                logger.warning(
+                    f"Failed to format LinkedIn data: {str(e)}, using raw text"
+                )
                 content_blocks.append(("LinkedIn Profile", linkedin_text.strip()))
 
         # Build final content within token limits
@@ -287,17 +288,6 @@ class AIProcessor:
                     f"Input still exceeds token limit after truncation: {final_tokens} > {self.max_tokens}"
                 )
 
-            # Create structured response format using extraction schema
-            schema = PortfolioExtractionData.model_json_schema()
-            response_format = {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "portfolio_extraction",
-                    "schema": schema,
-                    "strict": True,
-                },
-            }
-
             # Create messages
             messages = [
                 {"role": "system", "content": PORTFOLIO_EXTRACTION_PROMPT.strip()},
@@ -305,23 +295,33 @@ class AIProcessor:
             ]
 
             # Cache the final prompt for debugging
-            # self._cache_final_prompt(PORTFOLIO_EXTRACTION_PROMPT, input_text)
+            self._cache_final_prompt(PORTFOLIO_EXTRACTION_PROMPT, input_text)
 
-            # Call Azure AI with structured output
-            response = await asyncio.wait_for(
-                self.client.chat.completions.create(
-                    model=self.model_name,
-                    messages=messages,
-                    response_format=response_format,
-                    # temperature=0,
-                    # reasoning_effort="low",
-                ),
-                timeout=self.request_timeout * 3,
+            # Call Azure AI with structured output using .parse()
+            # The .parse() method automatically:
+            # 1. Generates JSON schema from Pydantic model
+            # 2. Adds "additionalProperties": false to all objects (required for strict mode)
+            # 3. Validates and parses the response into the Pydantic model
+            # 4. Handles refusals gracefully
+            completion = await self.client.chat.completions.parse(
+                model=self.model_name,
+                messages=messages,
+                response_format=PortfolioExtractionData,
+                timeout=self.request_timeout,
             )
 
-            # Extract and validate response
-            response_content = response.choices[0].message.content or ""
-            extraction_data = self.validate_extraction_response(response_content)
+            # Extract parsed response
+            message = completion.choices[0].message
+
+            # Check for refusal
+            if message.refusal:
+                logger.error(f"AI refused to respond: {message.refusal}")
+                raise AIProcessingError(f"AI refused to respond: {message.refusal}")
+
+            # Get the parsed extraction data
+            extraction_data = message.parsed
+            if not extraction_data:
+                raise AIProcessingError("No parsed data returned from AI")
 
             # Post-process extraction data to full portfolio data
             processor = get_extraction_processor()
@@ -337,52 +337,14 @@ class AIProcessor:
 
         except TokenLimitExceededError:
             raise
-        except asyncio.TimeoutError as e:
-            logger.error(
-                "AI processing timed out after %.2f seconds", self.request_timeout
-            )
-            raise AIProcessingError(
-                "AI processing timed out. Please try again later."
-            ) from e
         except Exception as e:
             logger.error(f"AI processing failed: {str(e)}")
             raise AIProcessingError(f"AI processing failed: {str(e)}")
 
-    def validate_extraction_response(self, response_content: str) -> PortfolioExtractionData:
-        """
-        Validate AI extraction response and convert to PortfolioExtractionData.
-
-        Args:
-            response_content: JSON response from AI
-
-        Returns:
-            PortfolioExtractionData: Validated extraction data
-
-        Raises:
-            AIProcessingError: If validation fails
-        """
-        try:
-            # Parse JSON response
-            response_dict = json.loads(response_content)
-
-            # Convert to PortfolioExtractionData using Pydantic validation
-            extraction_data = PortfolioExtractionData.model_validate(response_dict)
-
-            # Additional validation
-            if not self.validate_extraction_data(extraction_data):
-                logger.warning("Extraction data validation warnings detected")
-
-            return extraction_data
-
-        except json.JSONDecodeError as e:
-            raise AIProcessingError(f"Invalid JSON response from AI: {str(e)}")
-        except Exception as e:
-            raise AIProcessingError(f"Response validation failed: {str(e)}")
-    
     def validate_response(self, response_content: str) -> PortfolioData:
         """
         Validate AI response and convert to PortfolioData.
-        
+
         DEPRECATED: Use validate_extraction_response instead.
         Kept for backwards compatibility.
 
@@ -445,15 +407,17 @@ class AIProcessor:
 
         # Log warnings
         if warnings:
-            logger.warning(f"Extraction data validation warnings: {', '.join(warnings)}")
+            logger.warning(
+                f"Extraction data validation warnings: {', '.join(warnings)}"
+            )
             return False
 
         return True
-    
+
     def validate_portfolio_data(self, data: PortfolioData) -> bool:
         """
         Validate portfolio data completeness and quality.
-        
+
         DEPRECATED: Use validate_extraction_data instead.
         Kept for backwards compatibility.
 

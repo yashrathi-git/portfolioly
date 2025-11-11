@@ -18,7 +18,7 @@ class ChatConfig:
 
     # AI processing
     CHAT_MODEL_NAME = "gpt-5-mini"  # Azure AI model
-    PROCESSOR_MODEL_NAME = "grok-4-fast-non-reasoning"  # Default model for AIProcessor
+    PROCESSOR_MODEL_NAME = "gpt-5-mini"  # Default model for AIProcessor
     MAX_CONVERSATION_HISTORY = 10  # Number of previous messages to include
     MAX_RESPONSE_TOKENS = 500  # Keep token limit to control Azure response size
 
