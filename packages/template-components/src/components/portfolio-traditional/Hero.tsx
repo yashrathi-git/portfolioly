@@ -45,7 +45,7 @@ export const Hero = ({ profile }: HeroProps) => {
 
   return (
     <>
-      <section id="hero" className="px-6 py-16 sm:py-24">
+      <section id="hero" className="px-6 pt-16 sm:pt-24 pb-10">
         <div className="mx-auto w-full max-w-2xl space-y-8">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row sm:items-start">
             <div className="flex flex-1 flex-col space-y-1.5">
@@ -109,16 +109,18 @@ export const Hero = ({ profile }: HeroProps) => {
       </section>
 
       {summary && (
-        <section id="about" className="px-6 pb-16">
-          <div className="mx-auto w-full max-w-2xl space-y-4">
-            <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.about}>
-              <h2 className="text-xl font-bold">About</h2>
-            </BlurFade>
-            <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.aboutContent}>
-              <Markdown className="prose max-w-full text-pretty font-sans text-sm text-muted-foreground dark:prose-invert">
-                {summary}
-              </Markdown>
-            </BlurFade>
+        <section id="about" className="px-6 pb-12">
+          <div className="mx-auto w-full max-w-2xl">
+            <div className="flex min-h-0 flex-col gap-y-3">
+              <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.about}>
+                <h2 className="text-2xl font-bold">About</h2>
+              </BlurFade>
+              <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.aboutContent}>
+                <Markdown className="prose max-w-full text-pretty font-sans text-base leading-relaxed text-foreground dark:prose-invert prose-p:text-foreground prose-p:leading-relaxed prose-li:text-foreground">
+                  {summary}
+                </Markdown>
+              </BlurFade>
+            </div>
           </div>
         </section>
       )}

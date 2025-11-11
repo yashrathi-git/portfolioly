@@ -358,14 +358,14 @@ function TraditionalProjectCard({
           }
         >
           <div className="space-y-2">
-            <CardTitle className="text-lg font-semibold leading-tight">
+            <CardTitle className="text-base sm:text-lg font-semibold leading-tight">
               {project.name}
             </CardTitle>
             {description && (
               <div className="pt-1">
                 <MarkdownContent
                   content={description}
-                  className="prose max-w-full text-pretty font-sans text-sm text-muted-foreground dark:prose-invert"
+                  className="prose max-w-full text-pretty font-sans text-sm text-foreground dark:prose-invert prose-p:text-foreground prose-li:text-foreground"
                 />
               </div>
             )}
@@ -546,7 +546,7 @@ export const ProjectsSection = ({
   if (variant === "traditional") {
     return (
       <>
-        <section id="projects" className={cn("px-6 pb-16", className)}>
+        <section id="projects" className={cn("px-6 pb-12", className)}>
           <div className="mx-auto w-full max-w-2xl space-y-12">
             <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.projects}>
               <div className="flex flex-col items-center justify-center space-y-4 text-center">
@@ -557,7 +557,7 @@ export const ProjectsSection = ({
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
                     Check out my latest work
                   </h2>
-                  <p className="text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  <p className="text-foreground/80 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                     I&apos;ve worked on a variety of projects, from simple
                     websites to complex web applications. Here are a few of my
                     favorites.

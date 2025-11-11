@@ -103,7 +103,7 @@ const TraditionalPortfolioComponent = ({
           <Education items={effectiveData.education} />
         )}
         {effectiveData.skills && effectiveData.skills.length > 0 && (
-          <div className="px-6 pb-16">
+          <div className="px-6 pb-12">
             <div className="mx-auto w-full max-w-2xl">
               <Skills items={effectiveData.skills} />
             </div>
@@ -116,39 +116,43 @@ const TraditionalPortfolioComponent = ({
 
         {effectiveData.achievements &&
           effectiveData.achievements.length > 0 && (
-            <section id="achievements" className="px-6 pb-16">
-              <div className="mx-auto w-full max-w-2xl space-y-4">
-                <BlurFade delay={BLUR_FADE_DELAY * 11}>
-                  <h2 className="text-xl font-bold">Achievements</h2>
-                </BlurFade>
-                <BlurFade delay={BLUR_FADE_DELAY * 12}>
-                  <Markdown className="prose prose-sm max-w-full text-pretty font-sans text-muted-foreground dark:prose-invert prose-ul:list-disc prose-ul:pl-5 prose-li:text-muted-foreground">
-                    {effectiveData.achievements.join("\n")}
-                  </Markdown>
-                </BlurFade>
+            <section id="achievements" className="px-6 pb-12">
+              <div className="mx-auto w-full max-w-2xl">
+                <div className="flex min-h-0 flex-col gap-y-3">
+                  <BlurFade delay={BLUR_FADE_DELAY * 11}>
+                    <h2 className="text-2xl font-bold">Achievements</h2>
+                  </BlurFade>
+                  <BlurFade delay={BLUR_FADE_DELAY * 12}>
+                    <Markdown className="prose max-w-full text-pretty font-sans text-base leading-relaxed text-foreground dark:prose-invert prose-ul:list-disc prose-ul:pl-5 prose-li:text-foreground prose-p:text-foreground">
+                      {effectiveData.achievements.join("\n")}
+                    </Markdown>
+                  </BlurFade>
+                </div>
               </div>
             </section>
           )}
 
         {effectiveData.certificates &&
           effectiveData.certificates.length > 0 && (
-            <section id="certificates" className="px-6 pb-16">
-              <div className="mx-auto w-full max-w-2xl space-y-4">
-                <BlurFade delay={BLUR_FADE_DELAY * 13}>
-                  <h2 className="text-xl font-bold">Certificates</h2>
-                </BlurFade>
-                <BlurFade delay={BLUR_FADE_DELAY * 14}>
-                  <ul className="grid gap-3 sm:grid-cols-2">
-                    {effectiveData.certificates.map((c, idx) => (
-                      <li
-                        key={`${c}-${idx}`}
-                        className="rounded-lg border border-border bg-card px-4 py-3 text-sm"
-                      >
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                </BlurFade>
+            <section id="certificates" className="px-6 pb-12">
+              <div className="mx-auto w-full max-w-2xl">
+                <div className="flex min-h-0 flex-col gap-y-3">
+                  <BlurFade delay={BLUR_FADE_DELAY * 13}>
+                    <h2 className="text-2xl font-bold">Certificates</h2>
+                  </BlurFade>
+                  <BlurFade delay={BLUR_FADE_DELAY * 14}>
+                    <ul className="grid gap-3 sm:grid-cols-2">
+                      {effectiveData.certificates.map((c, idx) => (
+                        <li
+                          key={`${c}-${idx}`}
+                          className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground"
+                        >
+                          {c}
+                        </li>
+                      ))}
+                    </ul>
+                  </BlurFade>
+                </div>
               </div>
             </section>
           )}

@@ -70,11 +70,11 @@ export function EducationSection({
   // Traditional variant - full section layout
   if (variant === "traditional") {
     return (
-      <section id="education" className={cn("px-6 pb-16", className)}>
+      <section id="education" className={cn("px-6 pb-12", className)}>
         <div className="mx-auto w-full max-w-2xl space-y-4">
           <div className="flex min-h-0 flex-col gap-y-3">
             <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.education}>
-              <h2 className="text-xl font-bold">{heading}</h2>
+              <h2 className="text-2xl font-bold">{heading}</h2>
             </BlurFade>
             {visibleItems.map((education, idx) => (
               <BlurFade
