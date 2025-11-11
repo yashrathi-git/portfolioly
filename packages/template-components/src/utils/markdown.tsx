@@ -20,13 +20,7 @@ const defaultOverrides = {
       className,
       ...props
     }: React.HTMLAttributes<HTMLParagraphElement>) => (
-      <p
-        {...props}
-        className={cn(
-          "m-0 text-sm leading-relaxed text-muted-foreground",
-          className
-        )}
-      />
+      <p {...props} className={cn("m-0 text-sm leading-relaxed", className)} />
     ),
   },
   ul: {
@@ -37,7 +31,7 @@ const defaultOverrides = {
       <ul
         {...props}
         className={cn(
-          "ml-5 list-disc space-y-2 text-sm leading-relaxed text-muted-foreground",
+          "ml-5 list-disc space-y-2 text-sm leading-relaxed",
           className
         )}
       />
@@ -51,7 +45,7 @@ const defaultOverrides = {
       <ol
         {...props}
         className={cn(
-          "ml-5 list-decimal space-y-2 text-sm leading-relaxed text-muted-foreground",
+          "ml-5 list-decimal space-y-2 text-sm leading-relaxed",
           className
         )}
       />
@@ -62,13 +56,7 @@ const defaultOverrides = {
       className,
       ...props
     }: React.HTMLAttributes<HTMLLIElement>) => (
-      <li
-        {...props}
-        className={cn(
-          "text-sm leading-relaxed text-muted-foreground",
-          className
-        )}
-      />
+      <li {...props} className={cn("text-sm leading-relaxed", className)} />
     ),
   },
   strong: {
@@ -253,7 +241,7 @@ function normalizeContent(
 
 export function MarkdownContent({
   content,
-  className,
+  className = "",
   overrides,
 }: MarkdownContentProps) {
   const normalized = normalizeContent(content);
@@ -262,12 +250,82 @@ export function MarkdownContent({
     return null;
   }
 
+  // Extract text color from className if present, otherwise default to muted
+  const textColorClass =
+    className.split(" ").find((c) => c.startsWith("text-")) ||
+    "text-muted-foreground";
+
+  // Create color-aware overrides by merging with defaults
+  const colorAwareOverrides = {
+    ...defaultOverrides,
+    p: {
+      component: ({
+        className: elemClassName,
+        ...props
+      }: React.HTMLAttributes<HTMLParagraphElement>) => (
+        <p
+          {...props}
+          className={cn(
+            "m-0 text-sm leading-relaxed",
+            textColorClass,
+            elemClassName
+          )}
+        />
+      ),
+    },
+    ul: {
+      component: ({
+        className: elemClassName,
+        ...props
+      }: React.HTMLAttributes<HTMLUListElement>) => (
+        <ul
+          {...props}
+          className={cn(
+            "ml-5 list-disc space-y-2 text-sm leading-relaxed",
+            textColorClass,
+            elemClassName
+          )}
+        />
+      ),
+    },
+    ol: {
+      component: ({
+        className: elemClassName,
+        ...props
+      }: React.HTMLAttributes<HTMLOListElement>) => (
+        <ol
+          {...props}
+          className={cn(
+            "ml-5 list-decimal space-y-2 text-sm leading-relaxed",
+            textColorClass,
+            elemClassName
+          )}
+        />
+      ),
+    },
+    li: {
+      component: ({
+        className: elemClassName,
+        ...props
+      }: React.HTMLAttributes<HTMLLIElement>) => (
+        <li
+          {...props}
+          className={cn(
+            "text-sm leading-relaxed",
+            textColorClass,
+            elemClassName
+          )}
+        />
+      ),
+    },
+  };
+
   return (
     <Markdown
       className={cn("space-y-2", className)}
       options={{
         overrides: {
-          ...defaultOverrides,
+          ...colorAwareOverrides,
           ...overrides,
         },
         forceBlock: false,
