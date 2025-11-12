@@ -45,20 +45,25 @@ class TestAccessControl:
     """Test access control for public/private portfolios."""
 
     def test_public_portfolio_access_allowed(self, mock_verified_user):
-        """Test that public portfolios are accessible via public API."""
+        """Test that public portfolios are accessible via public API with valid token."""
         username = "publicuser"
 
         with patch(
             "app.routes.utils.auth_helpers.get_user_settings_by_username"
         ) as mock_get_settings, patch(
             "app.routes.public_portfolio.get_portfolio_service"
-        ) as mock_get_portfolio_service:
+        ) as mock_get_portfolio_service, patch(
+            "app.routes.utils.auth_helpers.verify_public_token"
+        ) as mock_verify_token:
 
             mock_get_settings.return_value = {
                 "user_id": "user123",
                 "username": username,
                 "chat_settings": {"access_mode": "public"},
             }
+
+            # Mock valid public token
+            mock_verify_token.return_value = True
 
             mock_portfolio_data = {
                 "personal_info": {
@@ -70,7 +75,11 @@ class TestAccessControl:
             mock_portfolio_service.get_portfolio_data.return_value = mock_portfolio_data
             mock_get_portfolio_service.return_value = mock_portfolio_service
 
-            response = client.get(f"/public/portfolio/{username}")
+            # Provide valid public token in Authorization header
+            response = client.get(
+                f"/public/portfolio/{username}",
+                headers={"Authorization": "Bearer psk_validtoken123"},
+            )
 
             assert response.status_code == 200
             data = response.json()
@@ -78,7 +87,7 @@ class TestAccessControl:
             assert data["personal_info"]["headline"] == "Software Engineer"
 
     def test_private_portfolio_access_denied(self, mock_verified_user):
-        """Test that private portfolios return 404 via public API."""
+        """Test that accessing portfolios without authentication returns 401."""
         username = "privateuser"
 
         with patch(
@@ -91,10 +100,11 @@ class TestAccessControl:
                 "chat_settings": {"access_mode": "private"},
             }
 
+            # No authentication token provided - should return 401
             response = client.get(f"/public/portfolio/{username}")
 
-            assert response.status_code == 404
-            assert "not found" in response.json()["detail"].lower()
+            assert response.status_code == 401
+            assert "authentication required" in response.json()["detail"].lower()
 
     def test_nonexistent_username_access_denied(self, mock_verified_user):
         """Test that non-existent usernames return 404."""

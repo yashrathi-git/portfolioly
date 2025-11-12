@@ -37,21 +37,24 @@ router = APIRouter(prefix="/public", tags=["public-portfolio"])
 def get_public_portfolio(
     username: str = Path(..., description="Username of the portfolio to retrieve"),
     authorization: Optional[str] = Header(
-        None, description="Public token for authentication"
+        None, description="Firebase JWT or Public token for authentication"
     ),
 ):
     """
     Get a public portfolio by username.
 
-    Authentication: Public token only (psk_xxx...)
-    - Requires valid public token in Authorization header
-    - Token must match the username
+    Authentication: Required (Firebase JWT OR Public Token)
+    - Owner with Firebase JWT: Can access their own portfolio (even if private)
+    - Public token: Can access public portfolios only
+    - Non-owner with Firebase JWT: Cannot access (401)
 
     Returns 401 if token is missing or invalid.
-    Returns 404 if portfolio doesn't exist.
+    Returns 404 if portfolio doesn't exist or is private.
     """
     try:
-        # Require token - no public requirement check
+        # Validate authentication and authorization
+        # This handles: authentication check, ownership verification
+        # If valid PSK token or owner with Firebase JWT, grant access
         user_settings, firebase_user = validate_portfolio_access(
             username=username, authorization=authorization, require_public=False
         )
@@ -61,19 +64,6 @@ def get_public_portfolio(
         if not user_id:
             logger.error(f"No user_id found for username '{username}'")
             raise HTTPException(status_code=404, detail="Portfolio not found")
-
-        # Enforce access_mode gating when no Firebase auth was present
-        if not firebase_user:
-            chat_settings = user_settings.get("chat_settings") or {}
-            access_mode = chat_settings.get("access_mode", "private")
-
-            if access_mode != "public":
-                logger.info(
-                    "Portfolio for username '%s' is private (access_mode=%s)",
-                    username,
-                    access_mode,
-                )
-                raise HTTPException(status_code=404, detail="Portfolio not found")
 
         # Fetch the portfolio data
         portfolio_service = get_portfolio_service()
@@ -183,13 +173,13 @@ def ensure_token(
     Generate a public token for a username.
 
     Authentication rules:
-    - With valid Firebase JWT: Always returns token (owner access, regardless of access_mode)
-    - Without Firebase JWT: Returns token only if chat_settings.access_mode is "public"
+    - With valid Firebase JWT AND user owns username: Returns token (owner access)
+    - Without Firebase JWT OR user doesn't own username: Returns token only if access_mode is "public"
 
     Returns 404 if:
     - Username doesn't exist
     - Token generation disabled (public_token_enabled == false)
-    - Portfolio access_mode is "private" AND no valid Firebase JWT provided
+    - Portfolio access_mode is "private" AND user is not the owner
 
     Returns:
         EnsureTokenResponse with the generated token in format "psk_xxx..."
@@ -207,26 +197,35 @@ def ensure_token(
             logger.info(f"Token generation disabled for username '{request.username}'")
             raise HTTPException(status_code=404, detail="Portfolio not found")
 
-        # Check authentication
+        # Check authentication and ownership
         token = extract_bearer_token(authorization)
-        has_firebase_auth = False
+        is_owner = False
 
         if token:
             firebase_user = verify_firebase_jwt(token)
             if firebase_user:
-                has_firebase_auth = True
-                logger.info(
-                    f"Firebase JWT verified for token generation (owner access): {request.username}"
-                )
+                # SECURITY: Verify ownership
+                portfolio_owner_id = user_settings.get("user_id")
 
-        # If no Firebase auth, check access_mode in chat_settings
-        if not has_firebase_auth:
+                if portfolio_owner_id == firebase_user.uid:
+                    # User owns this username - grant owner access
+                    is_owner = True
+                    logger.info(
+                        f"Firebase JWT verified for token generation (owner access): {request.username}"
+                    )
+                else:
+                    logger.debug(
+                        f"Firebase JWT valid but user {firebase_user.uid} doesn't own username '{request.username}'"
+                    )
+
+        # If not owner, check if portfolio is public
+        if not is_owner:
             chat_settings = user_settings.get("chat_settings", {})
             access_mode = chat_settings.get("access_mode", "private")
 
             if access_mode != "public":
                 logger.info(
-                    f"Portfolio for username '{request.username}' has access_mode '{access_mode}' and no Firebase auth provided"
+                    f"Portfolio for username '{request.username}' has access_mode '{access_mode}' and user is not owner"
                 )
                 raise HTTPException(status_code=404, detail="Portfolio not found")
 
@@ -237,12 +236,14 @@ def ensure_token(
         # Generate the token
         token_version = user_settings.get("public_token_ver", 1)
         token_service = get_public_token_service()
-        token = token_service.derive_public_token(request.username, token_version)
+        generated_token = token_service.derive_public_token(
+            request.username, token_version
+        )
 
         logger.info(
             f"Generated token for username '{request.username}' with version {token_version}"
         )
-        return EnsureTokenResponse(token=token)
+        return EnsureTokenResponse(token=generated_token)
 
     except HTTPException:
         raise

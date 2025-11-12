@@ -110,19 +110,20 @@ def validate_portfolio_access(
     Validate access to a portfolio with flexible authentication.
 
     This function handles both Firebase JWT and public token authentication.
+    Authentication is ALWAYS required - anonymous access is not permitted.
 
     Args:
         username: Portfolio username
         authorization: Optional Authorization header
-        require_public: If True, portfolio must be public when no valid Firebase JWT
+        require_public: If True, portfolio must be public when using public token
 
     Returns:
         Tuple of (user_settings, firebase_user)
         - user_settings: User settings dict
-        - firebase_user: UserToken if Firebase JWT was valid, None otherwise
+        - firebase_user: UserToken if Firebase JWT was valid and user is owner, None otherwise
 
     Raises:
-        HTTPException: 401 for invalid tokens, 404 for missing/private portfolios
+        HTTPException: 401 for missing/invalid tokens, 404 for missing/private portfolios
     """
     # Get user settings
     user_settings = get_user_settings_by_username(username)
@@ -133,27 +134,44 @@ def validate_portfolio_access(
 
     # Extract token from authorization header
     token = extract_bearer_token(authorization)
+
+    # SECURITY: Always require authentication
+    if not token:
+        logger.warning(f"No authentication token provided for username '{username}'")
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     firebase_user = None
 
-    if token:
-        # Try Firebase JWT first
-        firebase_user = verify_firebase_jwt(token)
+    # Try Firebase JWT first
+    firebase_user = verify_firebase_jwt(token)
 
-        if firebase_user:
-            logger.info(f"Firebase JWT verified for username '{username}'")
-            # Firebase JWT is valid - grant access regardless of public status
+    if firebase_user:
+        # SECURITY: Verify ownership - user must own this username
+        portfolio_owner_id = user_settings.get("user_id")
+
+        if portfolio_owner_id == firebase_user.uid:
+            # Owner access - always allowed regardless of public/private status
+            logger.info(
+                f"Firebase JWT verified for username '{username}' (owner access)"
+            )
             return user_settings, firebase_user
+        else:
+            # Valid JWT but not the owner - treat as unauthenticated
+            logger.debug(
+                f"Firebase JWT valid but user {firebase_user.uid} doesn't own username '{username}' (owner: {portfolio_owner_id})"
+            )
+            firebase_user = None
 
-        # Not a valid Firebase JWT, try public token
-        is_valid_public_token = verify_public_token(username, token)
+    # Not owner with Firebase JWT, try public token
+    is_valid_public_token = verify_public_token(username, token)
 
-        if not is_valid_public_token:
-            logger.warning(f"Invalid token provided for username '{username}'")
-            raise HTTPException(status_code=401, detail="Invalid token")
+    if not is_valid_public_token:
+        logger.warning(f"Invalid token provided for username '{username}'")
+        raise HTTPException(status_code=401, detail="Invalid token")
 
-        logger.info(f"Public token verified for username '{username}'")
+    logger.info(f"Public token verified for username '{username}'")
 
-    # No valid Firebase JWT - check if portfolio is public (if required)
+    # Valid public token - check if portfolio is public (if required)
     if require_public:
         chat_settings = user_settings.get("chat_settings") or {}
         access_mode = chat_settings.get("access_mode", "private")
