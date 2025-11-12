@@ -109,6 +109,7 @@ function getFirstLine(highlights?: string | null): string | undefined {
 export function mapProject(project: Project): DisplayProject {
   return {
     name: project.name ?? undefined,
+    cardImageUrl: project.card_image_url ?? undefined,
     one_line_description: getFirstLine(project.highlights ?? undefined),
     highlights: project.highlights ?? undefined,
     technologies: project.technologies,

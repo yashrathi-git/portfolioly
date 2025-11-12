@@ -54,6 +54,8 @@ export interface DisplayPortfolioProfile {
  */
 export interface DisplayProject {
   name?: string;
+  /** Card image URL for project thumbnail (supports static images and GIFs) */
+  cardImageUrl?: string;
   /** First line extracted from highlights for quick display */
   one_line_description?: string;
   /** Full markdown highlights */

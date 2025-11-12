@@ -337,25 +337,26 @@ function TraditionalProjectCard({
     });
   }
 
+  // Prioritize card_image_url over first project image
+  const displayImageUrl = project.cardImageUrl || project.images?.[0]?.url;
+
   return (
     <BlurFade
       key={project.name || `project-${index}`}
       delay={BLUR_FADE_DELAY * SECTION_DELAYS.projects + index * 0.05}
     >
       <Card className="flex flex-col overflow-hidden border hover:shadow-lg hover:shadow-foreground/5 hover:border-foreground/30 hover:scale-[1.02] hover:bg-accent/50 transition-all duration-300 ease-out h-full group">
-        {project.images?.[0]?.url && (
+        {displayImageUrl && (
           <div className="block cursor-pointer">
             <img
-              src={project.images[0].url}
+              src={displayImageUrl}
               alt={project.name || "Project"}
               className="h-40 w-full overflow-hidden object-cover object-top"
             />
           </div>
         )}
         <CardHeader
-          className={
-            project.images?.[0]?.url ? "px-4 pt-4 pb-3" : "px-4 pt-6 pb-3"
-          }
+          className={displayImageUrl ? "px-4 pt-4 pb-3" : "px-4 pt-6 pb-3"}
         >
           <div className="space-y-2">
             <CardTitle className="text-base sm:text-lg font-semibold leading-tight">
