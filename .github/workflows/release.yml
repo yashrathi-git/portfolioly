@@ -36,8 +36,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Build packages
-        run: yarn workspaces foreach -At run build
+      - name: Build publishable packages only
+        run: |
+          yarn workspace portfolioly-schema build
+          yarn workspace portfolioly-template-components build
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
