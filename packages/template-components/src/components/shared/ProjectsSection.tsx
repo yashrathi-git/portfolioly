@@ -1,6 +1,6 @@
 "use client";
 
-import type { DisplayProject } from "@portfolioly/schema";
+import type { DisplayProject } from "portfolioly-schema";
 import { Github, ExternalLink, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Badge } from "../ui/badge";

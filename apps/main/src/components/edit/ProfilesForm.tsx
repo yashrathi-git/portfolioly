@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { PersonalInfo, Profile, ProfileType } from "@portfolioly/schema";
+import type { PersonalInfo, Profile, ProfileType } from "portfolioly-schema";
 
 export interface ProfilesFormProps {
   value: PersonalInfo;

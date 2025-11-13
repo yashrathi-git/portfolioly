@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 import {
   getUserPortfolio,
   saveUserPortfolio,
@@ -25,7 +25,7 @@ import {
 } from "@/lib/api/portfolio";
 import { doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { getFirestoreDb } from "@/lib/firebase";
-import { validatePortfolioDataSafe } from "@portfolioly/schema";
+import { validatePortfolioDataSafe } from "portfolioly-schema";
 
 type SnapshotPortfolio = Record<string, unknown> & {
   work_experiences?: Array<Record<string, unknown> | null | undefined>;

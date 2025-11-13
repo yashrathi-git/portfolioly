@@ -1,7 +1,7 @@
 {
-  "name": "@portfolioly/template-components",
-  "private": true,
-  "version": "0.0.0",
+  "name": "portfolioly-template-components",
+  "version": "0.1.0",
+  "description": "Reusable portfolio components for Portfolioly templates",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -36,9 +36,25 @@
   },
   "files": [
     "dist",
-    "styles.css"
+    "styles.css",
+    "README.md"
   ],
   "style": "dist/style.css",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yashrathi-git/portfolioly.git",
+    "directory": "packages/template-components"
+  },
+  "keywords": [
+    "portfolio",
+    "react",
+    "components",
+    "nextjs",
+    "template"
+  ],
   "peerDependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-icons": "^1.3.2",
@@ -51,11 +67,11 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^1.0.26",
-    "@portfolioly/schema": "workspace:*",
     "ai": "^4.1.8",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
     "markdown-to-jsx": "^7.7.14",
+    "portfolioly-schema": "^0.1.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {

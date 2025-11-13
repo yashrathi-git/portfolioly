@@ -6,7 +6,7 @@ import {
 } from "../../components/ui/avatar";
 import BlurFade from "../magicui/blur-fade";
 import BlurFadeText from "../magicui/blur-fade-text";
-import type { DisplayPortfolioProfile } from "@portfolioly/schema";
+import type { DisplayPortfolioProfile } from "portfolioly-schema";
 import { SocialIcon } from "./SocialIcon";
 import {
   BLUR_FADE_DELAY,

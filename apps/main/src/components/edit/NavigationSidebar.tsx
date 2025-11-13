@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 import { cn } from "@/lib/utils";
 
 export interface NavigationSection {

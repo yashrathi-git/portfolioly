@@ -19,6 +19,6 @@ export type {
   DisplayWorkExperience,
   SocialLink,
   SocialType,
-} from "@portfolioly/schema";
+} from "portfolioly-schema";
 export * from "./config/portfolio-config";
 export { cn } from "./lib/utils";

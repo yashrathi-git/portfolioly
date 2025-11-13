@@ -3,8 +3,8 @@
 import {
   TemplateProvider,
   PortfolioWrapper,
-} from "@portfolioly/template-components";
-import "@portfolioly/template-components/style.css";
+} from "portfolioly-template-components";
+import "portfolioly-template-components/style.css";
 import { getUsername, getAPIBaseURL, getPublicToken } from "@/lib/env";
 
 export default function Home() {

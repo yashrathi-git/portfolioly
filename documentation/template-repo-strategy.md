@@ -1,141 +1,165 @@
-# Separate Template Repository Strategy
+# One‑Click Deploy with a Minimal Template Repo (NPM‑first, Dual‑mode Dev)
 
-## Single-Path Strategy (Git Subtree Auto-Sync)
+This document is the single source of truth for:
 
-**Two Repos:**
+- Developing the template app inside the monorepo with zero friction
+- Publishing reusable packages to npm
+- Auto‑syncing a separate, minimal template GitHub repo for Vercel’s Deploy Button
+- Generating a correct Deploy Button URL with prefilled env vars
 
-1. **Main Monorepo** (portfolioly) - Development happens here
-2. **Template Repo** (portfolioly-template) - Auto-synced via git subtree
+Goals:
 
-**Flow:**
+- Keep your original repo out of user clones (no lost history/attribution)
+- Keep the template repo minimal; rely on published packages
+- Follow best practices with minimal ongoing effort
 
-```
-Monorepo (Development)
-  └── apps/template/
-      ├── src/
-      ├── lib/         ← Gitignored in monorepo
-      │   ├── schema/  ← Built packages (auto-generated)
-      │   └── components/
-      └── package.json (uses file:./lib/...)
+## Architecture
 
-Git subtree split → Template Repo (includes lib/)
-                    └── Vercel deploys ✓
-```
+Two repos, one codebase:
 
-**Key Concept:**
+1. Main monorepo (development happens here)
+2. Separate template repo (auto‑synced; minimal Next.js app)
 
-- `lib/` is gitignored in monorepo (never committed)
-- CI builds packages into `lib/` temporarily
-- Git subtree pushes `apps/template/` (including `lib/`) to template repo
-- Template repo is a clean, standalone Next.js app
-
-## Template Repo Structure (Auto-Generated)
+Key idea: The template app depends on `@portfolioly/*` packages published to npm using normal semver ranges. In the monorepo, Yarn workspaces link to local sources automatically when versions satisfy the range; in the separate template repo, they resolve from npm. No toggle scripts needed.
 
 ```
-portfolioly-template/          # Root is apps/template/
-├── src/                       # Template app source
-├── lib/                       # Bundled packages (pre-built)
-│   ├── schema/
-│   │   ├── index.mjs
-│   │   ├── index.d.ts
-│   │   └── package.json
-│   └── components/
-│       ├── index.mjs
-│       ├── index.d.ts
-│       ├── style.css
-│       └── package.json
-├── package.json               # Uses file:./lib/...
-├── next.config.ts
-└── .env.example
+Monorepo
+  apps/template/                # Next.js app (dev target)
+  packages/schema               # @portfolioly/schema (published)
+  packages/template-components  # @portfolioly/template-components (published)
+
+Git subtree split → portfolioly-template (separate repo)
+  └── a minimal Next.js app that depends on npm @portfolioly/* packages
 ```
 
-## Setup (One-Time)
+## Package Publishing (npm)
 
-### 1) Make template app dual-mode (workspace for dev, bundled for deploy)
+We publish `@portfolioly/schema` and `@portfolioly/template-components` to npm.
 
-**Update `apps/template/package.json`:**
+1. Ensure each package builds to a portable `dist/`:
 
-Add a script to toggle dependencies for standalone deploy:
+Example `packages/template-components/package.json`:
 
 ```json
 {
-  "name": "template",
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "prepare-standalone": "node scripts/prepare-standalone.js"
+  "name": "@portfolioly/template-components",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
   },
-  "dependencies": {
-    "@portfolioly/schema": "workspace:*",
-    "@portfolioly/template-components": "workspace:*"
+  "files": ["dist", "package.json", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup src/index.tsx --dts --format cjs,esm --sourcemap"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
 ```
 
-**Create `apps/template/scripts/prepare-standalone.js`:**
+Do similar for `@portfolioly/schema` (use `tsc` or `tsup` to emit `.d.ts` + JS).
 
-```javascript
-const fs = require("fs");
-const path = require("path");
-
-// Read current package.json
-const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-
-// Replace workspace dependencies with local file paths
-pkg.dependencies["@portfolioly/schema"] = "file:./lib/schema";
-pkg.dependencies["@portfolioly/template-components"] = "file:./lib/components";
-
-// Write updated package.json
-fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
-
-console.log("✅ Converted to standalone mode");
-```
-
-**Add `apps/template/.gitignore`:**
-
-```
-lib/
-```
-
-This ensures `lib/` is never committed in the monorepo.
-
-### 2) Build libs into the template (CI-only)
-
-**Create `scripts/build-template-libs.sh`:**
+2. Monorepo release flow with Changesets:
 
 ```bash
-#!/bin/bash
-set -e
-
-TEMPLATE_DIR="apps/template"
-
-echo "🔧 Building packages..."
-yarn workspace @portfolioly/schema build
-yarn workspace @portfolioly/template-components build
-
-echo "📦 Bundling into template/lib..."
-rm -rf "$TEMPLATE_DIR/lib"
-mkdir -p "$TEMPLATE_DIR/lib/schema"
-mkdir -p "$TEMPLATE_DIR/lib/components"
-
-# Copy built packages
-cp -r packages/schema/dist/* "$TEMPLATE_DIR/lib/schema/"
-cp packages/schema/package.json "$TEMPLATE_DIR/lib/schema/"
-
-cp -r packages/template-components/dist/* "$TEMPLATE_DIR/lib/components/"
-cp packages/template-components/package.json "$TEMPLATE_DIR/lib/components/"
-cp packages/template-components/styles.css "$TEMPLATE_DIR/lib/components/"
-
-echo "✅ Libraries bundled to $TEMPLATE_DIR/lib"
+yarn add -D @changesets/cli
+yarn changeset init
 ```
+
+Create a release when package changes occur:
 
 ```bash
-chmod +x scripts/build-template-libs.sh
+yarn changeset   # choose packages and bump types
+yarn changeset version
+yarn install     # updates lockfile with new versions
 ```
 
-### 3) Auto-sync with git subtree (CI)
+3. GitHub Action to publish to npm (once you have NPM_TOKEN):
 
-**Create `.github/workflows/sync-template.yml`:**
+`.github/workflows/release.yml`:
+
+```yaml
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install
+        run: yarn install --immutable
+      - name: Build
+        run: yarn workspaces foreach -A run build
+      - name: Create versions from changesets
+        run: yarn changeset version
+      - name: Reinstall after version bump
+        run: yarn install --immutable
+      - name: Publish
+        run: yarn workspaces foreach -A npm publish --tolerate-republish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+Notes:
+
+- Use semver ranges in dependents (e.g. `^0.1.0`).
+- Yarn in the monorepo links local workspaces when versions match. Outside, npm registry is used.
+
+## Template App (dual‑mode with zero toggles)
+
+Set normal semver dependencies in `apps/template/package.json`:
+
+```json
+{
+  "name": "template",
+  "private": false,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start -p 3000"
+  },
+  "dependencies": {
+    "@portfolioly/schema": "^0.1.0",
+    "@portfolioly/template-components": "^0.1.0",
+    "next": "15.x",
+    "react": "18.x",
+    "react-dom": "18.x"
+  }
+}
+```
+
+Why this works:
+
+- In the monorepo: Yarn links to `packages/*` automatically (versions satisfy `^0.1.0`).
+- In the separate template repo: dependencies resolve from npm (no workspaces needed).
+
+## Auto‑Sync a Separate Template Repository (git subtree)
+
+Keep `portfolioly-template` minimal. We push only `apps/template/` to it—no local bundling required because dependencies come from npm.
+
+Create `.github/workflows/sync-template.yml` in the monorepo:
 
 ```yaml
 name: Sync Template Repository
@@ -160,182 +184,91 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.TEMPLATE_REPO_TOKEN }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: Build packages into template/lib
-        run: ./scripts/build-template-libs.sh
-
-      - name: Prepare standalone package.json
-        run: |
-          cd apps/template
-          node scripts/prepare-standalone.js
-
-      - name: Create deployment commit
-        run: |
-          cd apps/template
-          git add -f lib/ package.json
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git commit -m "Add bundled dependencies for deployment" || true
-
-      - name: Push to template repo using subtree
+      - name: Push apps/template to separate repo via subtree
         run: |
           git remote add template-repo https://x-access-token:${{ secrets.TEMPLATE_REPO_TOKEN }}@github.com/yashrathi-git/portfolioly-template.git || true
           git subtree split --prefix apps/template -b template-deploy
           git push template-repo template-deploy:main --force
-
-      - name: Cleanup
-        run: |
-          git reset --hard HEAD~1
           git branch -D template-deploy || true
 ```
 
-**What CI does:**
-
-1. Builds packages into `apps/template/lib/`
-2. Updates `package.json` to use `file:./lib/...`
-3. Creates a temporary commit with lib/ included
-4. Uses git subtree to push ONLY `apps/template/` to the template repo
-5. Cleans up temporary changes
-
-### 4) Create Template Repository (once)
+One‑time setup:
 
 ```bash
-# Create empty repo on GitHub
 gh repo create portfolioly-template --public
-
-# First sync will populate it
-# Trigger manually or push to main branch
+# Add TEMPLATE_REPO_TOKEN (repo scope) in the monorepo GitHub secrets
 ```
 
-### 5) Configure Secret (once)
+Template repo structure (auto‑generated by subtree):
 
-GitHub Settings → Secrets → Actions:
-
-- Add `TEMPLATE_REPO_TOKEN` with `repo` scope
-
-## Development & Deployment (Single Way)
-
-### You do only this:
-
-```bash
-# 1) Develop in monorepo (workspace deps)
-yarn dev:template   # or: yarn workspace template dev
-
-# 2) Commit & push to main
-git push            # CI builds & syncs template repo via subtree ✓
+```
+portfolioly-template/
+├── src/
+├── public/
+├── package.json            # semver deps on @portfolioly/*
+├── next.config.ts
+└── .env.example
 ```
 
-Notes:
+## Deploy Button Integration (point to the template repo)
 
-- `lib/` is CI-generated; you never touch it locally
-- Workspace development stays fast and simple
+Use Vercel’s documented env prefill syntax `env[NAME]` (not `envDefaults`).
 
-## Deploy Button Integration
-
-**In Main App (PortfolioPreview.tsx):**
+Example (`apps/main/.../DeployButton.tsx`):
 
 ```tsx
 const deployUrl = new URL("https://vercel.com/new/clone");
 deployUrl.searchParams.set(
   "repository-url",
-  "https://github.com/yashrathi-git/portfolioly-template" // ← Template repo
+  "https://github.com/yashrathi-git/portfolioly-template"
 );
-deployUrl.searchParams.set("project-name", "my-portfolio");
+deployUrl.searchParams.set("project-name", `${username || "my"}-portfolio`);
+deployUrl.searchParams.set("repository-name", `${username || "my"}-portfolio`);
 deployUrl.searchParams.set(
   "env",
-  "NEXT_PUBLIC_API_BASE_URL,NEXT_PUBLIC_PUBLIC_TOKEN"
+  "NEXT_PUBLIC_USERNAME,NEXT_PUBLIC_PSK_TOKEN,NEXT_PUBLIC_API_BASE_URL"
 );
-deployUrl.searchParams.set("envDescription", "Portfolio configuration");
-
-// Pre-fill values
-const envObject = {
-  NEXT_PUBLIC_API_BASE_URL: "https://api.portfolioly.com",
-  NEXT_PUBLIC_PUBLIC_TOKEN: userPublicToken,
-};
-deployUrl.searchParams.set("envDefaults", JSON.stringify(envObject));
+if (username) deployUrl.searchParams.set("env[NEXT_PUBLIC_USERNAME]", username);
+if (publicToken)
+  deployUrl.searchParams.set("env[NEXT_PUBLIC_PSK_TOKEN]", publicToken);
+deployUrl.searchParams.set("env[NEXT_PUBLIC_API_BASE_URL]", apiBaseUrl);
 ```
 
-**User Experience:**
-
-1. Click "Deploy to Vercel"
-2. Vercel clones `portfolioly-template` (simple Next.js app)
-3. Standard build works immediately
-4. Portfolio deployed in 60 seconds ✓
-
-## Advantages of Git Subtree Approach
-
-**For Development:**
-
-- ✅ One way to run: monorepo dev with workspace deps
-- ✅ `lib/` is gitignored - never clutters your repo
-- ✅ No manual copying or hardcoding
-- ✅ Type safety and hot reload work perfectly
-- ✅ Single source of truth in monorepo
-
-**For Deployment:**
-
-- ✅ **Git subtree handles everything** - no custom scripts
-- ✅ Template repo is pure Next.js (no monorepo complexity)
-- ✅ Fast Vercel builds (packages pre-built)
-- ✅ No `workspace:*` or Yarn 4 issues
-- ✅ Users can fork and customize easily
-
-**For Maintenance:**
-
-- ✅ **Fully automated** - push to main = auto sync
-- ✅ Template repo always matches main repo
-- ✅ Minimal configuration needed
-- ✅ Clean git history in template repo
-- ✅ No temporary directories or manual cleanup
-
-**Why Better Than Previous Approach:**
-
-- ❌ No hardcoded paths or copy-paste logic
-- ❌ No temporary directories to manage
-- ❌ No complex bash scripts with multiple steps
-- ✅ Uses native git commands (subtree)
-- ✅ Package.json transformation is minimal and clean
-- ✅ Everything happens in CI, never pollutes local dev
-
-## Summary
-
-**What You Get:**
-
-- ✅ One clear way to run: `yarn dev:template` in monorepo
-- ✅ `lib/` auto-generated only during deployment
-- ✅ Git subtree automatically syncs `apps/template/` to separate repo
-- ✅ Template repo is clean, standalone Next.js app
-- ✅ Deploy button works flawlessly (no monorepo issues)
-- ✅ No hardcoding, no manual steps
-
-**Your Only Workflow:**
+Template `.env.example`:
 
 ```bash
-# 1) Develop
-yarn dev:template
-
-# 2) Ship
-git push
-
-# Done — CI builds, bundles, subtree-pushes, and Vercel can deploy
+NEXT_PUBLIC_USERNAME=your-username
+NEXT_PUBLIC_PSK_TOKEN=your-public-token
+NEXT_PUBLIC_API_BASE_URL=https://api.portfolioly.com
 ```
 
-**What CI Does Automatically:**
+Notes:
 
-1. Builds `@portfolioly/schema` and `@portfolioly/template-components`
-2. Bundles them into `apps/template/lib/`
-3. Updates `package.json` to use `file:./lib/...`
-4. Uses git subtree to push only `apps/template/` to template repo
-5. Cleans up temporary changes
+- The template repo is a normal Next.js app. You typically don’t need a custom `vercel.json`.
+- Keep the template repo public for the Deploy Button to work seamlessly.
 
-**Result:** Template repo stays in sync, deployment works perfectly, you do nothing extra.
+## Local Dev and Shipping
+
+```bash
+# 1) Develop in monorepo
+yarn dev:template  # or: yarn workspace template dev
+
+# 2) When packages change: bump versions via changesets and publish
+yarn changeset && yarn changeset version && git commit -am "chore: versions" && git push
+# CI publishes to npm (Release workflow)
+
+# 3) Push to main to sync template repo
+git push  # subtree workflow updates portfolioly-template
+```
+
+## Testing Checklist
+
+- [ ] `apps/template` runs locally in the monorepo
+- [ ] Packages build and publish to npm
+- [ ] `portfolioly-template` contains only the template app
+- [ ] Deploy Button opens with correct repo and env prefilled
+- [ ] Vercel deployment succeeds and the app loads data/chat
+
+## Appendix: Alternative (not recommended now)
+
+Earlier we proposed bundling prebuilt libs into `apps/template/lib` and rewriting `package.json` to `file:./lib/...`. That works but adds CI complexity and larger commits. The npm‑first approach above is simpler, standard, and requires no toggles. Consider the lib‑bundling approach only if you must avoid npm publishing.

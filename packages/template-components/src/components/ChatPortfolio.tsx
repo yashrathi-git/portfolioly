@@ -9,7 +9,7 @@ import { Thread } from "./chat/Thread";
 import { Composer } from "./chat/Composer";
 import { Suggestions } from "./chat/Suggestions";
 import type { Message, ChatProfile, Suggestion } from "./chat/types";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
 import {

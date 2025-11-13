@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.7"
   }
 }

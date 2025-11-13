@@ -7,8 +7,8 @@ import { AuthenticatedApiClient } from "../clients/api-client";
 import { PublicApiClient } from "../clients/public-api-client";
 import { JsonFileLoader } from "../clients/json-loader";
 import { TemplateConfig } from "../config/template-config";
-import type { PortfolioData, DisplayPortfolioData } from "@portfolioly/schema";
-import { mapBackendToDisplay } from "@portfolioly/schema";
+import type { PortfolioData, DisplayPortfolioData } from "portfolioly-schema";
+import { mapBackendToDisplay } from "portfolioly-schema";
 
 export class HybridDataProvider extends BaseDataProvider {
   private authenticatedClient: AuthenticatedApiClient;

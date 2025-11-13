@@ -15,7 +15,7 @@ import {
   FileText,
   Layout,
 } from "lucide-react";
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 import { PersonalInfoForm } from "./PersonalInfoForm";
 import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
 import { ProfilesForm } from "./ProfilesForm";

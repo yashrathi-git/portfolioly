@@ -9,7 +9,7 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 import { TemplateConfig } from "../config/template-config";
 import { BatchDataProvider } from "./batch-data-provider";
 

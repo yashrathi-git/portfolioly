@@ -26,7 +26,7 @@ export type {
   DisplayWorkExperience,
   SocialLink,
   SocialType,
-} from "@portfolioly/schema";
+} from "portfolioly-schema";
 
 // Configuration types
 export type { TemplateConfig, DataSourceType } from "../config/template-config";

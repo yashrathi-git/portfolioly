@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 
 export interface ComponentDataRequirements {
   requiresExternalData: boolean;

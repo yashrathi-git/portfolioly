@@ -1,11 +1,11 @@
 /**
  * Data validation utilities
  *
- * Note: Data transformation functions have been moved to @portfolioly/schema package.
- * Use mapBackendToDisplay from @portfolioly/schema instead of mapBackendToFrontend.
+ * Note: Data transformation functions have been moved to portfolioly-schema package.
+ * Use mapBackendToDisplay from portfolioly-schema instead of mapBackendToFrontend.
  */
 
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 
 /**
  * Validates that the API response has the expected structure
@@ -35,4 +35,4 @@ export function validateApiResponse(data: any): data is PortfolioData {
 export {
   mapBackendToDisplay,
   mapBackendToDisplay as mapBackendToFrontend,
-} from "@portfolioly/schema";
+} from "portfolioly-schema";

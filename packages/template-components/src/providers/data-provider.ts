@@ -2,7 +2,7 @@
  * Abstract data provider interface and base implementation
  */
 
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 import { TemplateConfig } from "../config/template-config";
 
 export interface DataProvider {

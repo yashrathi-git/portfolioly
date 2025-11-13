@@ -1,0 +1,34 @@
+name: Sync Template Repository
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/template/**"
+      - "packages/schema/**"
+      - "packages/template-components/**"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sync Template Repo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.TEMPLATE_REPO_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Push apps/template to separate repo via subtree
+        run: |
+          git remote add template-repo https://x-access-token:${{ secrets.TEMPLATE_REPO_TOKEN }}@github.com/yashrathi-git/portfolioly-template.git || true
+          git subtree split --prefix apps/template -b template-deploy
+          git push template-repo template-deploy:main --force
+          git branch -D template-deploy || true

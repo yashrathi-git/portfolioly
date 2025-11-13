@@ -2,131 +2,178 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Star, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ExternalLink, Copy, Check } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-export interface DeployToVercelButtonProps {
-  /**
-   * Whether the button should be disabled
-   */
-  disabled?: boolean;
-  /**
-   * Optional custom className for styling
-   */
+interface DeployToVercelButtonProps {
+  username?: string;
+  publicToken?: string;
   className?: string;
 }
 
-/**
- * Placeholder button for future Vercel deployment feature
- * Shows "Coming Soon" badge and displays informational modal on click
- */
 export function DeployToVercelButton({
-  disabled = false,
+  username,
+  publicToken,
   className,
 }: DeployToVercelButtonProps) {
-  const [showModal, setShowModal] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const handleClick = () => {
-    setShowModal(true);
+  const githubRepoUrl = "https://github.com/yashrathi-git/portfolioly-template";
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.portfolioly.com";
+
+  // Generate Vercel deploy URL with correct env prefill syntax
+  const deployUrl = new URL("https://vercel.com/new/clone");
+  deployUrl.searchParams.set("repository-url", githubRepoUrl);
+  deployUrl.searchParams.set("project-name", `${username || "my"}-portfolio`);
+  deployUrl.searchParams.set(
+    "repository-name",
+    `${username || "my"}-portfolio`
+  );
+  deployUrl.searchParams.set(
+    "env",
+    "NEXT_PUBLIC_USERNAME,NEXT_PUBLIC_PSK_TOKEN,NEXT_PUBLIC_API_BASE_URL"
+  );
+
+  // Pre-fill values using env[NAME] syntax
+  if (username)
+    deployUrl.searchParams.set("env[NEXT_PUBLIC_USERNAME]", username);
+  if (publicToken)
+    deployUrl.searchParams.set("env[NEXT_PUBLIC_PSK_TOKEN]", publicToken);
+  deployUrl.searchParams.set("env[NEXT_PUBLIC_API_BASE_URL]", apiBaseUrl);
+
+  const copyToClipboard = async (text: string, field: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
+  const isConfigured = Boolean(username && publicToken);
 
   return (
-    <>
-      <Button
-        onClick={handleClick}
-        disabled={disabled}
-        variant="outline"
-        size="sm"
-        className={cn(
-          "relative text-muted-foreground hover:text-foreground",
-          className
-        )}
-        title="Deploy to Vercel (Coming Soon)"
-        aria-label="Deploy to Vercel - Coming Soon"
-      >
-        <Star className="h-4 w-4" aria-hidden="true" />
-        <span className="hidden sm:inline">Deploy to Vercel</span>
-        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-          Soon
-        </span>
-      </Button>
+    <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className={className}>
+          <ExternalLink className="h-4 w-4" />
+          <span className="hidden sm:inline">Deploy to Vercel</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Deploy Your Portfolio to Vercel</DialogTitle>
+          <DialogDescription>
+            One-click deployment with pre-configured credentials
+          </DialogDescription>
+        </DialogHeader>
 
-      {/* Informational Modal */}
-      {showModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={handleCloseModal}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
-        >
-          <div
-            className="relative bg-card border rounded-lg shadow-lg max-w-md w-full mx-4 p-6 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              onClick={handleCloseModal}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Close modal"
-            >
-              <X className="h-5 w-5" />
-            </button>
+        <div className="space-y-4">
+          {!isConfigured && (
+            <div className="rounded-lg bg-yellow-50 dark:bg-yellow-950 p-4 text-sm">
+              <p className="font-medium text-yellow-900 dark:text-yellow-100">
+                ⚠️ Set your username in Settings to enable deployment
+              </p>
+            </div>
+          )}
 
-            {/* Icon */}
-            <div className="flex justify-center">
-              <div className="rounded-full bg-primary/10 p-3">
-                <Star className="h-8 w-8 text-primary" />
+          <div className="space-y-3">
+            <h3 className="font-medium">Deployment Credentials</h3>
+
+            {/* Username */}
+            <div className="space-y-1">
+              <label className="text-sm text-muted-foreground">Username</label>
+              <div className="flex gap-2">
+                <code className="flex-1 px-3 py-2 bg-muted rounded-md text-sm">
+                  {username || "Not set"}
+                </code>
+                {username && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyToClipboard(username, "username")}
+                  >
+                    {copiedField === "username" ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
 
-            {/* Content */}
-            <div className="space-y-2 text-center">
-              <h2
-                id="modal-title"
-                className="text-xl font-semibold tracking-tight"
-              >
-                Deploy to Vercel
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                This feature is currently in development
-              </p>
+            {/* Public Token */}
+            <div className="space-y-1">
+              <label className="text-sm text-muted-foreground">
+                Public Token
+              </label>
+              <div className="flex gap-2">
+                <code className="flex-1 px-3 py-2 bg-muted rounded-md text-sm font-mono">
+                  {publicToken
+                    ? `${publicToken.slice(0, 20)}...`
+                    : "Not available"}
+                </code>
+                {publicToken && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyToClipboard(publicToken, "token")}
+                  >
+                    {copiedField === "token" ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <p>
-                Soon you&apos;ll be able to deploy your portfolio to Vercel with
-                a single click, giving you:
-              </p>
-              <ul className="space-y-2 list-disc list-inside">
-                <li>Custom domain support</li>
-                <li>Lightning-fast global CDN</li>
-                <li>Automatic SSL certificates</li>
-                <li>Zero-configuration deployment</li>
-              </ul>
-              <p className="text-xs pt-2">
-                We&apos;re working hard to bring this feature to you. Stay
-                tuned!
-              </p>
-            </div>
-
-            {/* Action Button */}
-            <div className="pt-2">
-              <Button
-                onClick={handleCloseModal}
-                className="w-full"
-                variant="default"
-              >
-                Got it
-              </Button>
+            {/* API URL */}
+            <div className="space-y-1">
+              <label className="text-sm text-muted-foreground">
+                API Base URL
+              </label>
+              <code className="block px-3 py-2 bg-muted rounded-md text-sm">
+                {apiBaseUrl}
+              </code>
             </div>
           </div>
+
+          <div className="rounded-lg bg-blue-50 dark:bg-blue-950 p-4 text-sm">
+            <p className="font-medium text-blue-900 dark:text-blue-100">
+              What happens:
+            </p>
+            <ul className="text-blue-800 dark:text-blue-200 space-y-1 ml-4 list-disc mt-1">
+              <li>Vercel clones template to your GitHub</li>
+              <li>Credentials pre-filled as environment variables</li>
+              <li>Portfolio deploys with live chat</li>
+              <li>Updates reflect automatically</li>
+            </ul>
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => window.open(deployUrl.toString(), "_blank")}
+              disabled={!isConfigured}
+              className="gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Deploy Now
+            </Button>
+          </div>
         </div>
-      )}
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }

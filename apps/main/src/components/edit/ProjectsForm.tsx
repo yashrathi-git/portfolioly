@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { Project } from "@portfolioly/schema";
+import type { Project } from "portfolioly-schema";
 import { TagInput } from "./TagInput";
 import { ProjectImageUpload } from "./ProjectImageUpload";
 import { ProjectCardImageUpload } from "./ProjectCardImageUpload";

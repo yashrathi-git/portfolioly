@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 import { getUserPortfolio } from "@/lib/api/portfolio";
 
 export interface UseAuthenticatedPortfolioResult {

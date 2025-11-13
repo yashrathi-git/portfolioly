@@ -2,10 +2,7 @@ import type { NextConfig } from "next";
 import path from "node:path";
 
 const nextConfig: NextConfig = {
-  transpilePackages: [
-    "@portfolioly/schema",
-    "@portfolioly/template-components",
-  ],
+  transpilePackages: ["portfolioly-schema", "portfolioly-template-components"],
   images: {
     remotePatterns: [
       {

@@ -13,7 +13,7 @@ import { fetchUsernameAndToken } from "@/lib/api/publicToken";
 
 // Dynamic import to avoid SSR issues with Portfolio component
 const Portfolio = dynamic(
-  () => import("@portfolioly/template-components").then((mod) => mod.Portfolio),
+  () => import("portfolioly-template-components").then((mod) => mod.Portfolio),
   { ssr: false }
 );
 

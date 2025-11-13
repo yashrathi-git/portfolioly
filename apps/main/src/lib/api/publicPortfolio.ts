@@ -6,7 +6,7 @@
  */
 
 import { env } from "@/lib/env";
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 
 export class PublicPortfolioError extends Error {
   constructor(

@@ -33,7 +33,7 @@
 - **Build Tool**: Vite 5.x with React SWC plugin
 - **Output**: ESM + CJS formats with TypeScript declarations
 - **Peer Dependencies**: React 18+, Framer Motion, Lucide React
-- **Schema Dependency**: Imports from `@portfolioly/schema`
+- **Schema Dependency**: Imports from `portfolioly-schema`
 
 ### Template App (`apps/template`)
 
@@ -91,6 +91,6 @@ cd backend && uv run uvicorn app.main:app --reload
 - **Schema Validation**: Zod for runtime type checking and validation
 - **Error Handling**: Structured error boundaries and toast notifications
 - **Data Fetching**: Custom hooks with error handling
-- **Data Transformation**: Centralized mappers in `@portfolioly/schema`
+- **Data Transformation**: Centralized mappers in `portfolioly-schema`
 - **Theming**: next-themes with CSS custom properties
 - **File Uploads**: Multipart form handling with progress tracking

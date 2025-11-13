@@ -5,7 +5,7 @@ import {
   PortfolioLayoutContainer,
   type PortfolioLayoutSettings,
 } from "./PortfolioLayoutContainer";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 import type { ChatProfile, Suggestion } from "./chat/types";
 
 export interface PortfolioProps {

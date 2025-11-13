@@ -4,10 +4,10 @@ A FastAPI backend with Firebase authentication and email verification middleware
 
 ## Schema Alignment
 
-The backend Pydantic models in `app/schemas/portfolio.py` are aligned with the frontend TypeScript types defined in the `@portfolioly/schema` package. This ensures type consistency across the entire stack:
+The backend Pydantic models in `app/schemas/portfolio.py` are aligned with the frontend TypeScript types defined in the `portfolioly-schema` package. This ensures type consistency across the entire stack:
 
 - **Backend**: Pydantic models for validation and serialization
-- **Frontend**: Zod schemas in `@portfolioly/schema` package
+- **Frontend**: Zod schemas in `portfolioly-schema` package
 - **Alignment**: Field names, types, and validation rules match exactly
 
 When updating schemas, ensure changes are reflected in both:

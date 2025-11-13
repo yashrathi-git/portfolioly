@@ -1,6 +1,6 @@
 import BlurFade from "../magicui/blur-fade";
 import { ResumeCard } from "../resume-card";
-import type { DisplayWorkExperience } from "@portfolioly/schema";
+import type { DisplayWorkExperience } from "portfolioly-schema";
 import { cn } from "../../lib/utils";
 import {
   BLUR_FADE_DELAY,

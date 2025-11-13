@@ -148,6 +148,6 @@ src/
 
 ### Shared Packages
 
-- **Schema Package**: All packages and apps import from `@portfolioly/schema` for type definitions and validation
+- **Schema Package**: All packages and apps import from `portfolioly-schema` for type definitions and validation
 - **Template Components**: Reusable UI components that consume schema types
 - **Workspace Protocol**: Packages linked via `workspace:*` in package.json

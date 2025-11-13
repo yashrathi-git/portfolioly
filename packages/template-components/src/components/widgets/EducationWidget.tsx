@@ -1,6 +1,6 @@
 "use client";
 
-import type { DisplayEducation } from "@portfolioly/schema";
+import type { DisplayEducation } from "portfolioly-schema";
 import { EducationSection } from "../shared/EducationSection";
 
 export type EducationWidgetProps = {

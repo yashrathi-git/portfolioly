@@ -3,7 +3,7 @@
  */
 
 import React, { Component, ReactNode } from "react";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 
 export interface ErrorBoundaryState {
   hasError: boolean;

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Portfolio, type PortfolioProps } from "./Portfolio";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 import { PublicApiClient } from "../clients/public-api-client";
-import { mapBackendToDisplay } from "@portfolioly/schema";
+import { mapBackendToDisplay } from "portfolioly-schema";
 import { DataProviderError } from "../providers/data-provider";
 import type { TemplateConfig } from "../config/template-config";
 

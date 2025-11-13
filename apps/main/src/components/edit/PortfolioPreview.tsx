@@ -1,16 +1,16 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { Portfolio } from "@portfolioly/template-components";
-import type { DisplayPortfolioData as TemplatePortfolioData } from "@portfolioly/template-components";
-import type { PortfolioData as MainPortfolioData } from "@portfolioly/schema";
+import { Portfolio } from "portfolioly-template-components";
+import type { DisplayPortfolioData as TemplatePortfolioData } from "portfolioly-template-components";
+import type { PortfolioData as MainPortfolioData } from "portfolioly-schema";
 import { mapPortfolioDataToTemplate } from "@/utils/portfolioDataMapper";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { env } from "@/lib/env";
 import { fetchUsernameAndToken, PublicTokenError } from "@/lib/api/publicToken";
 
 // Import the compiled CSS styles to ensure they're loaded
-import "@portfolioly/template-components/style.css";
+import "portfolioly-template-components/style.css";
 
 export interface PortfolioPreviewProps {
   data: MainPortfolioData;

@@ -3,7 +3,7 @@
  */
 
 import { TemplateConfig } from "../config/template-config";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 import { getFlaggedComponents } from "./component-flags";
 
 export interface DebugInfo {

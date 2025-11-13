@@ -3,7 +3,7 @@
  */
 
 import { HybridDataProvider } from "./hybrid-data-provider";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 import { TemplateConfig } from "../config/template-config";
 
 export interface BatchLoadResult {

@@ -12,11 +12,11 @@ import { env } from "@/lib/env";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 
 // Dynamic import to avoid SSR issues with Portfolio component
 const Portfolio = dynamic(
-  () => import("@portfolioly/template-components").then((mod) => mod.Portfolio),
+  () => import("portfolioly-template-components").then((mod) => mod.Portfolio),
   { ssr: false }
 );
 

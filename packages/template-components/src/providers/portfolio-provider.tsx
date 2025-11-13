@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode, useMemo } from "react";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 
 interface PortfolioContextValue {
   portfolioData?: DisplayPortfolioData | null;

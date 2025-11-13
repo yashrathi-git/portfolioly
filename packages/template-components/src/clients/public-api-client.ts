@@ -2,7 +2,7 @@
  * API client for public portfolio data access
  */
 
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 import { TemplateConfig } from "../config/template-config";
 import { DataProviderError } from "../providers/data-provider";
 

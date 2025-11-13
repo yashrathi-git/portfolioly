@@ -1,7 +1,7 @@
 {
-  "name": "@portfolioly/schema",
-  "private": true,
-  "version": "0.0.0",
+  "name": "portfolioly-schema",
+  "version": "0.1.0",
+  "description": "Shared portfolio data schemas and validation for Portfolioly",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -13,7 +13,22 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yashrathi-git/portfolioly.git",
+    "directory": "packages/schema"
+  },
+  "keywords": [
+    "portfolio",
+    "schema",
+    "validation",
+    "zod"
   ],
   "dependencies": {
     "zod": "^3.24.1"

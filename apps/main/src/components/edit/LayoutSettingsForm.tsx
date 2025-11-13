@@ -11,7 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MessageSquare, FileText, Eye } from "lucide-react";
-import type { LayoutSettings } from "@portfolioly/schema";
+import type { LayoutSettings } from "portfolioly-schema";
 
 export interface LayoutSettingsFormProps {
   value: LayoutSettings;

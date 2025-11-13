@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Globe, Link, ShieldCheck, User } from "lucide-react";
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 import { EditorTopBar } from "./EditorTopBar";
 import { NavigationSidebar } from "./NavigationSidebar";
 import { sections } from "./sectionConfig";

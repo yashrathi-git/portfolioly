@@ -1,7 +1,7 @@
 "use client";
 
 import { WorkExperienceSection } from "../shared/WorkExperienceSection";
-import type { DisplayWorkExperience } from "@portfolioly/schema";
+import type { DisplayWorkExperience } from "portfolioly-schema";
 
 export type WorkExperienceWidgetProps = {
   heading?: string;

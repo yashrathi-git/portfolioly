@@ -2,11 +2,11 @@
  * Server-side data provider for Next.js SSR/SSG support
  */
 
-import type { DisplayPortfolioData, PortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData, PortfolioData } from "portfolioly-schema";
 import {
   mapBackendToDisplay,
   validatePortfolioData,
-} from "@portfolioly/schema";
+} from "portfolioly-schema";
 import { TemplateConfig } from "../config/template-config";
 
 export interface ServerDataProviderOptions {

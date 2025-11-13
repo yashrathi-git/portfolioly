@@ -1,4 +1,4 @@
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 import { Hero } from "./portfolio-traditional/Hero";
 import { Projects } from "./portfolio-traditional/Projects";
 import { Education } from "./portfolio-traditional/Education";

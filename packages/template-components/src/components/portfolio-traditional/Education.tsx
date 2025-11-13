@@ -1,4 +1,4 @@
-import type { DisplayEducation } from "@portfolioly/schema";
+import type { DisplayEducation } from "portfolioly-schema";
 import { EducationSection } from "../shared/EducationSection";
 
 type EducationItem = DisplayEducation & { logoUrl?: string };

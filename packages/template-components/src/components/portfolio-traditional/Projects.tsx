@@ -1,4 +1,4 @@
-import type { DisplayProject } from "@portfolioly/schema";
+import type { DisplayProject } from "portfolioly-schema";
 import { ProjectsSection } from "../shared/ProjectsSection";
 
 export type ProjectsProps = {

@@ -2,7 +2,7 @@
  * JSON file loader for local portfolio data
  */
 
-import type { PortfolioData } from "@portfolioly/schema";
+import type { PortfolioData } from "portfolioly-schema";
 import { TemplateConfig } from "../config/template-config";
 import { DataProviderError } from "../providers/data-provider";
 import { validateApiResponse } from "../utils/data-mapper";

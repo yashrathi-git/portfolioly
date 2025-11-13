@@ -2,7 +2,7 @@
  * Configuration for template components with authenticated API integration
  */
 
-import type { TemplateConfig } from "@portfolioly/template-components";
+import type { TemplateConfig } from "portfolioly-template-components";
 
 export const createTemplateConfig = (authToken?: string): TemplateConfig => ({
   dataSource: "api",

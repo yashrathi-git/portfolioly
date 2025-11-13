@@ -2,7 +2,7 @@
 
 import { Sparkles } from "lucide-react";
 import type { Message } from "./types";
-import type { DisplayPortfolioData } from "@portfolioly/schema";
+import type { DisplayPortfolioData } from "portfolioly-schema";
 import { AboutWidget } from "../widgets/AboutWidget";
 import { ProjectsWidget } from "../widgets/ProjectsWidget";
 import { SkillsWidget } from "../widgets/SkillsWidget";

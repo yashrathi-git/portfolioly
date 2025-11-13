@@ -1,6 +1,6 @@
 import BlurFade from "../magicui/blur-fade";
 import { ResumeCard } from "../resume-card";
-import type { DisplayEducation } from "@portfolioly/schema";
+import type { DisplayEducation } from "portfolioly-schema";
 import { GraduationCap } from "lucide-react";
 import {
   BLUR_FADE_DELAY,
