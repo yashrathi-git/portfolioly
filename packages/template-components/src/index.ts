@@ -69,4 +69,5 @@ export * from "./lib/constants/animations";
 export * from "./components/shared/ProjectsSection";
 export * from "./components/shared/WorkExperienceSection";
 
-import "./styles.css";
+// Note: Consumers should import the CSS separately:
+// import "portfolioly-template-components/style.css";

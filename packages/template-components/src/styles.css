@@ -1,7 +1,5 @@
-/* No side-effect styles shipped by default.
-   This file only declares a Tailwind v4 @source so the app can scan package sources
-   if the app chooses to import this file. Prefer adding @source to the app instead. */
-@source "./";
+/* Styles for template components.
+   Consuming apps should configure their own Tailwind to scan this package. */
 
 /* Minimal, sleek scrollbar utility - localized to portfolio template components */
 .thin-scrollbar {

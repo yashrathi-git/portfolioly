@@ -31,13 +31,12 @@
       "require": "./dist/utils/index.cjs",
       "types": "./dist/utils/index.d.ts"
     },
-    "./style.css": "./dist/style.css",
-    "./styles.css": "./styles.css"
+    "./style.css": "./dist/style.css"
   },
   "files": [
     "dist",
-    "styles.css",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "style": "dist/style.css",
   "publishConfig": {

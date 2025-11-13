@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "portfolioly-template-components/styles.css";
+import "portfolioly-template-components/style.css";
 
 export const metadata: Metadata = {
   title: "Portfolio Preview",
