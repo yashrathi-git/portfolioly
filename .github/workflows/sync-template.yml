@@ -31,4 +31,4 @@ jobs:
         run: |
           git remote remove template-repo 2>/dev/null || true
           git remote add template-repo https://x-access-token:${{ secrets.TEMPLATE_REPO_TOKEN }}@github.com/yashrathi-git/portfolioly-template.git
-          git push template-repo $(git subtree split --prefix apps/template):main
+          git push template-repo $(git subtree split --prefix apps/template):main --force
