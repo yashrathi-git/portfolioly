@@ -1,7 +1,20 @@
 "use client";
 
-import { Linkedin, FileText, Github, ArrowRight, Shield, CheckCircle2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Linkedin,
+  FileText,
+  Github,
+  ArrowRight,
+  Shield,
+  CheckCircle2,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,7 +65,11 @@ const sources: SourceOption[] = [
   },
 ];
 
-export function SourceSelectionStep({ onSelectSource, onSkip, importedSources = {} }: SourceSelectionStepProps) {
+export function SourceSelectionStep({
+  onSelectSource,
+  onSkip,
+  importedSources = {},
+}: SourceSelectionStepProps) {
   const isImported = (sourceId: SourceType): boolean => {
     if (!sourceId) return false;
     return importedSources[sourceId] === true;
@@ -64,7 +81,7 @@ export function SourceSelectionStep({ onSelectSource, onSkip, importedSources = 
         {sources.map((source) => {
           const Icon = source.icon;
           const imported = isImported(source.id);
-          
+
           return (
             <Card
               key={source.id}
@@ -87,16 +104,22 @@ export function SourceSelectionStep({ onSelectSource, onSkip, importedSources = 
             >
               <CardHeader className="pb-4">
                 <div className="flex flex-col items-center mb-2 relative">
-                  <div className={cn(
-                    "flex items-center justify-center w-12 h-12 rounded-lg transition-colors mb-3",
-                    imported
-                      ? "bg-green-100 dark:bg-green-900/30"
-                      : "bg-primary/10 dark:bg-primary/20 group-hover:bg-primary/20 dark:group-hover:bg-primary/30"
-                  )}>
-                    <Icon className={cn(
-                      "h-6 w-6",
-                      imported ? "text-green-600 dark:text-green-400" : "text-primary"
-                    )} />
+                  <div
+                    className={cn(
+                      "flex items-center justify-center w-12 h-12 rounded-lg transition-colors mb-3",
+                      imported
+                        ? "bg-green-100 dark:bg-green-900/30"
+                        : "bg-primary/10 dark:bg-primary/20 group-hover:bg-primary/20 dark:group-hover:bg-primary/30"
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-6 w-6",
+                        imported
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-primary"
+                      )}
+                    />
                   </div>
                   {imported && (
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1">
@@ -106,12 +129,14 @@ export function SourceSelectionStep({ onSelectSource, onSkip, importedSources = 
                     </div>
                   )}
                 </div>
-                <CardTitle className={cn(
-                  "text-xl font-semibold transition-colors text-center",
-                  imported
-                    ? "text-green-700 dark:text-green-400"
-                    : "group-hover:text-primary"
-                )}>
+                <CardTitle
+                  className={cn(
+                    "text-xl font-semibold transition-colors text-center",
+                    imported
+                      ? "text-green-700 dark:text-green-400"
+                      : "group-hover:text-primary"
+                  )}
+                >
                   {source.title}
                 </CardTitle>
                 <CardDescription className="text-sm mt-2 text-center">
@@ -121,7 +146,10 @@ export function SourceSelectionStep({ onSelectSource, onSkip, importedSources = 
               <CardContent className="flex flex-col mt-auto pt-0">
                 {source.badge && !imported && (
                   <div className="flex justify-center mb-3">
-                    <Badge variant={source.badgeVariant || "secondary"} className="text-xs">
+                    <Badge
+                      variant={source.badgeVariant || "secondary"}
+                      className="text-xs"
+                    >
                       <Shield className="h-3 w-3 mr-1" />
                       {source.badge}
                     </Badge>
@@ -151,7 +179,7 @@ export function SourceSelectionStep({ onSelectSource, onSkip, importedSources = 
             type="button"
             className="text-muted-foreground hover:text-foreground"
           >
-            Skip, I'll manually add data
+            Skip, I&apos;ll manually add data
           </Button>
         </div>
       )}
@@ -160,4 +188,3 @@ export function SourceSelectionStep({ onSelectSource, onSkip, importedSources = 
 }
 
 export default SourceSelectionStep;
-

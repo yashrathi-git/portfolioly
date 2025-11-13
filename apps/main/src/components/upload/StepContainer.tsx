@@ -27,8 +27,6 @@ export function StepContainer({
   title,
   description,
   children,
-  onBack,
-  onSkip,
   onNext,
   onAddAnother,
   nextLabel = "Save & Continue",
@@ -66,7 +64,10 @@ export function StepContainer({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Import data from additional sources like LinkedIn, GitHub, or Resume</p>
+                  <p>
+                    Import data from additional sources like LinkedIn, GitHub,
+                    or Resume
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

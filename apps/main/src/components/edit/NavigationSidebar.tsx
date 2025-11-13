@@ -8,7 +8,12 @@ export interface NavigationSection {
   id: string;
   label: string;
   icon: LucideIcon;
-  component: React.ComponentType<any>;
+  component: React.ComponentType<{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    value: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onChange: (value: any) => void;
+  }>;
   hasData: (data: PortfolioData) => boolean;
 }
 

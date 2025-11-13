@@ -242,7 +242,7 @@ function renderSectionContent(
       return (
         <SectionComponent
           value={data.personal_info}
-          onChange={(v: any) => update({ personal_info: v })}
+          onChange={(v) => update({ personal_info: v })}
         />
       );
 
@@ -275,7 +275,7 @@ function renderSectionContent(
       return (
         <SectionComponent
           value={data.personal_info}
-          onChange={(v: any) => update({ personal_info: v })}
+          onChange={(v) => update({ personal_info: v })}
         />
       );
 
@@ -283,7 +283,7 @@ function renderSectionContent(
       return (
         <SectionComponent
           value={data.work_experiences || []}
-          onChange={(v: any) => update({ work_experiences: v })}
+          onChange={(v) => update({ work_experiences: v })}
         />
       );
 
@@ -291,7 +291,7 @@ function renderSectionContent(
       return (
         <SectionComponent
           value={data.projects || []}
-          onChange={(v: any) => update({ projects: v })}
+          onChange={(v) => update({ projects: v })}
         />
       );
 
@@ -299,7 +299,7 @@ function renderSectionContent(
       return (
         <SectionComponent
           value={data.education || []}
-          onChange={(v: any) => update({ education: v })}
+          onChange={(v) => update({ education: v })}
         />
       );
 
@@ -307,7 +307,7 @@ function renderSectionContent(
       return (
         <SectionComponent
           value={data.certifications || []}
-          onChange={(v: any) => update({ certifications: v })}
+          onChange={(v) => update({ certifications: v })}
         />
       );
 
@@ -315,7 +315,7 @@ function renderSectionContent(
       return (
         <SectionComponent
           value={data.text_blobs}
-          onChange={(v: any) => update({ text_blobs: v })}
+          onChange={(v) => update({ text_blobs: v })}
         />
       );
 
@@ -323,7 +323,7 @@ function renderSectionContent(
       return (
         <SectionComponent
           value={data.layout_settings}
-          onChange={(v: any) => update({ layout_settings: v })}
+          onChange={(v) => update({ layout_settings: v })}
         />
       );
 

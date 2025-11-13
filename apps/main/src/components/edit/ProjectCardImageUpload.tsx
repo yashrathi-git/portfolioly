@@ -67,6 +67,64 @@ export function ProjectCardImageUpload({
     };
   }, []);
 
+  const uploadImage = useCallback(
+    async (file: File, previewUrl: string) => {
+      try {
+        // Check online status
+        if (!navigator.onLine) {
+          throw new Error(
+            "You are offline. Please check your internet connection."
+          );
+        }
+
+        // Update progress
+        setUploadingImage((prev) => (prev ? { ...prev, progress: 10 } : null));
+
+        // Optimize image on client side (GIFs are not compressed)
+        const optimizedFile = await optimizeImage(file);
+
+        setUploadingImage((prev) => (prev ? { ...prev, progress: 40 } : null));
+
+        // Upload to backend
+        const [imageUrl] = await uploadProjectImagesApi([optimizedFile]);
+
+        setUploadingImage((prev) => (prev ? { ...prev, progress: 90 } : null));
+
+        if (!imageUrl) {
+          throw new Error("No image URL returned from server");
+        }
+
+        // Update value with the new URL
+        onChange(imageUrl);
+
+        // Clear uploading state
+        setUploadingImage(null);
+
+        // Clean up preview URL
+        URL.revokeObjectURL(previewUrl);
+      } catch (err) {
+        console.error("Upload error:", err);
+
+        // Parse error for better handling
+        const structuredError = parseError(err);
+        const retryable = isRetryableError(err);
+
+        // Update error state
+        setUploadingImage((prev) =>
+          prev
+            ? {
+                ...prev,
+                error: structuredError.userMessage,
+                uploading: false,
+                retryable,
+              }
+            : null
+        );
+      }
+    },
+    [onChange]
+  );
+
   const handleFileSelect = useCallback(
     async (file: File) => {
       // Check online status first
@@ -97,63 +155,28 @@ export function ProjectCardImageUpload({
       // Start upload
       uploadImage(file, previewUrl);
     },
-    [onChange]
+    [uploadImage]
   );
 
-  const uploadImage = async (file: File, previewUrl: string) => {
-    try {
-      // Check online status
-      if (!navigator.onLine) {
-        throw new Error(
-          "You are offline. Please check your internet connection."
-        );
-      }
-
-      // Update progress
-      setUploadingImage((prev) => (prev ? { ...prev, progress: 10 } : null));
-
-      // Optimize image on client side (GIFs are not compressed)
-      const optimizedFile = await optimizeImage(file);
-
-      setUploadingImage((prev) => (prev ? { ...prev, progress: 40 } : null));
-
-      // Upload to backend
-      const [imageUrl] = await uploadProjectImagesApi([optimizedFile]);
-
-      setUploadingImage((prev) => (prev ? { ...prev, progress: 90 } : null));
-
-      if (!imageUrl) {
-        throw new Error("No image URL returned from server");
-      }
-
-      // Update value with the new URL
-      onChange(imageUrl);
-
-      // Clear uploading state
-      setUploadingImage(null);
-
-      // Clean up preview URL
-      URL.revokeObjectURL(previewUrl);
-    } catch (err) {
-      console.error("Upload error:", err);
-
-      // Parse error for better handling
-      const structuredError = parseError(err);
-      const retryable = isRetryableError(err);
-
-      // Update error state
-      setUploadingImage((prev) =>
-        prev
-          ? {
-              ...prev,
-              error: structuredError.userMessage,
-              uploading: false,
-              retryable,
-            }
-          : null
-      );
+  const handleRetryUpload = useCallback(() => {
+    if (uploadingImage) {
+      // Reset error and retry
+      setUploadingImage({
+        ...uploadingImage,
+        error: undefined,
+        uploading: true,
+        progress: 0,
+      });
+      uploadImage(uploadingImage.file, uploadingImage.preview);
     }
-  };
+  }, [uploadImage, uploadingImage]);
+
+  const handleCancelUpload = useCallback(() => {
+    if (uploadingImage) {
+      URL.revokeObjectURL(uploadingImage.preview);
+    }
+    setUploadingImage(null);
+  }, [uploadingImage]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,26 +243,6 @@ export function ProjectCardImageUpload({
       setError(structuredError.userMessage);
     }
   }, [value, onChange]);
-
-  const handleRetryUpload = useCallback(() => {
-    if (uploadingImage) {
-      // Reset error and retry
-      setUploadingImage({
-        ...uploadingImage,
-        error: undefined,
-        uploading: true,
-        progress: 0,
-      });
-      uploadImage(uploadingImage.file, uploadingImage.preview);
-    }
-  }, [uploadingImage]);
-
-  const handleCancelUpload = useCallback(() => {
-    if (uploadingImage) {
-      URL.revokeObjectURL(uploadingImage.preview);
-    }
-    setUploadingImage(null);
-  }, [uploadingImage]);
 
   const hasImage = !!value;
 
@@ -323,6 +326,7 @@ export function ProjectCardImageUpload({
         <div className="border rounded-lg p-3 space-y-2">
           <div className="flex items-center gap-3">
             <div className="size-16 rounded overflow-hidden bg-secondary flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={uploadingImage.preview}
                 alt="Uploading"
@@ -380,6 +384,7 @@ export function ProjectCardImageUpload({
         <div className="border rounded-lg p-3">
           <div className="flex items-start gap-3">
             <div className="size-20 rounded overflow-hidden bg-secondary flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={value}
                 alt="Card image"

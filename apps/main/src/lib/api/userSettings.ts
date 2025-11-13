@@ -97,9 +97,9 @@ export async function getUserSettings(
   authToken?: string
 ): Promise<UserSettings> {
   try {
-    let token = authToken;
+    let token: string | undefined = authToken;
     if (!token) {
-      token = await getIdToken();
+      token = (await getIdToken()) || undefined;
       if (!token) {
         throw new UserSettingsError(
           "User not authenticated",

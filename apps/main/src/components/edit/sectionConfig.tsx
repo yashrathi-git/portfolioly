@@ -37,7 +37,12 @@ export interface NavigationSection {
   /** Lucide icon component */
   icon: LucideIcon;
   /** React component to render for this section */
-  component: React.ComponentType<any>;
+  component: React.ComponentType<{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    value: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onChange: (value: any) => void;
+  }>;
   /** Function to determine if this section has data */
   hasData: (data: PortfolioData) => boolean;
 }

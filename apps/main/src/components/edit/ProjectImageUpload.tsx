@@ -84,6 +84,101 @@ export function ProjectImageUpload({
     };
   }, []);
 
+  const uploadImage = useCallback(
+    async (file: File, fileId: string, previewUrl: string) => {
+      try {
+        // Check online status
+        if (!navigator.onLine) {
+          throw new Error(
+            "You are offline. Please check your internet connection."
+          );
+        }
+
+        // Update progress
+        setUploadingImages((prev) => {
+          const next = new Map(prev);
+          const state = next.get(fileId);
+          if (state) {
+            next.set(fileId, { ...state, progress: 10 });
+          }
+          return next;
+        });
+
+        // Optimize image on client side
+        const optimizedFile = await optimizeImage(file);
+
+        setUploadingImages((prev) => {
+          const next = new Map(prev);
+          const state = next.get(fileId);
+          if (state) {
+            next.set(fileId, { ...state, progress: 40 });
+          }
+          return next;
+        });
+
+        // Upload to backend
+        const [imageUrl] = await uploadProjectImagesApi([optimizedFile]);
+
+        setUploadingImages((prev) => {
+          const next = new Map(prev);
+          const state = next.get(fileId);
+          if (state) {
+            next.set(fileId, { ...state, progress: 90 });
+          }
+          return next;
+        });
+
+        if (!imageUrl) {
+          throw new Error("No image URL returned from server");
+        }
+
+        // Add to value with next order
+        const newImage: ProjectImage = {
+          url: imageUrl,
+          caption: "",
+          order: latestImagesRef.current.length,
+        };
+
+        const updatedImages = [...latestImagesRef.current, newImage].map(
+          (img, index) => ({ ...img, order: index })
+        );
+        onChange(updatedImages);
+
+        // Remove from uploading state
+        setUploadingImages((prev) => {
+          const next = new Map(prev);
+          next.delete(fileId);
+          return next;
+        });
+
+        // Clean up preview URL
+        URL.revokeObjectURL(previewUrl);
+      } catch (err) {
+        console.error("Upload error:", err);
+
+        // Parse error for better handling
+        const structuredError = parseError(err);
+        const retryable = isRetryableError(err);
+
+        // Update error state
+        setUploadingImages((prev) => {
+          const next = new Map(prev);
+          const state = next.get(fileId);
+          if (state) {
+            next.set(fileId, {
+              ...state,
+              error: structuredError.userMessage,
+              uploading: false,
+              retryable,
+            });
+          }
+          return next;
+        });
+      }
+    },
+    [onChange]
+  );
+
   const handleFilesSelect = useCallback(
     async (files: FileList | File[]) => {
       // Check online status first
@@ -152,104 +247,8 @@ export function ProjectImageUpload({
         uploadImage(file, fileId, previewUrl);
       }
     },
-    [onChange]
+    [onChange, uploadImage]
   );
-
-  const uploadImage = async (
-    file: File,
-    fileId: string,
-    previewUrl: string
-  ) => {
-    try {
-      // Check online status
-      if (!navigator.onLine) {
-        throw new Error(
-          "You are offline. Please check your internet connection."
-        );
-      }
-
-      // Update progress
-      setUploadingImages((prev) => {
-        const next = new Map(prev);
-        const state = next.get(fileId);
-        if (state) {
-          next.set(fileId, { ...state, progress: 10 });
-        }
-        return next;
-      });
-
-      // Optimize image on client side
-      const optimizedFile = await optimizeImage(file);
-
-      setUploadingImages((prev) => {
-        const next = new Map(prev);
-        const state = next.get(fileId);
-        if (state) {
-          next.set(fileId, { ...state, progress: 40 });
-        }
-        return next;
-      });
-
-      // Upload to backend
-      const [imageUrl] = await uploadProjectImagesApi([optimizedFile]);
-
-      setUploadingImages((prev) => {
-        const next = new Map(prev);
-        const state = next.get(fileId);
-        if (state) {
-          next.set(fileId, { ...state, progress: 90 });
-        }
-        return next;
-      });
-
-      if (!imageUrl) {
-        throw new Error("No image URL returned from server");
-      }
-
-      // Add to value with next order
-      const newImage: ProjectImage = {
-        url: imageUrl,
-        caption: "",
-        order: latestImagesRef.current.length,
-      };
-
-      const updatedImages = [...latestImagesRef.current, newImage].map(
-        (img, index) => ({ ...img, order: index })
-      );
-      onChange(updatedImages);
-
-      // Remove from uploading state
-      setUploadingImages((prev) => {
-        const next = new Map(prev);
-        next.delete(fileId);
-        return next;
-      });
-
-      // Clean up preview URL
-      URL.revokeObjectURL(previewUrl);
-    } catch (err) {
-      console.error("Upload error:", err);
-
-      // Parse error for better handling
-      const structuredError = parseError(err);
-      const retryable = isRetryableError(err);
-
-      // Update error state
-      setUploadingImages((prev) => {
-        const next = new Map(prev);
-        const state = next.get(fileId);
-        if (state) {
-          next.set(fileId, {
-            ...state,
-            error: structuredError.userMessage,
-            uploading: false,
-            retryable,
-          });
-        }
-        return next;
-      });
-    }
-  };
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -344,39 +343,51 @@ export function ProjectImageUpload({
 
   const handleRetryUpload = useCallback(
     (fileId: string) => {
-      const state = uploadingImages.get(fileId);
-      if (state) {
-        // Reset error and retry
-        setUploadingImages((prev) => {
-          const next = new Map(prev);
-          next.set(fileId, {
-            ...state,
-            error: undefined,
-            uploading: true,
-            progress: 0,
-          });
-          return next;
-        });
-        uploadImage(state.file, fileId, state.preview);
-      }
-    },
-    [uploadingImages]
-  );
-
-  const handleCancelUpload = useCallback(
-    (fileId: string) => {
-      const state = uploadingImages.get(fileId);
-      if (state) {
-        URL.revokeObjectURL(state.preview);
-      }
+      let retryTarget: ImageUploadState | undefined;
       setUploadingImages((prev) => {
+        const existing = prev.get(fileId);
+        if (!existing) {
+          return prev;
+        }
+
+        retryTarget = existing;
+
         const next = new Map(prev);
-        next.delete(fileId);
+        next.set(fileId, {
+          ...existing,
+          error: undefined,
+          uploading: true,
+          progress: 0,
+        });
         return next;
       });
+
+      if (retryTarget) {
+        uploadImage(retryTarget.file, fileId, retryTarget.preview);
+      }
     },
-    [uploadingImages]
+    [uploadImage]
   );
+
+  const handleCancelUpload = useCallback((fileId: string) => {
+    let previewUrl: string | undefined;
+    setUploadingImages((prev) => {
+      const existing = prev.get(fileId);
+      if (!existing) {
+        return prev;
+      }
+
+      previewUrl = existing.preview;
+
+      const next = new Map(prev);
+      next.delete(fileId);
+      return next;
+    });
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  }, []);
 
   // Drag and drop reordering
   const handleDragStart = useCallback((index: number) => {
@@ -501,6 +512,7 @@ export function ProjectImageUpload({
             <div key={fileId} className="border rounded-lg p-3 space-y-2">
               <div className="flex items-center gap-3">
                 <div className="size-16 rounded overflow-hidden bg-secondary flex-shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={state.preview}
                     alt="Uploading"
@@ -583,6 +595,7 @@ export function ProjectImageUpload({
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <GripVertical className="h-5 w-5 text-muted-foreground" />
                     <div className="size-20 rounded overflow-hidden bg-secondary">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={image.url}
                         alt={image.caption || `Project image ${index + 1}`}
