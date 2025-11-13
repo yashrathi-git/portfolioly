@@ -1,6 +1,6 @@
 {
   "name": "portfolioly-schema",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared portfolio data schemas and validation for Portfolioly",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
