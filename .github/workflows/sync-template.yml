@@ -14,6 +14,7 @@ jobs:
   sync:
     name: Sync Template Repo
     runs-on: ubuntu-latest
+    environment: GA
     steps:
       - name: Checkout with full history
         uses: actions/checkout@v4
@@ -28,7 +29,6 @@ jobs:
 
       - name: Push apps/template to separate repo via subtree
         run: |
-          git remote add template-repo https://x-access-token:${{ secrets.TEMPLATE_REPO_TOKEN }}@github.com/yashrathi-git/portfolioly-template.git || true
-          git subtree split --prefix apps/template -b template-deploy
-          git push template-repo template-deploy:main --force
-          git branch -D template-deploy || true
+          git remote remove template-repo 2>/dev/null || true
+          git remote add template-repo https://x-access-token:${{ secrets.TEMPLATE_REPO_TOKEN }}@github.com/yashrathi-git/portfolioly-template.git
+          git push template-repo $(git subtree split --prefix apps/template):main
