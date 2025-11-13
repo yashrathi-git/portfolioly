@@ -34,9 +34,19 @@ Git subtree split → portfolioly-template (separate repo)
 
 ## Package Publishing (npm)
 
-We publish `@portfolioly/schema` and `@portfolioly/template-components` to npm.
+We publish `portfolioly-schema` and `portfolioly-template-components` to npm using **npm trusted publishing** (OIDC authentication).
 
-1. Ensure each package builds to a portable `dist/`:
+### Prerequisites for Trusted Publishing
+
+1. npm CLI v11.5.1 or later (automatically installed in CI)
+2. Packages must already exist on npmjs.com (initial publish done manually)
+3. Trusted publisher configured on npmjs.com for each package:
+
+   - Organization/User: `yashrathi-git`
+   - Repository: `portfolioly`
+   - Workflow filename: `release.yml`
+
+4. Ensure each package builds to a portable `dist/`:
 
 Example `packages/template-components/package.json`:
 
@@ -82,7 +92,7 @@ yarn changeset version
 yarn install     # updates lockfile with new versions
 ```
 
-3. GitHub Action to publish to npm (once you have NPM_TOKEN):
+3. GitHub Action to publish to npm (using npm trusted publishing):
 
 `.github/workflows/release.yml`:
 
@@ -118,8 +128,7 @@ jobs:
         run: yarn install --immutable
       - name: Publish
         run: yarn workspaces foreach -A npm publish --tolerate-republish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # No NODE_AUTH_TOKEN needed - using npm trusted publishing via OIDC
 ```
 
 Notes:
