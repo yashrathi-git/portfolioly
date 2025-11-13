@@ -149,6 +149,7 @@ export class JsonFileLoader {
         summary: "Experienced developer with expertise in web technologies",
         email: "john.doe@example.com",
         location: "San Francisco, CA",
+        tags: [],
         profiles: [
           {
             type: "github",
@@ -211,6 +212,10 @@ export class JsonFileLoader {
         source_type: "json_file",
         extracted_at: new Date().toISOString(),
         notes: "Manually created portfolio data",
+      },
+      layout_settings: {
+        layout_mode: "both",
+        default_layout: "chat",
       },
     };
   }

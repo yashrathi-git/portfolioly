@@ -2,7 +2,6 @@
 
 export * from "./components/ChatPortfolio";
 export * from "./components/TraditionalPortfolio";
-export * from "./components/PortfolioDock";
 export * from "./components/ThemeToggle";
 export * from "./components/chat/Composer";
 export * from "./components/chat/EmptyState";

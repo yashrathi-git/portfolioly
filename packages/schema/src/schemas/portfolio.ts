@@ -40,7 +40,13 @@ import {
  * ```
  */
 export const PortfolioDataSchema = z.object({
-  personal_info: PersonalInfoSchema.catch({}).default({}),
+  personal_info: PersonalInfoSchema.catch({
+    profiles: [],
+    tags: [],
+  }).default({
+    profiles: [],
+    tags: [],
+  }),
   work_experiences: z
     .preprocess(
       (val) => (Array.isArray(val) ? val : val == null ? [] : [val]),
