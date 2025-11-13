@@ -47,6 +47,8 @@ jobs:
         with:
           publish: yarn changeset publish
           version: yarn changeset version
+          commit: "chore: version packages"
+          title: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # No NODE_AUTH_TOKEN needed - using trusted publishing via OIDC
