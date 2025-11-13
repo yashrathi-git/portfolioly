@@ -46,7 +46,7 @@ jobs:
         uses: changesets/action@v1
         with:
           publish: yarn changeset publish
-          version: yarn changeset version && yarn install
+          version: .github/scripts/version-with-lockfile.sh
           commit: "chore: version packages"
           title: "chore: version packages"
         env:
