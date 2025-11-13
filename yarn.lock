@@ -7741,7 +7741,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"portfolioly-schema@npm:^0.1.0, portfolioly-schema@workspace:*, portfolioly-schema@workspace:packages/schema":
+"portfolioly-schema@npm:^0.1.1, portfolioly-schema@workspace:*, portfolioly-schema@workspace:packages/schema":
   version: 0.0.0-use.local
   resolution: "portfolioly-schema@workspace:packages/schema"
   dependencies:
@@ -7752,7 +7752,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"portfolioly-template-components@npm:^0.1.0, portfolioly-template-components@workspace:*, portfolioly-template-components@workspace:packages/template-components":
+"portfolioly-template-components@npm:^0.1.1, portfolioly-template-components@workspace:*, portfolioly-template-components@workspace:packages/template-components":
   version: 0.0.0-use.local
   resolution: "portfolioly-template-components@workspace:packages/template-components"
   dependencies:
@@ -7764,7 +7764,7 @@ __metadata:
     clsx: "npm:^2.1.1"
     embla-carousel-react: "npm:^8.6.0"
     markdown-to-jsx: "npm:^7.7.14"
-    portfolioly-schema: "npm:^0.1.0"
+    portfolioly-schema: "npm:^0.1.1"
     tailwind-merge: "npm:^3.3.1"
     typescript: "npm:^5"
     vite: "npm:^5"
@@ -8915,7 +8915,7 @@ __metadata:
     framer-motion: "npm:^12.23.21"
     lucide-react: "npm:^0.544.0"
     next: "npm:15.5.3"
-    portfolioly-template-components: "npm:^0.1.0"
+    portfolioly-template-components: "npm:^0.1.1"
     react: "npm:19.1.0"
     react-dom: "npm:19.1.0"
     tailwindcss: "npm:^4"
