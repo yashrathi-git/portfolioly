@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { DateInfo } from "portfolioly-schema";
 import { useEffect, useState, useId } from "react";
-import { Calendar, CheckCircle2, XCircle } from "lucide-react";
+import { Calendar, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export interface SimpleDateInputProps {
@@ -111,16 +111,12 @@ export function SimpleDateInput({
 
   // Determine border color based on validation state
   const getBorderColor = () => {
-    if (validationState === "valid") return "border-green-500";
     if (validationState === "invalid") return "border-red-500";
     return "";
   };
 
   // Determine icon to display
   const getIcon = () => {
-    if (validationState === "valid") {
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-    }
     if (validationState === "invalid") {
       return <XCircle className="h-4 w-4 text-red-500" />;
     }
