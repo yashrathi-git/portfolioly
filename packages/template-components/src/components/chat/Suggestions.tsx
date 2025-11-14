@@ -7,26 +7,37 @@ import {
   User,
   FolderGit2,
   Wrench,
-  Smile,
+  Briefcase,
   Mail,
   Circle,
   Link as LinkIcon,
 } from "lucide-react";
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
 const ICONS: Record<string, LucideIcon> = {
   user: User,
   folderGit2: FolderGit2,
   wrench: Wrench,
-  smile: Smile,
+  briefcase: Briefcase,
   mail: Mail,
   link: LinkIcon,
+};
+
+// Prompt expansion mapping: single word -> full prompt
+const PROMPT_EXPANSION: Record<string, string> = {
+  Me: "Tell me about yourself",
+  Projects: "Show me your projects",
+  Experience: "Tell me about your experience",
+  Contact: "How can I contact you?",
+  Skills: "What are your skills?",
 };
 
 type SuggestionsProps = {
   items: Suggestion[];
   onPick: (s: Suggestion) => void;
   variant?: "initial" | "inline";
-  maxVisible?: number; // for inline variant
+  maxVisible?: number;
   onShowMore?: () => void;
   showMoreLabel?: string;
   className?: string;
@@ -41,38 +52,100 @@ export const Suggestions = ({
   showMoreLabel = "Show more",
   className,
 }: SuggestionsProps) => {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
   if (!items || items.length === 0) {
     return null;
   }
+
+  // Extract single word from label for display
+  const getSingleWord = (label: string): string => {
+    // Check if label matches a known expansion pattern
+    for (const [word, expansion] of Object.entries(PROMPT_EXPANSION)) {
+      if (label.toLowerCase().includes(word.toLowerCase())) {
+        return word;
+      }
+    }
+    // Fallback: use first word
+    return label.split(" ")[0];
+  };
+
+  // Get full prompt for submission
+  const getFullPrompt = (label: string): string => {
+    const singleWord = getSingleWord(label);
+    return PROMPT_EXPANSION[singleWord] || label;
+  };
+
+  // Handle suggestion click with prompt expansion
+  const handlePick = (s: Suggestion) => {
+    const fullPrompt = getFullPrompt(s.label);
+    onPick({ ...s, label: fullPrompt });
+  };
+
   if (variant === "initial") {
     return (
       <div
         className={cn(
-          "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3",
+          "flex flex-wrap justify-center gap-2.5 mx-auto",
           className
         )}
       >
-        {items.slice(0, 5).map((s) => {
+        {items.slice(0, 5).map((s, index) => {
           const Icon = ICONS[s.icon] ?? Circle;
+          const singleWord = getSingleWord(s.label);
+
           return (
-            <button
+            <motion.button
               key={s.id}
               type="button"
-              onClick={() => onPick(s)}
-              className="group rounded-2xl p-2.5 sm:p-3 bg-[var(--card)]/70 border border-[color:var(--border)]/70 hover:bg-[var(--accent)] transition shadow-sm text-left flex flex-col items-center"
+              onClick={() => handlePick(s)}
+              initial={
+                prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 8 }
+              }
+              animate={{ opacity: 1, y: 0 }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0.01 }
+                  : {
+                      duration: 0.3,
+                      ease: [0.4, 0, 0.2, 1],
+                      delay: index * 0.05,
+                    }
+              }
+              whileHover={
+                prefersReducedMotion
+                  ? {}
+                  : {
+                      y: -2,
+                      transition: { duration: 0.2 },
+                    }
+              }
+              whileTap={
+                prefersReducedMotion
+                  ? {}
+                  : {
+                      scale: 0.98,
+                      transition: { duration: 0.1 },
+                    }
+              }
+              className="group flex flex-col items-center gap-2 rounded-2xl px-4 py-3 min-w-[90px] bg-white/40 dark:bg-white/5 backdrop-blur-[12px] border border-black/[0.05] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)] hover:bg-white/60 dark:hover:bg-white/[0.08] hover:border-black/10 dark:hover:border-white/15 hover:shadow-[0_4px_8px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              aria-label={getFullPrompt(s.label)}
             >
-              <div
-                className={cn(
-                  "size-9 sm:size-10 rounded-xl grid place-items-center text-white shadow",
-                  s.color || "bg-[oklch(0.74_0.15_310)]"
-                )}
-              >
-                <Icon className="size-4 sm:size-5" />
-              </div>
-              <span className="mt-2 sm:mt-2.5 text-[13px] sm:text-sm font-medium text-center">
-                {s.label}
-              </span>
-            </button>
+              <Icon className="size-5 text-[color:var(--muted-foreground)] opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-200" />
+              <span className="font-medium text-sm">{singleWord}</span>
+            </motion.button>
           );
         })}
       </div>
@@ -83,27 +156,47 @@ export const Suggestions = ({
   const hasMore = items.length > maxVisible;
   return (
     <div
-      className={cn("flex flex-wrap items-center gap-2 sm:gap-3", className)}
+      className={cn("flex flex-wrap items-center gap-2 sm:gap-2.5", className)}
     >
       {visible.map((s) => {
         const Icon = ICONS[s.icon] ?? Circle;
+        const singleWord = getSingleWord(s.label);
+
         return (
-          <button
+          <motion.button
             key={s.id}
             type="button"
-            onClick={() => onPick(s)}
-            className="group inline-flex items-center gap-2 rounded-full border border-[color:var(--border)]/80 bg-[var(--card)]/70 backdrop-blur px-3.5 sm:px-4 py-2 text-sm sm:text-[15px] hover:bg-[var(--accent)] transition shadow-sm"
+            onClick={() => handlePick(s)}
+            whileHover={
+              prefersReducedMotion
+                ? {}
+                : {
+                    y: -2,
+                    transition: { duration: 0.2 },
+                  }
+            }
+            whileTap={
+              prefersReducedMotion
+                ? {}
+                : {
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }
+            }
+            className="group inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-white/40 dark:bg-white/5 backdrop-blur-[12px] border border-black/[0.05] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)] hover:bg-white/60 dark:hover:bg-white/[0.08] hover:border-black/10 dark:hover:border-white/15 hover:shadow-[0_4px_8px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            aria-label={getFullPrompt(s.label)}
           >
-            <Icon className="size-4 sm:size-5 text-[color:var(--muted-foreground)] group-hover:text-[color:var(--secondary-foreground)]" />
-            <span className="font-medium">{s.label}</span>
-          </button>
+            <Icon className="size-4 text-[color:var(--muted-foreground)] opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-200" />
+            <span className="font-medium">{singleWord}</span>
+          </motion.button>
         );
       })}
       {hasMore && (
         <button
           type="button"
           onClick={onShowMore}
-          className="inline-flex items-center gap-2 rounded-full border border-dashed border-[color:var(--border)]/80 bg-[var(--card)]/50 px-3.5 sm:px-4 py-2 text-sm sm:text-[15px] text-[color:var(--muted-foreground)] hover:bg-[var(--accent)] transition"
+          className="inline-flex items-center gap-2 rounded-full border border-dashed border-black/[0.05] dark:border-white/10 bg-white/30 dark:bg-white/[0.03] px-4 py-2 text-sm text-[color:var(--muted-foreground)] hover:bg-white/50 dark:hover:bg-white/[0.06]] transition-all duration-200"
+          aria-label={showMoreLabel}
         >
           {showMoreLabel}
         </button>

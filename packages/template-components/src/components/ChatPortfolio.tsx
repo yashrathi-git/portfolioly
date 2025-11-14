@@ -224,6 +224,7 @@ const ChatPortfolioComponent = ({
                 }}
                 onSubmit={onSubmit}
                 onPick={onPickSuggestion}
+                avatarUrl={effectiveProfile?.avatarUrl}
               />
             ) : (
               <div

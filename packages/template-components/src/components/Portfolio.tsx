@@ -65,11 +65,11 @@ export const Portfolio = ({
 
     const generatedSuggestions: Suggestion[] = [];
 
-    // Add suggestions based on available data
+    // Add suggestions based on available data with single-word labels
     if (portfolioData?.profile) {
       generatedSuggestions.push({
         id: "about",
-        label: "Tell me about yourself",
+        label: "Me",
         icon: "user",
       });
     }
@@ -77,24 +77,16 @@ export const Portfolio = ({
     if (portfolioData?.projects && portfolioData.projects.length > 0) {
       generatedSuggestions.push({
         id: "projects",
-        label: "Show me your projects",
+        label: "Projects",
         icon: "folderGit2",
-      });
-    }
-
-    if (portfolioData?.skills && portfolioData.skills.length > 0) {
-      generatedSuggestions.push({
-        id: "skills",
-        label: "What are your skills?",
-        icon: "wrench",
       });
     }
 
     if (portfolioData?.experience && portfolioData.experience.length > 0) {
       generatedSuggestions.push({
         id: "experience",
-        label: "Tell me about your experience",
-        icon: "user",
+        label: "Experience",
+        icon: "briefcase",
       });
     }
 
@@ -104,8 +96,16 @@ export const Portfolio = ({
     ) {
       generatedSuggestions.push({
         id: "contact",
-        label: "How can I contact you?",
+        label: "Contact",
         icon: "mail",
+      });
+    }
+
+    if (portfolioData?.skills && portfolioData.skills.length > 0) {
+      generatedSuggestions.push({
+        id: "skills",
+        label: "Skills",
+        icon: "wrench",
       });
     }
 
