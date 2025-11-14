@@ -64,6 +64,8 @@ export {
   ProfileTypeSchema,
   /** Zod schema for a single profile/social link */
   ProfileSchema,
+  /** Display labels for profile types */
+  PROFILE_TYPE_LABELS,
   /** Date information type with optional month and year */
   type DateInfo,
   /** Profile type for social links */

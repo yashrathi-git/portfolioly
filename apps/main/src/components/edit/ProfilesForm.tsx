@@ -12,23 +12,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { PersonalInfo, Profile, ProfileType } from "portfolioly-schema";
+import {
+  PROFILE_TYPE_LABELS,
+  ProfileTypeSchema,
+  type PersonalInfo,
+  type Profile,
+  type ProfileType,
+} from "portfolioly-schema";
 
 export interface ProfilesFormProps {
   value: PersonalInfo;
   onChange: (next: PersonalInfo) => void;
 }
 
-const profileTypes: { label: string; value: ProfileType }[] = [
-  { label: "LinkedIn", value: "linkedin" },
-  { label: "GitHub", value: "github" },
-  { label: "Twitter / X", value: "twitter" },
-  { label: "Personal Website", value: "website" },
-  { label: "Portfolio", value: "portfolio" },
-  { label: "YouTube", value: "youtube" },
-  { label: "Google Scholar", value: "scholar" },
-  { label: "Other", value: "other" },
-];
+const profileTypes: { label: string; value: ProfileType }[] =
+  ProfileTypeSchema.options.map((type) => ({
+    label: PROFILE_TYPE_LABELS[type],
+    value: type,
+  }));
 
 export function ProfilesForm({ value, onChange }: ProfilesFormProps) {
   const profiles = useMemo(() => {

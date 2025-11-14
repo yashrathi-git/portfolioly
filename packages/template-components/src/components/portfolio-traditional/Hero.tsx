@@ -4,10 +4,16 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "../../components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../components/ui/tooltip";
 import BlurFade from "../magicui/blur-fade";
 import BlurFadeText from "../magicui/blur-fade-text";
 import type { DisplayPortfolioProfile } from "portfolioly-schema";
-import { SocialIcon } from "./SocialIcon";
+import { SocialIcon, getSocialLabel } from "./SocialIcon";
 import {
   BLUR_FADE_DELAY,
   SECTION_DELAYS,
@@ -84,25 +90,28 @@ export const Hero = ({ profile }: HeroProps) => {
 
           {hasSocials && (
             <BlurFade delay={BLUR_FADE_DELAY * SECTION_DELAYS.socials}>
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                {profile.socials?.map((s) => (
-                  <a
-                    key={`${s.type}-${s.href}`}
-                    href={s.href}
-                    className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:border-foreground/20"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span className="flex h-4 w-4 items-center justify-center text-muted-foreground">
-                      <SocialIcon type={s.type} className="h-4 w-4" />
-                    </span>
-                    <span>
-                      {s.label ||
-                        s.type.charAt(0).toUpperCase() + s.type.slice(1)}
-                    </span>
-                  </a>
-                ))}
-              </div>
+              <TooltipProvider delayDuration={300}>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {profile.socials?.map((s) => (
+                    <Tooltip key={`${s.type}-${s.href}`}>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={s.href}
+                          className="group relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all duration-200 hover:scale-110 hover:border-foreground/30 hover:bg-accent hover:text-foreground hover:shadow-md"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={getSocialLabel(s.type, s.label)}
+                        >
+                          <SocialIcon type={s.type} className="h-5 w-5" />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{getSocialLabel(s.type, s.label)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+              </TooltipProvider>
             </BlurFade>
           )}
         </div>

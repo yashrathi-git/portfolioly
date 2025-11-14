@@ -67,6 +67,7 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^1.0.26",
+    "@icons-pack/react-simple-icons": "^13.8.0",
     "ai": "^4.1.8",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",

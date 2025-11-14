@@ -1248,6 +1248,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@icons-pack/react-simple-icons@npm:^13.8.0":
+  version: 13.8.0
+  resolution: "@icons-pack/react-simple-icons@npm:13.8.0"
+  peerDependencies:
+    react: ^16.13 || ^17 || ^18 || ^19
+  checksum: 10c0/3cd5ad80c72b7615c80260321b80049f4313d0513ebafa06cf3b97c51da77a3e04117683405a1e1fed044b48710eb9a8b2a59c6ffb4669afd09e898c9ccfc0ad
+  languageName: node
+  linkType: hard
+
 "@img/colour@npm:^1.0.0":
   version: 1.0.0
   resolution: "@img/colour@npm:1.0.0"
@@ -7757,6 +7766,7 @@ __metadata:
   resolution: "portfolioly-template-components@workspace:packages/template-components"
   dependencies:
     "@ai-sdk/react": "npm:^1.0.26"
+    "@icons-pack/react-simple-icons": "npm:^13.8.0"
     "@types/react": "npm:^19"
     "@types/react-dom": "npm:^19"
     "@vitejs/plugin-react-swc": "npm:^3"

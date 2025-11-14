@@ -101,11 +101,50 @@ export const ProfileTypeSchema = z.enum([
   "portfolio",
   "youtube",
   "twitter",
+  "instagram",
+  "codeforces",
+  "codechef",
+  "leetcode",
+  "figma",
+  "stackoverflow",
+  "devto",
+  "medium",
+  "producthunt",
+  "atcoder",
   "scholar",
+  "dribbble",
+  "behance",
   "other",
 ]);
 
 export type ProfileType = z.infer<typeof ProfileTypeSchema>;
+
+/**
+ * Display labels for profile types.
+ * Used in UI dropdowns and forms.
+ */
+export const PROFILE_TYPE_LABELS: Record<ProfileType, string> = {
+  linkedin: "LinkedIn",
+  github: "GitHub",
+  website: "Personal Website",
+  portfolio: "Portfolio",
+  youtube: "YouTube",
+  twitter: "Twitter / X",
+  instagram: "Instagram",
+  codeforces: "Codeforces",
+  codechef: "CodeChef",
+  leetcode: "LeetCode",
+  figma: "Figma",
+  stackoverflow: "Stack Overflow",
+  devto: "Dev.to",
+  medium: "Medium",
+  producthunt: "Product Hunt",
+  atcoder: "AtCoder",
+  scholar: "Google Scholar",
+  dribbble: "Dribbble",
+  behance: "Behance",
+  other: "Other",
+};
 
 /**
  * User profile/social media link information.
