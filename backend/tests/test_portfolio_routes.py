@@ -87,10 +87,13 @@ class TestPortfolioRoutes:
         """Test successful portfolio save."""
         mock_auth.return_value = mock_user_token
         mock_service = Mock()
+        mock_service.get_portfolio_data.return_value = None  # No existing portfolio
         mock_service.store_portfolio_data.return_value = None
         mock_get_service.return_value = mock_service
 
-        response = client.put("/portfolio/", json=sample_portfolio_data.model_dump())
+        response = client.put(
+            "/portfolio/", json=sample_portfolio_data.model_dump(mode="json")
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -149,3 +152,193 @@ class TestPortfolioRoutes:
         assert response.status_code == 200
         data = response.json()
         assert data["exists"] is False
+
+    @patch("app.routes.portfolio.require_verified_email")
+    @patch("app.routes.portfolio.get_portfolio_service")
+    def test_save_portfolio_flushes_stale_labels_on_url_change(
+        self, mock_get_service, mock_auth, client, mock_user_token
+    ):
+        """Test that profile labels are flushed when URL changes."""
+        from app.schemas.portfolio import Profile, ProfileType
+
+        mock_auth.return_value = mock_user_token
+        mock_service = Mock()
+
+        # Existing portfolio with a profile that has a label
+        existing_portfolio = PortfolioData(
+            personal_info=PersonalInfo(
+                full_name="John Doe",
+                profiles=[
+                    Profile(
+                        type=ProfileType.GITHUB,
+                        url="https://github.com/olduser",
+                        label="Old GitHub",
+                    )
+                ],
+            )
+        )
+        mock_service.get_portfolio_data.return_value = existing_portfolio
+        mock_service.store_portfolio_data.return_value = None
+        mock_get_service.return_value = mock_service
+
+        # New portfolio with changed URL but same type
+        new_portfolio = PortfolioData(
+            personal_info=PersonalInfo(
+                full_name="John Doe",
+                profiles=[
+                    Profile(
+                        type=ProfileType.GITHUB,
+                        url="https://github.com/newuser",
+                        label="My GitHub",  # This should be flushed
+                    )
+                ],
+            )
+        )
+
+        response = client.put(
+            "/portfolio/",
+            json=new_portfolio.model_dump(mode="json"),
+        )
+
+        assert response.status_code == 200
+
+        # Verify store was called with label flushed
+        call_args = mock_service.store_portfolio_data.call_args
+        stored_portfolio = call_args[0][1]
+        assert stored_portfolio.personal_info.profiles[0].label is None
+
+    @patch("app.routes.portfolio.require_verified_email")
+    @patch("app.routes.portfolio.get_portfolio_service")
+    def test_save_portfolio_flushes_stale_labels_on_type_change(
+        self, mock_get_service, mock_auth, client, mock_user_token
+    ):
+        """Test that profile labels are flushed when type changes."""
+        from app.schemas.portfolio import Profile, ProfileType
+
+        mock_auth.return_value = mock_user_token
+        mock_service = Mock()
+
+        # Existing portfolio with a profile
+        existing_portfolio = PortfolioData(
+            personal_info=PersonalInfo(
+                full_name="John Doe",
+                profiles=[
+                    Profile(
+                        type=ProfileType.GITHUB,
+                        url="https://example.com",
+                        label="GitHub",
+                    )
+                ],
+            )
+        )
+        mock_service.get_portfolio_data.return_value = existing_portfolio
+        mock_service.store_portfolio_data.return_value = None
+        mock_get_service.return_value = mock_service
+
+        # New portfolio with same URL but different type
+        new_portfolio = PortfolioData(
+            personal_info=PersonalInfo(
+                full_name="John Doe",
+                profiles=[
+                    Profile(
+                        type=ProfileType.WEBSITE,
+                        url="https://example.com",
+                        label="My Website",  # This should be flushed
+                    )
+                ],
+            )
+        )
+
+        response = client.put(
+            "/portfolio/",
+            json=new_portfolio.model_dump(mode="json"),
+        )
+
+        assert response.status_code == 200
+
+        # Verify store was called with label flushed
+        call_args = mock_service.store_portfolio_data.call_args
+        stored_portfolio = call_args[0][1]
+        assert stored_portfolio.personal_info.profiles[0].label is None
+
+    @patch("app.routes.portfolio.require_verified_email")
+    @patch("app.routes.portfolio.get_portfolio_service")
+    def test_save_portfolio_preserves_label_when_url_and_type_match(
+        self, mock_get_service, mock_auth, client, mock_user_token
+    ):
+        """Test that profile labels are preserved when URL and type don't change."""
+        from app.schemas.portfolio import Profile, ProfileType
+
+        mock_auth.return_value = mock_user_token
+        mock_service = Mock()
+
+        # Existing portfolio with a profile
+        existing_portfolio = PortfolioData(
+            personal_info=PersonalInfo(
+                full_name="John Doe",
+                profiles=[
+                    Profile(
+                        type=ProfileType.GITHUB,
+                        url="https://github.com/user",
+                        label="Old Label",
+                    )
+                ],
+            )
+        )
+        mock_service.get_portfolio_data.return_value = existing_portfolio
+        mock_service.store_portfolio_data.return_value = None
+        mock_get_service.return_value = mock_service
+
+        # New portfolio with same URL and type but new label
+        new_portfolio = PortfolioData(
+            personal_info=PersonalInfo(
+                full_name="John Doe",
+                profiles=[
+                    Profile(
+                        type=ProfileType.GITHUB,
+                        url="https://github.com/user",
+                        label="New Label",  # This should be kept
+                    )
+                ],
+            )
+        )
+
+        response = client.put(
+            "/portfolio/",
+            json=new_portfolio.model_dump(mode="json"),
+        )
+
+        assert response.status_code == 200
+
+        # Verify store was called with new label preserved
+        call_args = mock_service.store_portfolio_data.call_args
+        stored_portfolio = call_args[0][1]
+        assert stored_portfolio.personal_info.profiles[0].label == "New Label"
+
+    @patch("app.routes.portfolio.require_verified_email")
+    @patch("app.routes.portfolio.get_portfolio_service")
+    def test_save_portfolio_uses_preserve_brandfetch_false(
+        self,
+        mock_get_service,
+        mock_auth,
+        client,
+        mock_user_token,
+        sample_portfolio_data,
+    ):
+        """Test that save_portfolio calls store with preserve_brandfetch=False."""
+        mock_auth.return_value = mock_user_token
+        mock_service = Mock()
+        mock_service.get_portfolio_data.return_value = None
+        mock_service.store_portfolio_data.return_value = None
+        mock_get_service.return_value = mock_service
+
+        response = client.put(
+            "/portfolio/",
+            json=sample_portfolio_data.model_dump(mode="json"),
+        )
+
+        assert response.status_code == 200
+
+        # Verify preserve_brandfetch=False was passed
+        call_args = mock_service.store_portfolio_data.call_args
+        assert call_args[1]["preserve_brandfetch"] is False

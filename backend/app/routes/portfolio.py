@@ -3,7 +3,7 @@ Portfolio API routes for managing user portfolio data.
 """
 
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
@@ -22,6 +22,54 @@ from ..services.image_upload_service import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
+
+
+def _flush_stale_profile_labels(
+    new_portfolio: PortfolioData, existing_portfolio: Optional[PortfolioData]
+) -> None:
+    """
+    Flush stale profile labels when URL or type changes.
+
+    When a user updates a profile's URL or type, the old label becomes stale
+    and should be cleared. This function modifies the new_portfolio in place,
+    clearing labels for profiles where URL or type has changed.
+
+    Args:
+        new_portfolio: The incoming portfolio data from the user
+        existing_portfolio: The existing portfolio data from storage (if any)
+    """
+    if not existing_portfolio or not existing_portfolio.personal_info:
+        return
+
+    if not new_portfolio.personal_info or not new_portfolio.personal_info.profiles:
+        return
+
+    existing_profiles = existing_portfolio.personal_info.profiles or []
+    if not existing_profiles:
+        return
+
+    # Create lookup of existing profiles by (url, type) tuple
+    existing_lookup: Dict[tuple, Any] = {}
+    for profile in existing_profiles:
+        if profile.url and profile.type:
+            key = (profile.url, profile.type)
+            existing_lookup[key] = profile
+
+    # Check each new profile and flush label if URL or type changed
+    for new_profile in new_portfolio.personal_info.profiles:
+        if not new_profile.url or not new_profile.type:
+            continue
+
+        key = (new_profile.url, new_profile.type)
+        existing_profile = existing_lookup.get(key)
+
+        if not existing_profile:
+            # URL or type changed (no exact match found) - flush the label
+            new_profile.label = None
+            logger.debug(
+                f"Flushed stale label for profile: {new_profile.type} - {new_profile.url}"
+            )
+        # If exact match exists, keep whatever label the user provided
 
 
 @router.get("/", response_model=Optional[PortfolioData])
@@ -51,10 +99,25 @@ def save_user_portfolio(
 ):
     """
     Save or update the current user's portfolio data.
+
+    This endpoint handles profile label flushing: when a user updates a profile's
+    URL or type, any stale labels are automatically cleared to prevent displaying
+    incorrect information.
     """
     try:
         portfolio_service = get_portfolio_service()
-        portfolio_service.store_portfolio_data(user.uid, portfolio_data)
+
+        # Get existing portfolio to compare profiles
+        existing_portfolio = portfolio_service.get_portfolio_data(user.uid)
+
+        # Flush stale profile labels when URL or type changes
+        _flush_stale_profile_labels(portfolio_data, existing_portfolio)
+
+        # Store with preserve_brandfetch=False to avoid unintended merging
+        portfolio_service.store_portfolio_data(
+            user.uid, portfolio_data, preserve_brandfetch=False
+        )
+
         return {"message": "Portfolio saved successfully"}
     except FirebaseError as e:
         logger.error(f"Firebase error saving portfolio for user {user.uid}: {e}")
