@@ -54,6 +54,7 @@ const prepareWidgetData = (
         heading: "Projects",
         projects: projects.map((p: any) => ({
           name: p.name,
+          cardImageUrl: p.cardImageUrl,
           role: p.role,
           one_line_description: p.one_line_description,
           highlights: p.highlights,

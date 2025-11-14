@@ -135,7 +135,7 @@ function TraditionalProjectCard({
             <div className="flex flex-row flex-wrap items-start gap-2">
               {links.map((link, idx) => (
                 <a href={link.href} key={idx} target="_blank" rel="noreferrer">
-                  <Badge className="flex gap-1.5 px-2.5 py-1 text-[10px] hover:bg-primary/90 transition-colors">
+                  <Badge className="flex gap-1.5 px-2.5 py-1 text-[10px] !text-primary-foreground hover:bg-primary/90 transition-colors">
                     {link.icon}
                     {link.type}
                   </Badge>
@@ -224,7 +224,7 @@ function WidgetProjectCard({ project }: { project: DisplayProject }) {
           <div className="flex flex-row flex-wrap items-start gap-2">
             {links.map((link, idx) => (
               <a href={link.href} key={idx} target="_blank" rel="noreferrer">
-                <Badge className="flex gap-1.5 px-2.5 py-1 text-[10px] hover:bg-primary/90 transition-colors">
+                <Badge className="flex gap-1.5 px-2.5 py-1 text-[10px] !text-primary-foreground hover:bg-primary/90 transition-colors">
                   {link.icon}
                   {link.type}
                 </Badge>
