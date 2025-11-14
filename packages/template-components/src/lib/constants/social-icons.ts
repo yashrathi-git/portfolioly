@@ -61,28 +61,15 @@ export const SOCIAL_ICON_COMPONENTS: Record<SocialType, IconComponent> = {
 };
 
 /**
- * Display labels for social platforms.
- * Derives from schema for consistency.
+ * Maps SocialType to display labels.
+ * Derives from PROFILE_TYPE_LABELS for consistency, with special handling for UI-specific types.
  */
-export const SOCIAL_LABELS: Record<SocialType, string> = {
-  github: PROFILE_TYPE_LABELS.github,
-  linkedin: PROFILE_TYPE_LABELS.linkedin,
-  x: PROFILE_TYPE_LABELS.twitter,
-  instagram: PROFILE_TYPE_LABELS.instagram,
-  youtube: PROFILE_TYPE_LABELS.youtube,
-  dribbble: PROFILE_TYPE_LABELS.dribbble,
-  behance: PROFILE_TYPE_LABELS.behance,
-  leetcode: PROFILE_TYPE_LABELS.leetcode,
-  codeforces: PROFILE_TYPE_LABELS.codeforces,
-  codechef: PROFILE_TYPE_LABELS.codechef,
-  atcoder: PROFILE_TYPE_LABELS.atcoder,
-  figma: PROFILE_TYPE_LABELS.figma,
-  stackoverflow: PROFILE_TYPE_LABELS.stackoverflow,
-  devto: PROFILE_TYPE_LABELS.devto,
-  medium: PROFILE_TYPE_LABELS.medium,
-  producthunt: PROFILE_TYPE_LABELS.producthunt,
-  scholar: PROFILE_TYPE_LABELS.scholar,
-  website: PROFILE_TYPE_LABELS.website,
-  mail: "Email",
-  link: "Link",
-};
+export function getSocialLabel(type: SocialType): string {
+  // Handle UI-specific types that don't exist in ProfileType
+  if (type === "mail") return "Email";
+  if (type === "link") return "Link";
+  if (type === "x") return PROFILE_TYPE_LABELS.twitter; // twitter → x mapping
+
+  // For all other types, use the label from schema
+  return PROFILE_TYPE_LABELS[type as keyof typeof PROFILE_TYPE_LABELS] || type;
+}
