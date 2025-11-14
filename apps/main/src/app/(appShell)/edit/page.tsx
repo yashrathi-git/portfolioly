@@ -1,18 +1,10 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import withAuth from "@/lib/auth/withAuth";
 import { toast } from "sonner";
-// Dynamic import to disable SSR for PortfolioEditor
-const PortfolioEditor = dynamic(
-  () =>
-    import("@/components/edit/PortfolioEditor").then((mod) => ({
-      default: mod.PortfolioEditor,
-    })),
-  { ssr: false }
-);
+import { PortfolioEditor } from "@/components/edit/PortfolioEditor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
