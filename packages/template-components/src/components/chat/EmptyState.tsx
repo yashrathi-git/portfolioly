@@ -5,6 +5,7 @@ import { Suggestions } from "./Suggestions";
 import { Composer } from "./Composer";
 import type { Suggestion } from "./types";
 import { useState, useEffect } from "react";
+import { User } from "lucide-react";
 
 type EmptyStateProps = {
   title?: string;
@@ -31,6 +32,7 @@ export const EmptyState = ({
 }: EmptyStateProps) => {
   const [animationComplete, setAnimationComplete] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   // Character-by-character animation for greeting
   const greetingText = title ? `Hi I'm ${title} 👋` : "";
@@ -83,20 +85,32 @@ export const EmptyState = ({
           style={{
             willChange: animationComplete ? "auto" : "transform, opacity",
           }}
-          className="mx-auto w-24 h-24 md:w-32 md:h-32 rounded-full border-[3px] border-black/[0.06] dark:border-white/10 shadow-[0_0_0_1px_rgba(0,0,0,0.02),0_2px_4px_rgba(0,0,0,0.02),0_8px_16px_rgba(0,0,0,0.04),0_16px_32px_rgba(0,0,0,0.04)] overflow-hidden"
+          className="mx-auto w-24 h-24 md:w-32 md:h-32 rounded-full border-[3px] border-black/[0.06] dark:border-white/10 shadow-[0_0_0_1px_rgba(0,0,0,0.02),0_2px_4px_rgba(0,0,0,0.02),0_8px_16px_rgba(0,0,0,0.04),0_16px_32px_rgba(0,0,0,0.04)] overflow-hidden relative"
           role="img"
           aria-label={`${title || "Profile"} avatar`}
         >
-          {avatarUrl ? (
+          {/* Placeholder - shown when no image or while loading */}
+          {(!avatarUrl || !imageLoaded) && (
+            <div className="absolute inset-0 bg-gradient-to-br from-[oklch(0.84_0.07_250)] to-[oklch(0.74_0.15_310)] flex items-center justify-center">
+              <User
+                className="w-12 h-12 md:w-16 md:h-16 text-white/80"
+                strokeWidth={1.5}
+              />
+            </div>
+          )}
+
+          {/* Actual image */}
+          {avatarUrl && (
             <img
               src={avatarUrl}
               alt={title || "Profile"}
               loading="eager"
               decoding="async"
-              className="w-full h-full object-cover"
+              onLoad={() => setImageLoaded(true)}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${
+                imageLoaded ? "opacity-100" : "opacity-0"
+              }`}
             />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[oklch(0.84_0.07_250)] to-[oklch(0.74_0.15_310)]" />
           )}
         </motion.div>
 
