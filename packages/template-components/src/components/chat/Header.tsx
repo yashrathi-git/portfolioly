@@ -51,10 +51,15 @@ export const ChatHeader = ({ profile, showIdentity = true }: HeaderProps) => {
 
   return (
     <header className="w-full sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-transparent/0 bg-transparent">
-      {/* Empty header - profile photo and links removed */}
       <div className="w-full px-4 sm:px-6">
         <div className="py-3 sm:py-4">
-          {/* Header content removed for cleaner look */}
+          {showIdentity ? (
+            <div className="inline-flex items-center">
+              <div className="size-10 sm:size-11 rounded-xl bg-gradient-to-br from-[oklch(0.84_0.07_250)] to-[oklch(0.74_0.15_310)] text-white grid place-items-center shadow-sm">
+                {renderAvatar()}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </header>

@@ -8,14 +8,8 @@ import { mapPortfolioDataToTemplate } from "@/utils/portfolioDataMapper";
 import { env } from "@/lib/env";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import dynamic from "next/dynamic";
+import { Portfolio } from "portfolioly-template-components";
 import { fetchUsernameAndToken } from "@/lib/api/publicToken";
-
-// Dynamic import to avoid SSR issues with Portfolio component
-const Portfolio = dynamic(
-  () => import("portfolioly-template-components").then((mod) => mod.Portfolio),
-  { ssr: false }
-);
 
 /**
  * Authenticated preview page - shows user's portfolio in fullscreen mode
