@@ -5,7 +5,7 @@ This guide shows how to integrate the dynamic template components into your Next
 ## Installation
 
 ```bash
-npm install @portfolioly/template-components
+npm install portfolioly-template-components
 ```
 
 ## Quick Start
@@ -17,8 +17,8 @@ import {
   ChatPortfolio,
   HydrationProvider,
   TemplateConfig,
-} from "@portfolioly/template-components";
-import "@portfolioly/template-components/styles.css";
+} from "portfolioly-template-components";
+import "portfolioly-template-components/styles.css";
 
 const config: TemplateConfig = {
   dataSource: "api",
@@ -47,7 +47,7 @@ import {
   getServerSidePortfolioProps,
   createHydratedPage,
   ChatPortfolio,
-} from "@portfolioly/template-components";
+} from "portfolioly-template-components";
 
 const config: TemplateConfig = {
   dataSource: "api",
@@ -163,7 +163,7 @@ const config: TemplateConfig = {
 import {
   ChatPortfolio,
   usePortfolioData,
-} from "@portfolioly/template-components";
+} from "portfolioly-template-components";
 
 function PortfolioWrapper() {
   const { portfolioData, isLoading, error } = usePortfolioData();
@@ -181,7 +181,7 @@ function PortfolioWrapper() {
 ### Traditional Portfolio
 
 ```tsx
-import { TraditionalPortfolio } from "@portfolioly/template-components";
+import { TraditionalPortfolio } from "portfolioly-template-components";
 
 function Portfolio() {
   return (
@@ -200,7 +200,7 @@ function Portfolio() {
 import {
   UsernameSelector,
   VisibilityToggle,
-} from "@portfolioly/template-components";
+} from "portfolioly-template-components";
 
 function SettingsPage() {
   const [username, setUsername] = useState("");
@@ -335,7 +335,7 @@ For JSON mode or hybrid fallback, create a file matching the backend schema:
 Components automatically include error boundaries:
 
 ```tsx
-import { PortfolioErrorBoundary } from "@portfolioly/template-components";
+import { PortfolioErrorBoundary } from "portfolioly-template-components";
 
 <PortfolioErrorBoundary fallbackData={exampleData}>
   <ChatPortfolio />
@@ -379,7 +379,7 @@ const config: TemplateConfig = {
 Components that require external data are automatically flagged:
 
 ```tsx
-import { logFlaggedComponents } from "@portfolioly/template-components";
+import { logFlaggedComponents } from "portfolioly-template-components";
 
 // In development, log all flagged components
 logFlaggedComponents({
@@ -392,7 +392,7 @@ logFlaggedComponents({
 ### Performance Monitoring
 
 ```tsx
-import { performanceMonitor } from "@portfolioly/template-components";
+import { performanceMonitor } from "portfolioly-template-components";
 
 // Monitor data loading performance
 performanceMonitor.startTimer("portfolio-load");
@@ -411,7 +411,7 @@ import type {
   BackendPortfolioData,
   DataProvider,
   ComponentDataRequirements,
-} from "@portfolioly/template-components";
+} from "portfolioly-template-components";
 ```
 
 ## Best Practices
@@ -467,14 +467,14 @@ const config: TemplateConfig = {
 
 ```tsx
 // Before
-import { ChatPortfolio } from "@portfolioly/template-components";
+import { ChatPortfolio } from "portfolioly-template-components";
 
 // After
 import {
   ChatPortfolio,
   HydrationProvider,
   TemplateConfig,
-} from "@portfolioly/template-components";
+} from "portfolioly-template-components";
 ```
 
 2. **Add configuration:**
@@ -530,7 +530,7 @@ const config: TemplateConfig = {
 ### Debug Tools
 
 ```tsx
-import { generateDebugReport } from "@portfolioly/template-components";
+import { generateDebugReport } from "portfolioly-template-components";
 
 const debugInfo = generateDebugReport(config, portfolioData);
 console.log("Debug Report:", debugInfo);

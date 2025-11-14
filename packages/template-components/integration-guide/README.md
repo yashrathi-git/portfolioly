@@ -1,4 +1,4 @@
-# @portfolioly/template-components Integration Guide
+# portfolioly-template-components Integration Guide
 
 This comprehensive guide provides step-by-step instructions for integrating the Portfolioly template components into your application.
 
@@ -21,10 +21,10 @@ This comprehensive guide provides step-by-step instructions for integrating the 
 
 ```bash
 # If using in a monorepo with workspace protocol
-npm install @portfolioly/template-components@workspace:*
+npm install portfolioly-template-components@workspace:*
 
 # Or if published to npm
-npm install @portfolioly/template-components
+npm install portfolioly-template-components
 ```
 
 ### 2. Install Peer Dependencies
@@ -44,8 +44,8 @@ import {
   ChatPortfolio,
   TemplateProvider,
   PortfolioProvider,
-} from "@portfolioly/template-components";
-import "@portfolioly/template-components/style.css";
+} from "portfolioly-template-components";
+import "portfolioly-template-components/style.css";
 
 function MyPortfolio({ data }) {
   const profile = {
@@ -91,8 +91,8 @@ import {
   TraditionalPortfolio,
   TemplateProvider,
   PortfolioProvider,
-} from "@portfolioly/template-components";
-import "@portfolioly/template-components/style.css";
+} from "portfolioly-template-components";
+import "portfolioly-template-components/style.css";
 
 function MyTraditionalPortfolio({ data }) {
   return (
@@ -134,18 +134,18 @@ import {
   // Data and configuration
   TemplateProvider,
   PortfolioProvider,
-} from "@portfolioly/template-components";
+} from "portfolioly-template-components";
 ```
 
 ### Chat Portfolio with Custom Configuration
 
 ```tsx
-import { ChatPortfolio } from "@portfolioly/template-components";
+import { ChatPortfolio } from "portfolioly-template-components";
 import type {
   PortfolioData,
   Profile,
   Suggestion,
-} from "@portfolioly/template-components";
+} from "portfolioly-template-components";
 
 function CustomChatPortfolio({ data }: { data: PortfolioData }) {
   const profile: Profile = {
@@ -233,7 +233,7 @@ function CustomChatPortfolio({ data }: { data: PortfolioData }) {
 ### Portfolio with Theme Toggle
 
 ```tsx
-import { ChatPortfolio, ThemeToggle } from "@portfolioly/template-components";
+import { ChatPortfolio, ThemeToggle } from "portfolioly-template-components";
 
 function ThemedPortfolio({ data }: { data: PortfolioData }) {
   return (
@@ -262,8 +262,8 @@ For advanced use cases, you can use the configuration system:
 import {
   HydrationProvider,
   ChatPortfolio,
-} from "@portfolioly/template-components";
-import type { TemplateConfig } from "@portfolioly/template-components/config";
+} from "portfolioly-template-components";
+import type { TemplateConfig } from "portfolioly-template-components/config";
 
 const config: TemplateConfig = {
   dataSource: "api", // "api" | "json" | "hybrid"
@@ -295,7 +295,7 @@ function ConfiguredPortfolio({ username }: { username: string }) {
 ### Error Boundary Integration
 
 ```tsx
-import { ErrorBoundary, ChatPortfolio } from "@portfolioly/template-components";
+import { ErrorBoundary, ChatPortfolio } from "portfolioly-template-components";
 
 function SafePortfolio({ data }: { data: PortfolioData }) {
   return (
@@ -318,8 +318,8 @@ The package includes several data providers for different use cases:
 ### API Data Provider
 
 ```tsx
-import { HydrationProvider } from "@portfolioly/template-components";
-import type { TemplateConfig } from "@portfolioly/template-components/config";
+import { HydrationProvider } from "portfolioly-template-components";
+import type { TemplateConfig } from "portfolioly-template-components/config";
 
 const apiConfig: TemplateConfig = {
   dataSource: "api",
@@ -398,7 +398,7 @@ import type {
   // Utility types
   DateInfo,
   TextBlobs,
-} from "@portfolioly/template-components";
+} from "portfolioly-template-components";
 ```
 
 ### Data Structure Examples
@@ -550,14 +550,14 @@ const backendData: BackendPortfolioData = {
 **Option 1: Component-level import (Recommended)**
 
 ```tsx
-import "@portfolioly/template-components/style.css";
+import "portfolioly-template-components/style.css";
 ```
 
 **Option 2: Global CSS import**
 
 ```css
 /* In your global CSS file */
-@import "@portfolioly/template-components/style.css";
+@import "portfolioly-template-components/style.css";
 ```
 
 ### Custom Styling
@@ -586,7 +586,7 @@ If using Tailwind CSS, the components work seamlessly:
 ```tsx
 // The components include their own Tailwind classes
 // No additional configuration needed
-import { ChatPortfolio } from "@portfolioly/template-components";
+import { ChatPortfolio } from "portfolioly-template-components";
 ```
 
 ## Server-Side Rendering
@@ -595,9 +595,9 @@ import { ChatPortfolio } from "@portfolioly/template-components";
 
 ```tsx
 // app/portfolio/[username]/page.tsx
-import { getServerSidePortfolioProps } from "@portfolioly/template-components/providers";
-import { ChatPortfolio } from "@portfolioly/template-components";
-import type { TemplateConfig } from "@portfolioly/template-components/config";
+import { getServerSidePortfolioProps } from "portfolioly-template-components/providers";
+import { ChatPortfolio } from "portfolioly-template-components";
+import type { TemplateConfig } from "portfolioly-template-components/config";
 
 const config: TemplateConfig = {
   dataSource: "api",
@@ -638,7 +638,7 @@ export default async function PortfolioPage({
 import {
   getStaticPortfolioPaths,
   getStaticPortfolioProps,
-} from "@portfolioly/template-components/providers";
+} from "portfolioly-template-components/providers";
 
 export async function generateStaticParams() {
   const paths = await getStaticPortfolioPaths(config);
@@ -672,7 +672,7 @@ export async function generateMetadata({
 
 **Solutions**:
 
-- Ensure CSS import: `import "@portfolioly/template-components/style.css"`
+- Ensure CSS import: `import "portfolioly-template-components/style.css"`
 - Check build configuration for CSS handling
 - Verify no conflicting CSS resets
 
@@ -684,7 +684,7 @@ export async function generateMetadata({
 
 ```tsx
 // Ensure proper type imports
-import type { PortfolioData } from "@portfolioly/template-components";
+import type { PortfolioData } from "portfolioly-template-components";
 
 // Use type assertions if needed
 const data = portfolioData as PortfolioData;
@@ -702,7 +702,7 @@ import dynamic from "next/dynamic";
 
 const ChatPortfolio = dynamic(
   () =>
-    import("@portfolioly/template-components").then((mod) => mod.ChatPortfolio),
+    import("portfolioly-template-components").then((mod) => mod.ChatPortfolio),
   { ssr: false }
 );
 ```
@@ -740,7 +740,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ["@portfolioly/template-components"],
+    include: ["portfolioly-template-components"],
   },
 });
 ```
@@ -751,9 +751,9 @@ export default defineConfig({
 // next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@portfolioly/template-components"],
+  transpilePackages: ["portfolioly-template-components"],
   experimental: {
-    optimizePackageImports: ["@portfolioly/template-components"],
+    optimizePackageImports: ["portfolioly-template-components"],
   },
 };
 
@@ -840,7 +840,7 @@ Data provider for server-side rendering and client hydration.
 Utility for combining CSS classes.
 
 ```tsx
-import { cn } from "@portfolioly/template-components";
+import { cn } from "portfolioly-template-components";
 
 const className = cn("base-class", condition && "conditional-class");
 ```
@@ -851,7 +851,7 @@ const className = cn("base-class", condition && "conditional-class");
 import {
   mapBackendToFrontend,
   mapFrontendToBackend,
-} from "@portfolioly/template-components/utils";
+} from "portfolioly-template-components/utils";
 
 // Convert backend data to frontend format
 const frontendData = mapBackendToFrontend(backendData);

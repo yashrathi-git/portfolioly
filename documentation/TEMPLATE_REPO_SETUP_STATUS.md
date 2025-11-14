@@ -92,12 +92,7 @@ git push https://github.com/yashrathi-git/portfolioly-template.git template-depl
 
 Add these secrets to your main repository for the workflows to function:
 
-1. **NPM_TOKEN**: Your npm authentication token
-
-   - Go to npmjs.com → Access Tokens → Generate New Token
-   - Add to GitHub: Settings → Secrets → Actions → New repository secret
-
-2. **TEMPLATE_REPO_TOKEN**: GitHub Personal Access Token with `repo` scope
+1. **TEMPLATE_REPO_TOKEN**: GitHub Personal Access Token with `repo` scope
    - Go to GitHub Settings → Developer settings → Personal access tokens
    - Generate token with `repo` scope
    - Add to GitHub: Settings → Secrets → Actions → New repository secret
