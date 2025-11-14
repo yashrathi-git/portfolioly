@@ -1,5 +1,11 @@
 # portfolioly-template-components
 
+## 0.1.3
+
+### Patch Changes
+
+- 04bc0ee: Fix tailwind styling issues in standalone mode
+
 ## 0.1.2
 
 ### Patch Changes
