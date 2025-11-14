@@ -4,7 +4,7 @@
 @source "../../../../packages/template-components/src";
 
 /* NPM package path - works when installed from npm */
-@source "../node_modules/portfolioly-template-components/src";
+@source "../../node_modules/portfolioly-template-components/src";
 
 @import "tw-animate-css";
 
