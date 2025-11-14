@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { DateInfo, Education } from "portfolioly-schema";
-import { MonthYearInput } from "./MonthYearInput";
+import { SimpleDateInput } from "./SimpleDateInput";
 
 export interface EducationFormProps {
   value: Education[];
@@ -85,14 +85,14 @@ export function EducationForm({ value, onChange }: EducationFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Start date</Label>
-                <MonthYearInput
+                <SimpleDateInput
                   value={ed.start_date || undefined}
                   onChange={(d) => updateDate(idx, "start_date", d)}
                 />
               </div>
               <div className="grid gap-2">
                 <Label>End date</Label>
-                <MonthYearInput
+                <SimpleDateInput
                   value={ed.end_date || undefined}
                   onChange={(d) => updateDate(idx, "end_date", d)}
                   disabled={!!ed.is_current}
