@@ -88,6 +88,7 @@ const ChatPortfolioComponent = ({
     input,
     handleInputChange,
     handleSubmit: aiHandleSubmit,
+    append,
     isLoading: aiIsLoading,
     error: aiError,
   } = useChat({
@@ -179,13 +180,26 @@ const ChatPortfolioComponent = ({
     }
   };
 
-  const onPickSuggestion = (suggestion: Suggestion) => {
-    setLocalInput(suggestion.label);
-    // Trigger submission after a short delay to allow input to update
-    setTimeout(() => {
-      const form = new Event("submit", { bubbles: true, cancelable: true });
-      onSubmit(form as any);
-    }, 10);
+  const onPickSuggestion = async (suggestion: Suggestion) => {
+    const value = suggestion.label.trim();
+    if (!value) return;
+
+    // Validate required props
+    if (!username || !apiBaseUrl || !publicToken) {
+      console.error("Missing required props for chat submission");
+      return;
+    }
+
+    // Use append to directly send the message without going through input state
+    // This is the proper way to handle programmatic message sending in Vercel AI SDK
+    try {
+      await append({
+        role: "user",
+        content: value,
+      });
+    } catch (error) {
+      console.error("Failed to send suggestion:", error);
+    }
   };
 
   // Show API error if present
