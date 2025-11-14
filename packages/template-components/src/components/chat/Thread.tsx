@@ -171,20 +171,20 @@ export const Thread = ({
             : [{ type: "text" as const, content: m.content }];
 
         return (
-          <div key={m.id} className="flex gap-3">
+          <div key={m.id} className="flex gap-2 sm:gap-3">
             {m.role === "assistant" ? (
-              <div className="mt-1 size-9 shrink-0 rounded-full bg-[var(--secondary)] flex items-center justify-center">
-                <Sparkles className="size-4.5 text-[color:var(--secondary-foreground)]" />
+              <div className="mt-1 size-7 sm:size-9 shrink-0 rounded-full bg-[var(--secondary)] hidden sm:flex items-center justify-center">
+                <Sparkles className="size-3.5 sm:size-4.5 text-[color:var(--secondary-foreground)]" />
               </div>
             ) : (
-              <div className="mt-1 size-9 shrink-0 rounded-full bg-[oklch(0.84_0.07_250)] text-white flex items-center justify-center">
+              <div className="mt-1 size-7 sm:size-9 shrink-0 rounded-full bg-[oklch(0.84_0.07_250)] text-white hidden sm:flex items-center justify-center text-sm sm:text-base">
                 U
               </div>
             )}
 
             <div
               className={cn(
-                "flex-1 max-w-full md:max-w-[85%] leading-relaxed [&_*]:text-inherit [&_*]:leading-[inherit] space-y-4",
+                "flex-1 max-w-full leading-relaxed [&_*]:text-inherit [&_*]:leading-[inherit] space-y-4",
                 typography.content.responsive
               )}
             >
@@ -264,9 +264,9 @@ export const Thread = ({
       })}
 
       {isThinking && (
-        <div className="flex gap-3">
-          <div className="mt-1 size-9 shrink-0 rounded-full bg-[var(--secondary)] flex items-center justify-center">
-            <Sparkles className="size-4.5 text-[color:var(--secondary-foreground)]" />
+        <div className="flex gap-2 sm:gap-3">
+          <div className="mt-1 size-7 sm:size-9 shrink-0 rounded-full bg-[var(--secondary)] hidden sm:flex items-center justify-center">
+            <Sparkles className="size-3.5 sm:size-4.5 text-[color:var(--secondary-foreground)]" />
           </div>
           <div
             className={cn(

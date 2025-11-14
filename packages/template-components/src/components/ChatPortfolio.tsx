@@ -223,8 +223,8 @@ const ChatPortfolioComponent = ({
         />
 
         {/* Main content */}
-        <div className="flex-1 min-h-0 flex flex-col text-[15px] sm:text-base">
-          <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 relative flex-1">
+        <div className="flex-1 min-h-0 flex flex-col text-[14px] sm:text-[15px]">
+          <div className="mx-auto w-full max-w-3xl px-3 sm:px-4 md:px-6 relative flex-1">
             {!hasStarted ? (
               <EmptyState
                 title={effectivePortfolioData?.profile?.name || "Portfolio"}
@@ -245,7 +245,7 @@ const ChatPortfolioComponent = ({
                 ref={listRef}
                 className="absolute inset-0 overflow-y-auto pb-40 thin-scrollbar"
               >
-                <div className="mx-auto w-full max-w-3xl">
+                <div className="mx-auto w-full max-w-3xl px-1 sm:px-0">
                   <Thread
                     messages={messages}
                     isThinking={isThinking}
@@ -269,7 +269,7 @@ const ChatPortfolioComponent = ({
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className="sticky bottom-0 w-full py-4 bg-gradient-to-t from-transparent via-transparent to-transparent backdrop-blur supports-[backdrop-filter]:backdrop-blur outline-none"
               >
-                <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
+                <div className="mx-auto w-full max-w-3xl px-3 sm:px-4 md:px-6">
                   {/* Inline suggestions just above input */}
                   <Suggestions
                     items={suggestions}
@@ -278,7 +278,7 @@ const ChatPortfolioComponent = ({
                     maxVisible={inlineMax}
                     onShowMore={() => setInlineMax((v) => v + 5)}
                     showMoreLabel="⋯"
-                    className="mb-3"
+                    className="mb-2 sm:mb-3"
                   />
 
                   {/* Subtle loading animation */}
@@ -322,12 +322,12 @@ const ChatPortfolioComponent = ({
                     onSubmit={onSubmit}
                     placeholder="Type your message…"
                   />
-                  {/* Tech tags (subtle) */}
-                  <div className="mt-3 flex items-center gap-3 text-xs sm:text-[13px] text-[color:var(--muted-foreground)]">
-                    <span className="inline-flex items-center gap-1">
+                  {/* Tech tags (subtle) - wrap on mobile to prevent overflow */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-[13px] text-[color:var(--muted-foreground)]">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap">
                       React • Next.js • TypeScript
                     </span>
-                    <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap">
                       Tailwind v4 • Shadcn/UI
                     </span>
                   </div>
