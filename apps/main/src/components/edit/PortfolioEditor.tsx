@@ -150,10 +150,9 @@ export function PortfolioEditor({
 
   return (
     <div className="w-full min-h-screen">
-      {/* Sticky Top Bar */}
+      {/* Top Bar */}
       <EditorTopBar
         title="Edit Portfolio"
-        subtitle={`Welcome back, ${userName || "there"}!`}
         activeMode={activeMode}
         onModeChange={handleModeChange}
         onSave={onSave}
@@ -177,7 +176,7 @@ export function PortfolioEditor({
           <div className="flex gap-6">
             {/* Floating Sidebar - Hidden on mobile */}
             <div className="hidden md:block w-60 flex-shrink-0">
-              <div className="sticky top-[7.5rem]">
+              <div className="sticky top-20">
                 <NavigationSidebar
                   sections={sections}
                   activeSection={activeSection}

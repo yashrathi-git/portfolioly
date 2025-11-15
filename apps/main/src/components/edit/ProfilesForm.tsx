@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,6 +18,7 @@ import {
   type ProfileType,
 } from "portfolioly-schema";
 import { ActionButton } from "./ActionButton";
+import { FormSection } from "./FormSection";
 
 export interface ProfilesFormProps {
   value: PersonalInfo;
@@ -60,17 +60,18 @@ export function ProfilesForm({ value, onChange }: ProfilesFormProps) {
   const canAdd = useMemo(() => profiles.length < 10, [profiles.length]);
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base">Profiles & Social Links</CardTitle>
+    <FormSection
+      title="Profiles & Social Links"
+      actions={
         <ActionButton
           action="add"
           label="Add profile"
           onClick={addProfile}
           disabled={!canAdd}
         />
-      </CardHeader>
-      <CardContent className="grid gap-6">
+      }
+    >
+      <div className="grid gap-6">
         {profiles.length === 0 && (
           <p className="text-sm text-muted-foreground">
             No profiles added yet.
@@ -131,7 +132,7 @@ export function ProfilesForm({ value, onChange }: ProfilesFormProps) {
             </div>
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </FormSection>
   );
 }

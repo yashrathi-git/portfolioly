@@ -1,10 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Certification } from "portfolioly-schema";
 import { ActionButton } from "./ActionButton";
+import { FormSection } from "./FormSection";
 
 export interface CertificationsFormProps {
   value: Certification[];
@@ -24,12 +24,13 @@ export function CertificationsForm({
     onChange(items.map((it, i) => (i === idx ? { ...it, ...next } : it)));
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base">Certifications</CardTitle>
+    <FormSection
+      title="Certifications"
+      actions={
         <ActionButton action="add" label="Add certification" onClick={add} />
-      </CardHeader>
-      <CardContent className="grid gap-6">
+      }
+    >
+      <div className="grid gap-6">
         {items.length === 0 && (
           <p className="text-sm text-muted-foreground">
             No certifications added yet.
@@ -72,8 +73,8 @@ export function CertificationsForm({
             </div>
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </FormSection>
   );
 }
 

@@ -1,12 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { DateInfo, Education } from "portfolioly-schema";
 import { SimpleDateInput } from "./SimpleDateInput";
 import { ActionButton } from "./ActionButton";
+import { FormSection } from "./FormSection";
 
 export interface EducationFormProps {
   value: Education[];
@@ -40,12 +40,13 @@ export function EducationForm({ value, onChange }: EducationFormProps) {
   };
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base">Education</CardTitle>
+    <FormSection
+      title="Education"
+      actions={
         <ActionButton action="add" label="Add education" onClick={add} />
-      </CardHeader>
-      <CardContent className="grid gap-6">
+      }
+    >
+      <div className="grid gap-6">
         {items.length === 0 && (
           <p className="text-sm text-muted-foreground">
             No education entries yet.
@@ -152,8 +153,8 @@ export function EducationForm({ value, onChange }: EducationFormProps) {
             </div>
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </FormSection>
   );
 }
 

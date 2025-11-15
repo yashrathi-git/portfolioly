@@ -1,16 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MessageSquare, FileText, Eye } from "lucide-react";
+import { FormSection } from "./FormSection";
 import type { LayoutSettings } from "portfolioly-schema";
 
 export interface LayoutSettingsFormProps {
@@ -87,17 +81,16 @@ export function LayoutSettingsForm({
   const showDefaultLayoutOption = localValue.layout_mode === "both";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <FormSection
+      title={
+        <span className="flex items-center gap-2">
           <Eye className="h-5 w-5" />
           Layout Settings
-        </CardTitle>
-        <CardDescription>
-          Configure how visitors can view your portfolio
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </span>
+      }
+      description="Configure how visitors can view your portfolio"
+    >
+      <div className="space-y-6">
         {/* Layout Mode Selection */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Layout Options</Label>
@@ -170,8 +163,8 @@ export function LayoutSettingsForm({
             </RadioGroup>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </FormSection>
   );
 }
 
