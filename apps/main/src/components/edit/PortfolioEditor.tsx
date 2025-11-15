@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Globe, Link, ShieldCheck, User } from "lucide-react";
@@ -77,7 +77,9 @@ export function PortfolioEditor({
   };
 
   const handleModeChange = (mode: "edit" | "preview") => {
-    setActiveMode(mode);
+    startTransition(() => {
+      setActiveMode(mode);
+    });
   };
 
   // Check if portfolio has any content
@@ -165,8 +167,10 @@ export function PortfolioEditor({
         onPublishUpdated={() => refetchPublishStatus()}
       />
 
-      {/* Content Area */}
-      {activeMode === "edit" ? (
+      {/* Content Area - Both sections always rendered, visibility controlled by CSS */}
+
+      {/* Edit Mode */}
+      <div className={activeMode === "edit" ? "block" : "hidden"}>
         <div className="mx-auto max-w-7xl px-4 md:px-4 py-8">
           {/* Publish Prompt Banner */}
           {shouldShowPublishPrompt && (
@@ -216,11 +220,14 @@ export function PortfolioEditor({
             </div>
           </div>
         </div>
-      ) : (
+      </div>
+
+      {/* Preview Mode */}
+      <div className={activeMode === "preview" ? "block" : "hidden"}>
         <div className="mx-auto max-w-[1400px] px-4 py-8">
           <PortfolioPreview data={data} />
         </div>
-      )}
+      </div>
     </div>
   );
 }

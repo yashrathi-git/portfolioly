@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { PortfolioData } from "portfolioly-schema";
 import { cn } from "@/lib/utils";
@@ -45,12 +46,12 @@ export interface NavigationSidebarProps {
  * - All transitions use 150ms ease-in-out for smooth visual feedback
  */
 
-export function NavigationSidebar({
+const NavigationSidebarComponent = ({
   sections,
   activeSection,
   onSectionChange,
   portfolioData,
-}: NavigationSidebarProps) {
+}: NavigationSidebarProps) => {
   return (
     <nav
       className="rounded-lg border bg-card p-3 space-y-1"
@@ -109,4 +110,7 @@ export function NavigationSidebar({
       })}
     </nav>
   );
-}
+};
+
+// Memoize to prevent unnecessary re-renders
+export const NavigationSidebar = memo(NavigationSidebarComponent);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, memo } from "react";
 import { Portfolio } from "portfolioly-template-components";
 import type { DisplayPortfolioData as TemplatePortfolioData } from "portfolioly-template-components";
 import type { PortfolioData as MainPortfolioData } from "portfolioly-schema";
@@ -16,13 +16,11 @@ export interface PortfolioPreviewProps {
   data: MainPortfolioData;
 }
 
-export function PortfolioPreview({ data }: PortfolioPreviewProps) {
+const PortfolioPreviewComponent = ({ data }: PortfolioPreviewProps) => {
   const { user } = useAuth();
   const [username, setUsername] = useState<string | undefined>(undefined);
   const [publicToken, setPublicToken] = useState<string | undefined>(undefined);
   const [authToken, setAuthToken] = useState<string | undefined>(undefined);
-  const [fetchingToken, setFetchingToken] = useState(false);
-  const [tokenError, setTokenError] = useState<string | undefined>(undefined);
 
   // Transform main app's portfolio data to template component format
   const templateData: TemplatePortfolioData = useMemo(() => {
@@ -31,44 +29,31 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
 
   // Fetch username and public token for the authenticated user
   useEffect(() => {
+    if (!user) {
+      setUsername(undefined);
+      setPublicToken(undefined);
+      return;
+    }
+
+    const currentUser = user;
+
     async function loadUsernameAndToken() {
-      if (!user) {
-        setUsername(undefined);
-        setPublicToken(undefined);
-        setTokenError(undefined);
-        return;
-      }
-
       try {
-        setFetchingToken(true);
-        setTokenError(undefined);
-
         // Get Firebase auth token
-        const firebaseToken = await user.getIdToken();
+        const firebaseToken = await currentUser.getIdToken();
         setAuthToken(firebaseToken);
 
         // Fetch username and public token using API helper
-        const result = await fetchUsernameAndToken(user.uid, firebaseToken);
+        const result = await fetchUsernameAndToken(
+          currentUser.uid,
+          firebaseToken
+        );
         setUsername(result.username);
         setPublicToken(result.publicToken);
       } catch (err) {
         console.error("Error fetching username and token:", err);
-
-        if (err instanceof PublicTokenError) {
-          // Handle specific error cases
-          if (err.statusCode === 404) {
-            setTokenError("Portfolio not found");
-          } else {
-            setTokenError(err.message);
-          }
-        } else {
-          setTokenError("Failed to load chat token");
-        }
-
         setUsername(undefined);
         setPublicToken(undefined);
-      } finally {
-        setFetchingToken(false);
       }
     }
 
@@ -234,6 +219,9 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
       </div>
     </div>
   );
-}
+};
+
+// Memoize to prevent unnecessary re-renders when switching modes
+export const PortfolioPreview = memo(PortfolioPreviewComponent);
 
 export default PortfolioPreview;
