@@ -217,7 +217,7 @@ export function PortfolioEditor({
           </div>
         </div>
       ) : (
-        <div className="mx-auto max-w-5xl px-4 py-8">
+        <div className="mx-auto max-w-[1400px] px-4 py-8">
           <PortfolioPreview data={data} />
         </div>
       )}

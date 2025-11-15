@@ -217,33 +217,6 @@ export function PortfolioPreview({ data }: PortfolioPreviewProps) {
           Live Preview
         </div>
 
-        {/* Info banner for chat status */}
-        {fetchingToken && (
-          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[60] max-w-md px-4 py-2 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 text-sm rounded-lg border border-blue-200 dark:border-blue-800 shadow-sm">
-            <p className="text-center">⏳ Loading chat functionality...</p>
-          </div>
-        )}
-
-        {tokenError && (
-          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[60] max-w-md px-4 py-2 bg-yellow-50 dark:bg-yellow-950 text-yellow-900 dark:text-yellow-100 text-sm rounded-lg border border-yellow-200 dark:border-yellow-800 shadow-sm">
-            <p className="text-center">⚠️ Chat unavailable: {tokenError}</p>
-          </div>
-        )}
-
-        {!fetchingToken && !tokenError && !username && (
-          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[60] max-w-md px-4 py-2 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 text-sm rounded-lg border border-blue-200 dark:border-blue-800 shadow-sm">
-            <p className="text-center">
-              💡 Set a username to enable live AI chat in preview
-            </p>
-          </div>
-        )}
-
-        {!fetchingToken && username && publicToken && (
-          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[60] max-w-md px-4 py-2 bg-green-50 dark:bg-green-950 text-green-900 dark:text-green-100 text-sm rounded-lg border border-green-200 dark:border-green-800 shadow-sm">
-            <p className="text-center">✓ Live AI chat enabled</p>
-          </div>
-        )}
-
         {/* Portfolio Content - Full width preview */}
         <div className="w-full h-full">
           <Portfolio
