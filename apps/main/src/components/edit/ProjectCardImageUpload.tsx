@@ -1,190 +1,85 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
 import { validateImageFile } from "@/lib/utils/imageValidation";
 import { optimizeImage } from "@/lib/utils/imageOptimization";
-import { UPLOAD_CONFIG } from "@/config/uploadConfig";
-import { parseError, isRetryableError } from "@/lib/utils/errorHandling";
+import { parseError } from "@/lib/utils/errorHandling";
 import {
   uploadProjectImages as uploadProjectImagesApi,
   deleteProjectImage as deleteProjectImageApi,
 } from "@/lib/api/portfolio";
-import {
-  Upload,
-  X,
-  AlertCircle,
-  ImageIcon,
-  WifiOff,
-  RefreshCw,
-} from "lucide-react";
+import { Upload, Trash2, Loader2, ImageIcon } from "lucide-react";
+import { toast } from "sonner";
 
 export interface ProjectCardImageUploadProps {
   value?: string | null;
   onChange: (url: string | null) => void;
 }
 
-interface ImageUploadState {
-  file: File;
-  preview: string;
-  progress: number;
-  error?: string;
-  uploading: boolean;
-  retryable?: boolean;
-}
-
 export function ProjectCardImageUpload({
   value,
   onChange,
 }: ProjectCardImageUploadProps) {
-  const [uploadingImage, setUploadingImage] = useState<ImageUploadState | null>(
-    null
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Monitor online/offline status
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => {
-      setIsOnline(false);
-      setError("You are offline. Please check your internet connection.");
-    };
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      if (!navigator.onLine) {
+        toast.error("You are offline", {
+          description: "Please check your internet connection and try again.",
+        });
+        return;
+      }
 
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+      const validation = validateImageFile(file);
+      if (!validation.valid) {
+        toast.error("Invalid image file", {
+          description: validation.error || "Please select a valid image file.",
+        });
+        return;
+      }
 
-    // Check initial status
-    setIsOnline(navigator.onLine);
+      setUploading(true);
+      setProgress(10);
 
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  const uploadImage = useCallback(
-    async (file: File, previewUrl: string) => {
       try {
-        // Check online status
-        if (!navigator.onLine) {
-          throw new Error(
-            "You are offline. Please check your internet connection."
-          );
-        }
-
-        // Update progress
-        setUploadingImage((prev) => (prev ? { ...prev, progress: 10 } : null));
-
-        // Optimize image on client side (GIFs are not compressed)
+        setProgress(30);
         const optimizedFile = await optimizeImage(file);
+        setProgress(50);
 
-        setUploadingImage((prev) => (prev ? { ...prev, progress: 40 } : null));
-
-        // Upload to backend
         const [imageUrl] = await uploadProjectImagesApi([optimizedFile]);
-
-        setUploadingImage((prev) => (prev ? { ...prev, progress: 90 } : null));
+        setProgress(90);
 
         if (!imageUrl) {
           throw new Error("No image URL returned from server");
         }
 
-        // Update value with the new URL
         onChange(imageUrl);
-
-        // Clear uploading state
-        setUploadingImage(null);
-
-        // Clean up preview URL
-        URL.revokeObjectURL(previewUrl);
+        setProgress(100);
+        toast.success("Card image uploaded");
       } catch (err) {
         console.error("Upload error:", err);
-
-        // Parse error for better handling
         const structuredError = parseError(err);
-        const retryable = isRetryableError(err);
-
-        // Update error state
-        setUploadingImage((prev) =>
-          prev
-            ? {
-                ...prev,
-                error: structuredError.userMessage,
-                uploading: false,
-                retryable,
-              }
-            : null
-        );
+        toast.error("Failed to upload image", {
+          description: structuredError.userMessage,
+        });
+      } finally {
+        setUploading(false);
+        setProgress(0);
       }
     },
     [onChange]
   );
 
-  const handleFileSelect = useCallback(
-    async (file: File) => {
-      // Check online status first
-      if (!navigator.onLine) {
-        setError("You are offline. Please check your internet connection.");
-        return;
-      }
-
-      // Validate file
-      const validation = validateImageFile(file);
-      if (!validation.valid) {
-        setError(validation.error || "Invalid file");
-        return;
-      }
-
-      setError(null);
-
-      const previewUrl = URL.createObjectURL(file);
-
-      // Set uploading state
-      setUploadingImage({
-        file,
-        preview: previewUrl,
-        progress: 0,
-        uploading: true,
-      });
-
-      // Start upload
-      uploadImage(file, previewUrl);
-    },
-    [uploadImage]
-  );
-
-  const handleRetryUpload = useCallback(() => {
-    if (uploadingImage) {
-      // Reset error and retry
-      setUploadingImage({
-        ...uploadingImage,
-        error: undefined,
-        uploading: true,
-        progress: 0,
-      });
-      uploadImage(uploadingImage.file, uploadingImage.preview);
-    }
-  }, [uploadImage, uploadingImage]);
-
-  const handleCancelUpload = useCallback(() => {
-    if (uploadingImage) {
-      URL.revokeObjectURL(uploadingImage.preview);
-    }
-    setUploadingImage(null);
-  }, [uploadingImage]);
-
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files && files.length > 0) {
-        handleFileSelect(files[0]);
+      const file = e.target.files?.[0];
+      if (file) {
+        handleFileSelect(file);
       }
-      // Reset input value to allow re-uploading the same file
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -192,229 +87,126 @@ export function ProjectCardImageUpload({
     [handleFileSelect]
   );
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-
-      const files = e.dataTransfer.files;
-      if (files && files.length > 0) {
-        handleFileSelect(files[0]);
-      }
-    },
-    [handleFileSelect]
-  );
-
   const handleClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
+    if (!uploading) {
+      fileInputRef.current?.click();
+    }
+  }, [uploading]);
 
   const handleDelete = useCallback(async () => {
-    // Check online status first
     if (!navigator.onLine) {
-      setError("You are offline. Please check your internet connection.");
+      toast.error("You are offline", {
+        description: "Please check your internet connection and try again.",
+      });
       return;
     }
 
-    if (!value) return;
+    if (!value || uploading) return;
 
+    setUploading(true);
     try {
       await deleteProjectImageApi(value);
       onChange(null);
-      setError(null);
+      toast.success("Card image removed");
     } catch (err) {
       console.error("Delete error:", err);
-
-      // Parse error for better handling
       const structuredError = parseError(err);
-      setError(structuredError.userMessage);
+      toast.error("Failed to remove image", {
+        description: structuredError.userMessage,
+      });
+    } finally {
+      setUploading(false);
     }
-  }, [value, onChange]);
-
-  const hasImage = !!value;
+  }, [value, onChange, uploading]);
 
   return (
-    <div className="space-y-4">
-      {/* Upload Area */}
-      {!hasImage && !uploadingImage && (
-        <div
-          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-            isDragging
-              ? "border-primary bg-primary/5"
-              : "border-border hover:border-primary/50"
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={UPLOAD_CONFIG.ALLOWED_IMAGE_EXTENSIONS.join(",")}
-            onChange={handleInputChange}
-            className="hidden"
-          />
-          <div className="flex flex-col items-center gap-2">
-            <div className="p-3 rounded-full bg-secondary">
-              <Upload className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">
-                Drag and drop an image here, or click to browse
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Max {UPLOAD_CONFIG.MAX_IMAGE_SIZE_MB}MB. Formats: JPEG, PNG,
-                WebP, GIF
-              </p>
-              <p className="text-xs text-muted-foreground">
-                GIF animations are preserved
-              </p>
-            </div>
-            <Button
-              type="button"
-              onClick={handleClick}
-              size="sm"
-              variant="outline"
-            >
-              <ImageIcon className="h-4 w-4" />
-              Select Image
-            </Button>
-          </div>
-        </div>
-      )}
+    <div className="space-y-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        onChange={handleInputChange}
+        className="hidden"
+        disabled={uploading}
+      />
 
-      {/* Error Message */}
-      {error && (
-        <Alert variant="destructive">
-          <div className="flex items-start gap-2">
-            {!isOnline ? (
-              <WifiOff className="h-4 w-4 mt-0.5" />
+      {/* Upload button or uploading state */}
+      {!value && (
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            onClick={handleClick}
+            size="sm"
+            variant="outline"
+            className="gap-2"
+            disabled={uploading}
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Uploading...
+              </>
             ) : (
-              <AlertCircle className="h-4 w-4 mt-0.5" />
+              <>
+                <ImageIcon className="h-4 w-4" />
+                Upload Card Image
+              </>
             )}
-            <AlertDescription>{error}</AlertDescription>
-          </div>
-        </Alert>
-      )}
-
-      {/* Offline Warning */}
-      {!isOnline && !error && (
-        <Alert>
-          <WifiOff className="h-4 w-4" />
-          <AlertDescription>
-            You are currently offline. Upload functionality will be available
-            when you reconnect.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Uploading Image */}
-      {uploadingImage && (
-        <div className="border rounded-lg p-3 space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="size-16 rounded overflow-hidden bg-secondary flex-shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={uploadingImage.preview}
-                alt="Uploading"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
-                {uploadingImage.file.name}
-              </p>
-              {uploadingImage.uploading && (
-                <div className="space-y-1 mt-1">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Uploading...</span>
-                    <span>{Math.round(uploadingImage.progress)}%</span>
-                  </div>
-                  <Progress value={uploadingImage.progress} className="h-1" />
-                </div>
-              )}
-              {uploadingImage.error && (
-                <div className="flex items-center gap-1 text-xs text-destructive mt-1">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>{uploadingImage.error}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-1">
-              {uploadingImage.error && uploadingImage.retryable && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={handleRetryUpload}
-                  disabled={!isOnline}
-                >
-                  <RefreshCw className="h-3 w-3 mr-1" />
-                  Retry
-                </Button>
-              )}
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={handleCancelUpload}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            GIF animations preserved
+          </p>
         </div>
       )}
 
-      {/* Uploaded Image Preview */}
-      {hasImage && !uploadingImage && (
+      {/* Uploaded image preview */}
+      {value && (
         <div className="border rounded-lg p-3">
           <div className="flex items-start gap-3">
-            <div className="size-20 rounded overflow-hidden bg-secondary flex-shrink-0">
+            <div className="relative w-32 h-24 rounded overflow-hidden bg-secondary group flex-shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={value}
                 alt="Card image"
                 className="w-full h-full object-cover"
               />
+              {uploading && (
+                <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              )}
+              {!uploading && (
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleClick}
+                    className="text-white hover:bg-white/20 hover:scale-110 transition-transform h-8 w-8"
+                    title="Replace image"
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleDelete}
+                    className="text-white hover:bg-white/20 hover:scale-110 transition-transform h-8 w-8"
+                    title="Remove image"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">Card Image</p>
               <p className="text-xs text-muted-foreground mt-1">
-                This image will be displayed on the project card
+                Hover over image to replace or remove
               </p>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={handleDelete}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!hasImage && !uploadingImage && (
-        <div className="text-center py-4 text-muted-foreground">
-          <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-xs">No card image uploaded yet</p>
         </div>
       )}
     </div>
