@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { WorkExperience, DateInfo } from "portfolioly-schema";
 import { SimpleDateInput } from "./SimpleDateInput";
 import { TagInput } from "./TagInput";
+import { ActionButton } from "./ActionButton";
 
 export interface WorkExperienceFormProps {
   value: WorkExperience[];
@@ -51,14 +51,12 @@ export function WorkExperienceForm({
     <Card className="shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">Work Experience</CardTitle>
-        <Button
-          type="button"
+        <ActionButton
+          action="add"
+          label="Add experience"
           onClick={add}
-          variant="secondary"
           disabled={!canAdd}
-        >
-          Add experience
-        </Button>
+        />
       </CardHeader>
       <CardContent className="grid gap-6">
         {items.length === 0 && (
@@ -162,13 +160,11 @@ export function WorkExperienceForm({
             </div>
 
             <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="destructive"
+              <ActionButton
+                action="remove"
+                label="Remove"
                 onClick={() => remove(idx)}
-              >
-                Remove
-              </Button>
+              />
             </div>
           </div>
         ))}

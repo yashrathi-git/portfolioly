@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { DateInfo, Education } from "portfolioly-schema";
 import { SimpleDateInput } from "./SimpleDateInput";
+import { ActionButton } from "./ActionButton";
 
 export interface EducationFormProps {
   value: Education[];
@@ -43,9 +43,7 @@ export function EducationForm({ value, onChange }: EducationFormProps) {
     <Card className="shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">Education</CardTitle>
-        <Button type="button" variant="secondary" onClick={add}>
-          Add education
-        </Button>
+        <ActionButton action="add" label="Add education" onClick={add} />
       </CardHeader>
       <CardContent className="grid gap-6">
         {items.length === 0 && (
@@ -146,13 +144,11 @@ export function EducationForm({ value, onChange }: EducationFormProps) {
             </div>
 
             <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="destructive"
+              <ActionButton
+                action="remove"
+                label="Remove"
                 onClick={() => remove(idx)}
-              >
-                Remove
-              </Button>
+              />
             </div>
           </div>
         ))}

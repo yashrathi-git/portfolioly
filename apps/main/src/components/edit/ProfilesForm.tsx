@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +18,7 @@ import {
   type Profile,
   type ProfileType,
 } from "portfolioly-schema";
+import { ActionButton } from "./ActionButton";
 
 export interface ProfilesFormProps {
   value: PersonalInfo;
@@ -63,14 +63,12 @@ export function ProfilesForm({ value, onChange }: ProfilesFormProps) {
     <Card className="shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">Profiles & Social Links</CardTitle>
-        <Button
-          type="button"
+        <ActionButton
+          action="add"
+          label="Add profile"
           onClick={addProfile}
-          variant="secondary"
           disabled={!canAdd}
-        >
-          Add profile
-        </Button>
+        />
       </CardHeader>
       <CardContent className="grid gap-6">
         {profiles.length === 0 && (
@@ -125,13 +123,11 @@ export function ProfilesForm({ value, onChange }: ProfilesFormProps) {
             )}
 
             <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="destructive"
+              <ActionButton
+                action="remove"
+                label="Remove"
                 onClick={() => removeProfile(idx)}
-              >
-                Remove
-              </Button>
+              />
             </div>
           </div>
         ))}

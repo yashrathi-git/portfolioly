@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +8,7 @@ import type { Project } from "portfolioly-schema";
 import { TagInput } from "./TagInput";
 import { ProjectImageUpload } from "./ProjectImageUpload";
 import { ProjectCardImageUpload } from "./ProjectCardImageUpload";
+import { ActionButton } from "./ActionButton";
 
 export interface ProjectsFormProps {
   value: Project[];
@@ -37,9 +37,7 @@ export function ProjectsForm({ value, onChange }: ProjectsFormProps) {
     <Card className="shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">Projects</CardTitle>
-        <Button type="button" variant="secondary" onClick={add}>
-          Add project
-        </Button>
+        <ActionButton action="add" label="Add project" onClick={add} />
       </CardHeader>
       <CardContent className="grid gap-6">
         {items.length === 0 && (
@@ -152,13 +150,11 @@ export function ProjectsForm({ value, onChange }: ProjectsFormProps) {
             </div>
 
             <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="destructive"
+              <ActionButton
+                action="remove"
+                label="Remove"
                 onClick={() => remove(idx)}
-              >
-                Remove
-              </Button>
+              />
             </div>
           </div>
         ))}
