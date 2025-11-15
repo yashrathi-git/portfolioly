@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/useToast";
 import {
   validateImageFile,
   validateImageCaption,
@@ -52,6 +52,7 @@ export function ProjectImageUpload({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const latestImagesRef = useRef<ProjectImage[]>(value);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     latestImagesRef.current = value;
@@ -61,9 +62,10 @@ export function ProjectImageUpload({
     async (file: File, fileId: string, previewUrl: string) => {
       try {
         if (!navigator.onLine) {
-          toast.error("You are offline", {
-            description: "Please check your internet connection and try again.",
-          });
+          showError(
+            "You are offline",
+            "Please check your internet connection and try again."
+          );
           throw new Error("Offline");
         }
 
@@ -95,9 +97,7 @@ export function ProjectImageUpload({
       } catch (err) {
         console.error("Upload error:", err);
         const structuredError = parseError(err);
-        toast.error("Failed to upload image", {
-          description: structuredError.userMessage,
-        });
+        showError("Failed to upload image", structuredError.userMessage);
 
         setUploadingImages((prev) => {
           const next = new Map(prev);
@@ -113,9 +113,10 @@ export function ProjectImageUpload({
   const handleFilesSelect = useCallback(
     async (files: FileList | File[]) => {
       if (!navigator.onLine) {
-        toast.error("You are offline", {
-          description: "Please check your internet connection and try again.",
-        });
+        showError(
+          "You are offline",
+          "Please check your internet connection and try again."
+        );
         return;
       }
 
@@ -134,9 +135,7 @@ export function ProjectImageUpload({
           );
         } catch (err) {
           const structuredError = parseError(err);
-          toast.error("Failed to remove old images", {
-            description: structuredError.userMessage,
-          });
+          showError("Failed to remove old images", structuredError.userMessage);
           return;
         }
 
@@ -150,10 +149,10 @@ export function ProjectImageUpload({
       for (const file of fileArray) {
         const validation = validateImageFile(file);
         if (!validation.valid) {
-          toast.error("Invalid image file", {
-            description:
-              validation.error || "Please select a valid image file.",
-          });
+          showError(
+            "Invalid image file",
+            validation.error || "Please select a valid image file."
+          );
           continue;
         }
 
@@ -212,9 +211,10 @@ export function ProjectImageUpload({
   const handleDelete = useCallback(
     async (index: number) => {
       if (!navigator.onLine) {
-        toast.error("You are offline", {
-          description: "Please check your internet connection and try again.",
-        });
+        showError(
+          "You are offline",
+          "Please check your internet connection and try again."
+        );
         return;
       }
 
@@ -225,13 +225,11 @@ export function ProjectImageUpload({
           .filter((_, i) => i !== index)
           .map((img, i) => ({ ...img, order: i }));
         onChange(updatedImages);
-        toast.success("Image removed");
+        showSuccess("Image removed");
       } catch (err) {
         console.error("Delete error:", err);
         const structuredError = parseError(err);
-        toast.error("Failed to remove image", {
-          description: structuredError.userMessage,
-        });
+        showError("Failed to remove image", structuredError.userMessage);
       }
     },
     [value, onChange]

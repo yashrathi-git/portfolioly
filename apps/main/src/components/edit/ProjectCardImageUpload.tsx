@@ -10,7 +10,7 @@ import {
   deleteProjectImage as deleteProjectImageApi,
 } from "@/lib/api/portfolio";
 import { Upload, Trash2, Loader2, ImageIcon } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/useToast";
 
 export interface ProjectCardImageUploadProps {
   value?: string | null;
@@ -24,21 +24,24 @@ export function ProjectCardImageUpload({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showSuccess, showError } = useToast();
 
   const handleFileSelect = useCallback(
     async (file: File) => {
       if (!navigator.onLine) {
-        toast.error("You are offline", {
-          description: "Please check your internet connection and try again.",
-        });
+        showError(
+          "You are offline",
+          "Please check your internet connection and try again."
+        );
         return;
       }
 
       const validation = validateImageFile(file);
       if (!validation.valid) {
-        toast.error("Invalid image file", {
-          description: validation.error || "Please select a valid image file.",
-        });
+        showError(
+          "Invalid image file",
+          validation.error || "Please select a valid image file."
+        );
         return;
       }
 
@@ -59,13 +62,11 @@ export function ProjectCardImageUpload({
 
         onChange(imageUrl);
         setProgress(100);
-        toast.success("Card image uploaded");
+        showSuccess("Card image uploaded");
       } catch (err) {
         console.error("Upload error:", err);
         const structuredError = parseError(err);
-        toast.error("Failed to upload image", {
-          description: structuredError.userMessage,
-        });
+        showError("Failed to upload image", structuredError.userMessage);
       } finally {
         setUploading(false);
         setProgress(0);
@@ -95,9 +96,10 @@ export function ProjectCardImageUpload({
 
   const handleDelete = useCallback(async () => {
     if (!navigator.onLine) {
-      toast.error("You are offline", {
-        description: "Please check your internet connection and try again.",
-      });
+      showError(
+        "You are offline",
+        "Please check your internet connection and try again."
+      );
       return;
     }
 
@@ -107,13 +109,11 @@ export function ProjectCardImageUpload({
     try {
       await deleteProjectImageApi(value);
       onChange(null);
-      toast.success("Card image removed");
+      showSuccess("Card image removed");
     } catch (err) {
       console.error("Delete error:", err);
       const structuredError = parseError(err);
-      toast.error("Failed to remove image", {
-        description: structuredError.userMessage,
-      });
+      showError("Failed to remove image", structuredError.userMessage);
     } finally {
       setUploading(false);
     }

@@ -32,7 +32,7 @@ import {
   checkUsernameAvailability,
   UserSettingsError,
 } from "@/lib/api/userSettings";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/useToast";
 
 export interface PublishSettingsPanelProps {
   /** Trigger element for the popover */
@@ -247,6 +247,7 @@ export function PublishSettingsPanel({
   // Refs for debouncing
   const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const abortControllerRef = useRef<AbortController | undefined>(undefined);
+  const { showSuccess, showError } = useToast();
 
   // Derived state
   const hasUsername = Boolean(effectiveUsername);
@@ -285,7 +286,7 @@ export function PublishSettingsPanel({
 
       // Show toast for non-retryable errors
       if (!errorInfo.canRetry) {
-        toast.error(errorInfo.message);
+        showError(errorInfo.message);
       }
     } finally {
       setLoading(false);
@@ -405,7 +406,7 @@ export function PublishSettingsPanel({
       if (usernameChanged) {
         const formatValidation = validateUsernameFormat(targetUsername);
         if (!formatValidation.valid) {
-          toast.error(formatValidation.message || "Invalid username");
+          showError(formatValidation.message || "Invalid username");
           return;
         }
 
@@ -414,20 +415,10 @@ export function PublishSettingsPanel({
           setOriginalUsername(targetUsername);
           setUsername(targetUsername);
           pendingUsername = targetUsername;
-          toast.success("Username updated successfully");
+          showSuccess("Username updated successfully");
         } catch (error) {
           const errorInfo = getErrorMessage(error);
-
-          if (errorInfo.canRetry) {
-            toast.error(errorInfo.message, {
-              action: {
-                label: "Retry",
-                onClick: () => handleSave(overrides),
-              },
-            });
-          } else {
-            toast.error(errorInfo.message);
-          }
+          showError(errorInfo.message);
           throw error;
         }
       }
@@ -437,24 +428,14 @@ export function PublishSettingsPanel({
           await updateAccessMode(targetAccessMode);
           setOriginalAccessMode(targetAccessMode);
           setAccessMode(targetAccessMode);
-          toast.success(
+          showSuccess(
             `Portfolio is now ${
               targetAccessMode === "public" ? "public" : "private"
             }`
           );
         } catch (error) {
           const errorInfo = getErrorMessage(error);
-
-          if (errorInfo.canRetry) {
-            toast.error(errorInfo.message, {
-              action: {
-                label: "Retry",
-                onClick: () => handleSave(overrides),
-              },
-            });
-          } else {
-            toast.error(errorInfo.message);
-          }
+          showError(errorInfo.message);
           throw error;
         }
       }
@@ -482,11 +463,11 @@ export function PublishSettingsPanel({
     try {
       await navigator.clipboard.writeText(publicUrl);
       setCopied(true);
-      toast.success("URL copied to clipboard");
+      showSuccess("URL copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy URL:", error);
-      toast.error("Failed to copy URL");
+      showError("Failed to copy URL");
     }
   };
 

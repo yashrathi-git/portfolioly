@@ -1,18 +1,16 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { validateImageFile } from "@/lib/utils/imageValidation";
-import { optimizeImage } from "@/lib/utils/imageOptimization";
 import { UPLOAD_CONFIG } from "@/config/uploadConfig";
-import { parseError, isRetryableError } from "@/lib/utils/errorHandling";
 import {
   uploadProfilePhoto as uploadProfilePhotoApi,
   deleteProfilePhoto as deleteProfilePhotoApi,
 } from "@/lib/api/portfolio";
-import { Upload, X, User, AlertCircle, WifiOff, RefreshCw } from "lucide-react";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useToast } from "@/hooks/useToast";
+import { Upload, X, User } from "lucide-react";
 
 export interface ProfilePhotoUploadProps {
   value?: string | null;
@@ -23,136 +21,60 @@ export function ProfilePhotoUpload({
   value,
   onChange,
 }: ProfilePhotoUploadProps) {
-  const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
-  const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const [retryable, setRetryable] = useState(false);
-  const [lastFile, setLastFile] = useState<File | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showSuccess, showError } = useToast();
 
-  // Monitor online/offline status
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => {
-      setIsOnline(false);
-      setError("You are offline. Please check your internet connection.");
-    };
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    // Check initial status
-    setIsOnline(navigator.onLine);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
+  const { uploading, progress, uploadImage } = useImageUpload({
+    onSuccess: (url) => {
+      onChange(url);
+      setPreview(url);
+    },
+    onError: () => {
+      setPreview(value || null);
+    },
+  });
 
   const handleFileSelect = useCallback(
     async (file: File) => {
-      // Check online status first
-      if (!navigator.onLine) {
-        setError("You are offline. Please check your internet connection.");
-        setRetryable(true);
-        setLastFile(file);
-        return;
-      }
-
-      // Validate file
-      const validation = validateImageFile(file);
-      if (!validation.valid) {
-        setError(validation.error || "Invalid file");
-        setRetryable(false);
-        return;
-      }
-
-      // Store file for potential retry
-      setLastFile(file);
-
       // Show preview immediately
       const previewUrl = URL.createObjectURL(file);
       setPreview(previewUrl);
-      setError(null);
-      setRetryable(false);
-      setUploading(true);
-      setProgress(10);
 
-      try {
-        // Optimize image on client side
-        setProgress(30);
-        const optimizedFile = await optimizeImage(file);
-        setProgress(50);
+      // Upload using the hook
+      await uploadImage(file, uploadProfilePhotoApi);
 
-        setProgress(70);
-
-        const photoUrl = await uploadProfilePhotoApi(optimizedFile);
-
-        setProgress(100);
-
-        // Update parent component
-        onChange(photoUrl);
-        setPreview(photoUrl);
-
-        // Reset retry state on success
-        setLastFile(null);
-      } catch (err) {
-        console.error("Upload error:", err);
-
-        // Parse error for better handling
-        const structuredError = parseError(err);
-        setError(structuredError.userMessage);
-        setRetryable(isRetryableError(err));
-
-        // Revert preview on error
-        setPreview(value || null);
-      } finally {
-        setUploading(false);
-        setProgress(0);
-      }
+      // Clean up preview URL
+      URL.revokeObjectURL(previewUrl);
     },
-    [value, onChange]
+    [uploadImage]
   );
 
   const handleDelete = useCallback(async () => {
-    // Check online status first
     if (!navigator.onLine) {
-      setError("You are offline. Please check your internet connection.");
-      setRetryable(true);
+      showError(
+        "Connection required",
+        "You are offline. Please check your internet connection."
+      );
       return;
     }
 
-    setUploading(true);
-    setError(null);
-    setRetryable(false);
+    setDeleting(true);
 
     try {
       await deleteProfilePhotoApi();
-
-      // Update parent component and preview
       onChange(null);
       setPreview(null);
+      showSuccess("Profile photo removed");
     } catch (err) {
       console.error("Delete error:", err);
-
-      // Parse error for better handling
-      const structuredError = parseError(err);
-      setError(structuredError.userMessage);
-      setRetryable(isRetryableError(err));
+      showError("Failed to remove photo", "Please try again.");
     } finally {
-      setUploading(false);
+      setDeleting(false);
     }
-  }, [onChange]);
-
-  const handleRetry = useCallback(() => {
-    if (lastFile) {
-      handleFileSelect(lastFile);
-    }
-  }, [lastFile, handleFileSelect]);
+  }, [onChange, showSuccess, showError]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,12 +138,12 @@ export function ProfilePhotoUpload({
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
-              {!uploading && (
+              {!uploading && !deleting && (
                 <button
                   onClick={handleDelete}
                   className="absolute top-1 right-1 p-1 bg-destructive text-white rounded-full hover:bg-destructive/90 transition-colors"
                   title="Delete photo"
-                  disabled={uploading}
+                  disabled={uploading || deleting}
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -253,7 +175,7 @@ export function ProfilePhotoUpload({
             <Button
               type="button"
               onClick={handleClick}
-              disabled={uploading}
+              disabled={uploading || deleting}
               variant={preview ? "outline" : "default"}
               size="sm"
             >
@@ -266,11 +188,11 @@ export function ProfilePhotoUpload({
                 </>
               )}
             </Button>
-            {preview && !uploading && (
+            {preview && !uploading && !deleting && (
               <Button
                 type="button"
                 onClick={handleDelete}
-                disabled={uploading}
+                disabled={uploading || deleting}
                 variant="destructive"
                 size="sm"
               >
@@ -298,46 +220,6 @@ export function ProfilePhotoUpload({
           </div>
           <Progress value={progress} className="h-2" />
         </div>
-      )}
-
-      {/* Error Message */}
-      {error && (
-        <Alert variant="destructive">
-          <div className="flex items-start gap-2">
-            {!isOnline ? (
-              <WifiOff className="h-4 w-4 mt-0.5" />
-            ) : (
-              <AlertCircle className="h-4 w-4 mt-0.5" />
-            )}
-            <div className="flex-1">
-              <AlertDescription>{error}</AlertDescription>
-              {retryable && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={handleRetry}
-                  disabled={uploading || !isOnline}
-                  className="mt-2"
-                >
-                  <RefreshCw className="h-3 w-3 mr-1" />
-                  Retry Upload
-                </Button>
-              )}
-            </div>
-          </div>
-        </Alert>
-      )}
-
-      {/* Offline Warning */}
-      {!isOnline && !error && (
-        <Alert>
-          <WifiOff className="h-4 w-4" />
-          <AlertDescription>
-            You are currently offline. Upload functionality will be available
-            when you reconnect.
-          </AlertDescription>
-        </Alert>
       )}
     </div>
   );

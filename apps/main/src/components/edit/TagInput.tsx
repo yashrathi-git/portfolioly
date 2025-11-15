@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { TagInput as EmblorTagInput, Tag } from "emblor";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/useToast";
 
 export interface TagInputProps {
   value: string[];
@@ -24,6 +24,7 @@ export function TagInput({
   }));
 
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
+  const { showError } = useToast();
 
   const handleSetTags = (newTags: React.SetStateAction<Tag[]>) => {
     const resolvedTags =
@@ -35,7 +36,7 @@ export function TagInput({
 
     for (const text of textValues) {
       if (seen.has(text)) {
-        toast.error(`"${text}" is already added.`);
+        showError(`"${text}" is already added.`);
         return;
       }
       seen.add(text);

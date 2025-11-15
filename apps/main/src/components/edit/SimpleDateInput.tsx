@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { DateInfo } from "portfolioly-schema";
 import { useEffect, useState, useId } from "react";
 import { Calendar, XCircle } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/useToast";
 
 export interface SimpleDateInputProps {
   value?: DateInfo | null;
@@ -29,6 +29,7 @@ export function SimpleDateInput({
   const [validationState, setValidationState] = useState<
     "idle" | "valid" | "invalid"
   >("idle");
+  const { showError } = useToast();
 
   // Sync input value with prop value
   useEffect(() => {
@@ -74,9 +75,10 @@ export function SimpleDateInput({
 
     if (!match) {
       setValidationState("invalid");
-      toast.error("Invalid date format", {
-        description: "Please use MM/YYYY format (e.g., 03/2024)",
-      });
+      showError(
+        "Invalid date format",
+        "Please use MM/YYYY format (e.g., 03/2024)"
+      );
       onChange(undefined);
       return;
     }
@@ -87,9 +89,7 @@ export function SimpleDateInput({
     // Validate month range
     if (month < 1 || month > 12) {
       setValidationState("invalid");
-      toast.error("Invalid month", {
-        description: "Month must be between 01 and 12",
-      });
+      showError("Invalid month", "Month must be between 01 and 12");
       onChange(undefined);
       return;
     }
@@ -97,9 +97,7 @@ export function SimpleDateInput({
     // Validate year range (reasonable bounds)
     if (year < 1900 || year > 2100) {
       setValidationState("invalid");
-      toast.error("Invalid year", {
-        description: "Year must be between 1900 and 2100",
-      });
+      showError("Invalid year", "Year must be between 1900 and 2100");
       onChange(undefined);
       return;
     }
