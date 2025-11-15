@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Portfolio } from "portfolioly-template-components";
 import { fetchUsernameAndToken } from "@/lib/api/publicToken";
 
+// Import the compiled CSS styles to ensure they're loaded
+import "portfolioly-template-components/style.css";
+
 /**
  * Authenticated preview page - shows user's portfolio in fullscreen mode
  * Requires authentication and redirects to sign-in if not authenticated

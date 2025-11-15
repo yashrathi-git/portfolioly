@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Portfolio } from "portfolioly-template-components";
 import type { PortfolioData } from "portfolioly-schema";
 
+// Import the compiled CSS styles to ensure they're loaded
+import "portfolioly-template-components/style.css";
+
 interface PublicPortfolioPageProps {
   params: {
     username: string;
