@@ -1,5 +1,16 @@
 # portfolioly-template-components
 
+## 0.2.0
+
+### Minor Changes
+
+- 5524c25: Fix tailwind styling issues
+
+### Patch Changes
+
+- Updated dependencies [5524c25]
+  - portfolioly-schema@0.2.0
+
 ## 0.1.3
 
 ### Patch Changes
