@@ -61,6 +61,9 @@ const prepareWidgetData = (
           technologies: p.technologies,
           github: p.github,
           live_link: p.live_link,
+          demo_video: p.demo_video,
+          more_context: p.more_context,
+          images: p.images,
         })),
       };
 
