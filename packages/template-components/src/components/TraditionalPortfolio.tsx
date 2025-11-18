@@ -6,8 +6,8 @@ import { Skills } from "./portfolio-traditional/Skills";
 import { WorkExperience } from "./portfolio-traditional/WorkExperience";
 import styles from "./portfolio-theme.module.css";
 import PortfolioErrorBoundary from "./ErrorBoundary";
-import Markdown from "markdown-to-jsx";
 import BlurFade from "./magicui/blur-fade";
+import { MarkdownContent } from "../utils/markdown";
 import {
   SiUdemy,
   SiCoursera,
@@ -155,25 +155,10 @@ const TraditionalPortfolioComponent = ({
                   <h2 className="text-2xl font-bold">Achievements</h2>
                 </BlurFade>
                 <BlurFade delay={BLUR_FADE_DELAY * 12}>
-                  <Markdown
-                    className="prose max-w-full text-pretty font-sans text-base leading-relaxed text-foreground dark:prose-invert prose-li:marker:text-foreground"
-                    options={{
-                      overrides: {
-                        ul: {
-                          props: {
-                            className: "list-disc pl-5 space-y-2",
-                          },
-                        },
-                        li: {
-                          props: {
-                            className: "text-foreground",
-                          },
-                        },
-                      },
-                    }}
-                  >
-                    {effectiveData.achievements || ""}
-                  </Markdown>
+                  <MarkdownContent
+                    content={effectiveData.achievements}
+                    className="text-foreground"
+                  />
                 </BlurFade>
               </div>
             </div>
