@@ -44,17 +44,9 @@ export function EditorTopBar({
         <div className="flex h-14 md:h-16 items-center justify-between">
           {/* Left side */}
           <div className="flex items-center gap-3">
-            <h1 className="text-base md:text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <h1 className="text-base md:text-lg font-semibold text-foreground">
               {title}
             </h1>
-            {hasUnsavedChanges && (
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 animate-in fade-in duration-200">
-                <div className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
-                <span className="text-xs font-medium text-amber-600 dark:text-amber-400 hidden md:inline">
-                  Unsaved
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Right side */}
