@@ -171,45 +171,44 @@ export function ProjectDetailDialog({
               stiffness: 300,
               mass: 0.8,
             }}
-            className="z-50 bg-popover border border-border rounded-xl shadow-2xl overflow-hidden"
+            className="z-50 bg-background/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden outline-none"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="overflow-y-auto max-h-[90vh] overscroll-contain">
+            <div className="flex flex-col h-full max-h-[90vh]">
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="sticky top-0 z-10 bg-popover/95 backdrop-blur-md px-6 py-4"
+                className="shrink-0 z-10 flex items-start justify-between gap-4 px-8 py-6 bg-background/50 backdrop-blur-sm"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <h2 className="text-2xl font-bold text-foreground pr-8">
-                    {project.name}
-                  </h2>
-                  <button
-                    onClick={() => onOpenChange(false)}
-                    className="rounded-full p-2 hover:bg-accent transition-colors shrink-0"
-                    aria-label="Close"
-                  >
-                    <X className="size-5 text-muted-foreground" />
-                  </button>
-                </div>
+                <h2 className="text-3xl font-bold text-foreground pr-8 tracking-tight">
+                  {project.name}
+                </h2>
+                <button
+                  onClick={() => onOpenChange(false)}
+                  className="rounded-full p-2 bg-muted/50 hover:bg-accent transition-all hover:rotate-90 duration-300 shrink-0"
+                  aria-label="Close"
+                >
+                  <X className="size-5 text-foreground/70" />
+                </button>
               </motion.div>
 
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.15 }}
-                className="flex flex-col h-full"
+                className="flex flex-col min-h-0 flex-1"
               >
                 {/* Main Content - Scrollable */}
-                <div className="flex-1 px-6 py-6 space-y-10 overflow-y-auto">
+                <div className="flex-1 px-8 pb-8 space-y-12 overflow-y-auto custom-scrollbar">
                   {/* Demo Video Section */}
                   {embedUrl && videoThumbnail && (
-                    <section className="space-y-4">
-                      <h3 className="text-lg font-semibold text-foreground tracking-tight">
+                    <section className="space-y-6">
+                      <h3 className="text-xl font-semibold text-foreground/90 tracking-tight flex items-center gap-2">
+                        <span className="w-1 h-6 bg-primary rounded-full inline-block" />
                         Demo Video
                       </h3>
-                      <div className="w-full max-w-5xl mx-auto aspect-video rounded-lg overflow-hidden shadow-md ring-1 ring-border/50">
+                      <div className="w-full max-w-5xl mx-auto aspect-video rounded-2xl overflow-hidden shadow-lg ring-1 ring-black/5 dark:ring-white/10">
                         <HeroVideoDialog
                           videoSrc={embedUrl}
                           thumbnailSrc={videoThumbnail}
@@ -223,29 +222,40 @@ export function ProjectDetailDialog({
 
                   {/* Project Images Carousel */}
                   {sortedImages.length > 0 && (
-                    <section className="space-y-4">
-                      <h3 className="text-lg font-semibold text-foreground tracking-tight">
-                        Project Gallery
+                    <section className="space-y-6">
+                      <h3 className="text-xl font-semibold text-foreground/90 tracking-tight flex items-center gap-2">
+                        <span className="w-1 h-6 bg-primary rounded-full inline-block" />
+                        Gallery
                       </h3>
-                      <div className="relative max-w-5xl mx-auto group">
-                        <Carousel className="w-full" setApi={setCarouselApi}>
-                          <CarouselContent>
+                      <div className="relative max-w-5xl mx-auto group px-12">
+                        <Carousel
+                          className="w-full"
+                          setApi={setCarouselApi}
+                          opts={{
+                            align: "center",
+                            loop: true,
+                          }}
+                        >
+                          <CarouselContent className="-ml-4">
                             {sortedImages.map(
                               (image: ProjectImage, idx: number) => (
-                                <CarouselItem key={idx}>
-                                  <div className="space-y-3">
-                                    <div className="relative w-full flex items-center justify-center overflow-hidden rounded-lg border border-border/50 shadow-sm">
+                                <CarouselItem
+                                  key={idx}
+                                  className="pl-4 basis-full"
+                                >
+                                  <div className="space-y-4">
+                                    <div className="relative w-full flex items-center justify-center overflow-hidden rounded-2xl bg-muted/10">
                                       <img
                                         src={image.url}
                                         alt={
                                           image.caption ||
                                           `Project image ${idx + 1}`
                                         }
-                                        className="object-contain w-full h-auto max-h-[60vh]"
+                                        className="object-contain w-full h-auto max-h-[60vh] shadow-sm"
                                       />
                                     </div>
                                     {image.caption && (
-                                      <p className="text-sm text-muted-foreground text-center font-medium leading-relaxed">
+                                      <p className="text-sm text-muted-foreground text-center font-medium leading-relaxed px-4">
                                         {image.caption}
                                       </p>
                                     )}
@@ -256,26 +266,22 @@ export function ProjectDetailDialog({
                           </CarouselContent>
                           {sortedImages.length > 1 && (
                             <>
-                              {currentSlide > 0 && (
-                                <CarouselPrevious className="-left-12 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-background/95 backdrop-blur-sm border border-border hover:bg-background shadow-lg" />
-                              )}
-                              {currentSlide < sortedImages.length - 1 && (
-                                <CarouselNext className="-right-12 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-background/95 backdrop-blur-sm border border-border hover:bg-background shadow-lg" />
-                              )}
+                              <CarouselPrevious className="left-0 bg-background/80 backdrop-blur hover:bg-background border-0 shadow-md h-10 w-10 text-foreground/80" />
+                              <CarouselNext className="right-0 bg-background/80 backdrop-blur hover:bg-background border-0 shadow-md h-10 w-10 text-foreground/80" />
                             </>
                           )}
                         </Carousel>
                         {/* Interactive Carousel Indicators */}
                         {sortedImages.length > 1 && (
-                          <div className="flex justify-center mt-5 gap-2">
+                          <div className="flex justify-center mt-6 gap-2">
                             {sortedImages.map((_, idx) => (
                               <button
                                 key={idx}
                                 onClick={() => carouselApi?.scrollTo(idx)}
-                                className={`h-2 rounded-full transition-all duration-200 hover:scale-125 ${
+                                className={`h-1.5 rounded-full transition-all duration-300 ${
                                   idx === currentSlide
-                                    ? "w-8 bg-foreground"
-                                    : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                                    ? "w-8 bg-primary"
+                                    : "w-2 bg-primary/20 hover:bg-primary/40"
                                 }`}
                                 aria-label={`Go to image ${idx + 1}`}
                               />
@@ -288,25 +294,26 @@ export function ProjectDetailDialog({
 
                   {/* Project Details with Technologies */}
                   {project.more_context && (
-                    <section className="space-y-4">
-                      <h3 className="text-lg font-semibold text-foreground tracking-tight">
+                    <section className="space-y-6">
+                      <h3 className="text-xl font-semibold text-foreground/90 tracking-tight flex items-center gap-2">
+                        <span className="w-1 h-6 bg-primary rounded-full inline-block" />
                         About This Project
                       </h3>
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <div className="prose prose-zinc dark:prose-invert max-w-none">
                         <MarkdownContent
                           content={project.more_context}
-                          className="text-foreground leading-relaxed"
+                          className="text-foreground/80 leading-loose text-base"
                         />
                       </div>
                       {/* Technologies inline at bottom of About */}
                       {project.technologies &&
                         project.technologies.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-2">
+                          <div className="flex flex-wrap gap-2 pt-4">
                             {project.technologies.map((tech) => (
                               <Badge
                                 key={tech}
                                 variant="secondary"
-                                className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-white dark:bg-white text-black"
+                                className="px-3 py-1 text-xs font-medium rounded-full bg-secondary/50 text-secondary-foreground hover:bg-secondary/70 transition-colors border border-transparent"
                               >
                                 {tech}
                               </Badge>
@@ -319,16 +326,16 @@ export function ProjectDetailDialog({
 
                 {/* Fixed Footer with Action Buttons */}
                 {(project.github || project.live_link) && (
-                  <div className="border-t border-border bg-background/95 backdrop-blur-sm px-6 py-3">
-                    <div className="flex justify-end flex-wrap gap-2">
+                  <div className="shrink-0 border-t border-border/40 bg-background/80 backdrop-blur-md px-8 py-4">
+                    <div className="flex justify-end flex-wrap gap-3">
                       {project.github && (
                         <a
                           href={project.github}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-foreground text-background hover:bg-foreground/90 transition-all font-medium text-xs shadow-sm hover:shadow-md"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background hover:bg-foreground/90 hover:scale-105 transition-all font-medium text-sm shadow-lg hover:shadow-xl"
                         >
-                          <Github className="size-3.5" />
+                          <Github className="size-4" />
                           View Code
                         </a>
                       )}
@@ -337,9 +344,9 @@ export function ProjectDetailDialog({
                           href={project.live_link}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-background hover:bg-accent transition-all font-medium text-xs shadow-sm hover:shadow-md"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 bg-background hover:bg-accent/50 hover:scale-105 transition-all font-medium text-sm shadow-sm hover:shadow-md"
                         >
-                          <ExternalLink className="size-3.5" />
+                          <ExternalLink className="size-4" />
                           Live Demo
                         </a>
                       )}
