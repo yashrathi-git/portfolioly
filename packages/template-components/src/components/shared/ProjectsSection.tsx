@@ -72,17 +72,19 @@ export const ProjectsSection = ({
                 </div>
               </div>
             </BlurFade>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-w-[800px] mx-auto">
-              {visibleItems.map((project: DisplayProject, id: number) => (
-                <ProjectCard
-                  key={project.name || `project-${id}`}
-                  project={project}
-                  index={id}
-                  variant="traditional"
-                  onExpand={(rect) => handleExpand(project, rect)}
-                />
-              ))}
-            </div>
+            <BlurFade delay={BLUR_FADE_DELAY * 12}>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-w-[800px] mx-auto">
+                {visibleItems.map((project: DisplayProject, id: number) => (
+                  <ProjectCard
+                    key={project.name || `project-${id}`}
+                    project={project}
+                    index={id}
+                    variant="traditional"
+                    onExpand={(rect) => handleExpand(project, rect)}
+                  />
+                ))}
+              </div>
+            </BlurFade>
           </div>
         </section>
 

@@ -9,6 +9,18 @@ import PortfolioErrorBoundary from "./ErrorBoundary";
 import Markdown from "markdown-to-jsx";
 import BlurFade from "./magicui/blur-fade";
 import {
+  SiUdemy,
+  SiCoursera,
+  SiEdx,
+  SiUdacity,
+  SiPluralsight,
+  SiCodecademy,
+  SiFreecodecamp,
+  SiGoogle,
+  SiMeta,
+} from "@icons-pack/react-simple-icons";
+import { Award } from "lucide-react";
+import {
   requiresExternalData,
   useComponentDataTracking,
 } from "../utils/component-flags";
@@ -18,6 +30,27 @@ export type TraditionalPortfolioProps = {
   data?: DisplayPortfolioData | null;
   isLoading?: boolean;
   error?: string;
+};
+
+const getCertificateProvider = (issuer?: string) => {
+  const lowerName = (issuer || "").toLowerCase();
+  if (lowerName.includes("udemy")) return { icon: SiUdemy, color: "#A435F0" };
+  if (lowerName.includes("coursera"))
+    return { icon: SiCoursera, color: "#0056D2" };
+  if (lowerName.includes("edx")) return { icon: SiEdx, color: "#D23228" };
+  if (lowerName.includes("udacity"))
+    return { icon: SiUdacity, color: "#00B3E5" };
+  if (lowerName.includes("pluralsight"))
+    return { icon: SiPluralsight, color: "#F15B2A" };
+  if (lowerName.includes("codecademy"))
+    return { icon: SiCodecademy, color: "#1F4056" };
+  if (lowerName.includes("freecodecamp"))
+    return { icon: SiFreecodecamp, color: "#0A0A23" };
+  if (lowerName.includes("google")) return { icon: SiGoogle, color: "#4285F4" };
+  if (lowerName.includes("meta") || lowerName.includes("facebook"))
+    return { icon: SiMeta, color: "#0668E1" };
+
+  return { icon: Award, color: "currentColor" };
 };
 
 const TraditionalPortfolioComponent = ({
@@ -114,23 +147,38 @@ const TraditionalPortfolioComponent = ({
           <Projects items={effectiveData.projects} />
         )}
 
-        {effectiveData.achievements &&
-          effectiveData.achievements.length > 0 && (
-            <section id="achievements" className="px-6 pb-12">
-              <div className="mx-auto w-full max-w-2xl">
-                <div className="flex min-h-0 flex-col gap-y-3">
-                  <BlurFade delay={BLUR_FADE_DELAY * 11}>
-                    <h2 className="text-2xl font-bold">Achievements</h2>
-                  </BlurFade>
-                  <BlurFade delay={BLUR_FADE_DELAY * 12}>
-                    <Markdown className="prose max-w-full text-pretty font-sans text-base leading-relaxed text-foreground dark:prose-invert prose-ul:list-disc prose-ul:pl-5 prose-li:text-foreground prose-p:text-foreground">
-                      {effectiveData.achievements.join("\n")}
-                    </Markdown>
-                  </BlurFade>
-                </div>
+        {effectiveData.achievements && (
+          <section id="achievements" className="px-6 pb-12">
+            <div className="mx-auto w-full max-w-2xl">
+              <div className="flex min-h-0 flex-col gap-y-3">
+                <BlurFade delay={BLUR_FADE_DELAY * 11}>
+                  <h2 className="text-2xl font-bold">Achievements</h2>
+                </BlurFade>
+                <BlurFade delay={BLUR_FADE_DELAY * 12}>
+                  <Markdown
+                    className="prose max-w-full text-pretty font-sans text-base leading-relaxed text-foreground dark:prose-invert prose-li:marker:text-foreground"
+                    options={{
+                      overrides: {
+                        ul: {
+                          props: {
+                            className: "list-disc pl-5 space-y-2",
+                          },
+                        },
+                        li: {
+                          props: {
+                            className: "text-foreground",
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    {effectiveData.achievements || ""}
+                  </Markdown>
+                </BlurFade>
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
         {effectiveData.certificates &&
           effectiveData.certificates.length > 0 && (
@@ -140,18 +188,52 @@ const TraditionalPortfolioComponent = ({
                   <BlurFade delay={BLUR_FADE_DELAY * 13}>
                     <h2 className="text-2xl font-bold">Certificates</h2>
                   </BlurFade>
-                  <BlurFade delay={BLUR_FADE_DELAY * 14}>
-                    <ul className="grid gap-3 sm:grid-cols-2">
-                      {effectiveData.certificates.map((c, idx) => (
-                        <li
-                          key={`${c}-${idx}`}
-                          className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground"
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {effectiveData.certificates.map((cert, idx) => {
+                      const provider = getCertificateProvider(cert.issuer);
+                      const Icon = provider.icon;
+                      const CardContent = (
+                        <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground transition-colors hover:bg-accent/50 h-full">
+                          <div
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background"
+                            style={{ color: provider.color }}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-medium line-clamp-1">
+                              {cert.name}
+                            </span>
+                            {cert.issuer && (
+                              <span className="text-xs text-muted-foreground">
+                                {cert.issuer}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+
+                      return (
+                        <BlurFade
+                          key={`${cert.name}-${idx}`}
+                          delay={BLUR_FADE_DELAY * 13 + idx * 0.05}
                         >
-                          {c}
-                        </li>
-                      ))}
-                    </ul>
-                  </BlurFade>
+                          {cert.link ? (
+                            <a
+                              href={cert.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block h-full"
+                            >
+                              {CardContent}
+                            </a>
+                          ) : (
+                            CardContent
+                          )}
+                        </BlurFade>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </section>

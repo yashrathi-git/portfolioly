@@ -71,13 +71,14 @@ export function mapBackendToDisplay(
     project.technologies?.forEach((tech) => skills.add(tech));
   });
 
-  // Map certifications to formatted strings with issuer
+  // Map certifications to DisplayCertification objects
   const certificates = (backendData.certifications || [])
-    .map((cert) => {
-      const parts = [cert.name, cert.issuer].filter(Boolean);
-      return parts.length > 0 ? parts.join(" - ") : "";
-    })
-    .filter(Boolean);
+    .map((cert) => ({
+      name: cert.name || "",
+      issuer: cert.issuer || undefined,
+      link: cert.link || undefined,
+    }))
+    .filter((cert) => !!cert.name);
 
   return {
     profile: {
@@ -94,9 +95,7 @@ export function mapBackendToDisplay(
     education: (backendData.education || []).map(mapEducation),
     experience: (backendData.work_experiences || []).map(mapWorkExperience),
     skills: Array.from(skills),
-    achievements: backendData.text_blobs?.achievements
-      ? [backendData.text_blobs.achievements]
-      : [],
+    achievements: backendData.text_blobs?.achievements ?? undefined,
     certificates,
     layout_settings: backendData.layout_settings,
   };

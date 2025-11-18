@@ -2,7 +2,7 @@
 
 import { MessageSquare, FileText } from "lucide-react";
 import { cn } from "../lib/utils";
-import { Dock, DockIcon } from "./magicui/dock";
+import { motion } from "framer-motion";
 
 export type LayoutMode = "chat" | "traditional";
 
@@ -27,7 +27,7 @@ export const LayoutSwitcher = ({
   const layoutConfig = {
     chat: {
       icon: MessageSquare,
-      label: "Chat Mode",
+      label: "Chat",
     },
     traditional: {
       icon: FileText,
@@ -36,32 +36,44 @@ export const LayoutSwitcher = ({
   };
 
   return (
-    <div className={cn("flex items-center justify-center", className)}>
-      <Dock className="bg-background/80 backdrop-blur-sm border-border/50">
+    <div
+      className={cn(
+        "fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center",
+        className
+      )}
+    >
+      <div className="flex items-center p-1 bg-background/50 backdrop-blur-md border border-border/50 shadow-lg rounded-full">
         {availableLayouts.map((layout) => {
           const config = layoutConfig[layout];
           const Icon = config.icon;
           const isActive = currentLayout === layout;
 
           return (
-            <DockIcon key={layout}>
-              <button
-                type="button"
-                onClick={() => onLayoutChange(layout)}
-                aria-label={config.label}
-                className={cn(
-                  "flex h-full w-full items-center justify-center rounded-full transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <Icon className="h-5 w-5" />
-              </button>
-            </DockIcon>
+            <button
+              key={layout}
+              type="button"
+              onClick={() => onLayoutChange(layout)}
+              aria-label={config.label}
+              className={cn(
+                "relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors z-10",
+                isActive
+                  ? "text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="active-layout-pill"
+                  className="absolute inset-0 bg-primary rounded-full -z-10"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <Icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{config.label}</span>
+            </button>
           );
         })}
-      </Dock>
+      </div>
     </div>
   );
 };

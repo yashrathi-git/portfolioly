@@ -114,6 +114,12 @@ export interface DisplayWorkExperience {
   logoUrl?: string;
 }
 
+export interface DisplayCertification {
+  name: string;
+  issuer?: string;
+  link?: string;
+}
+
 /**
  * Root display format for complete portfolio data.
  * Optimized for UI component consumption with all nested data flattened.
@@ -124,8 +130,8 @@ export interface DisplayPortfolioData {
   education: DisplayEducation[];
   experience?: DisplayWorkExperience[];
   skills?: string[];
-  achievements?: string[];
-  certificates?: string[];
+  achievements?: string;
+  certificates?: DisplayCertification[];
   layout_settings?: {
     layout_mode?: string;
     default_layout?: string;
