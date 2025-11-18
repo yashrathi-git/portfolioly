@@ -99,16 +99,26 @@ export function WorkExperienceSection({
           </h3>
           <div className="space-y-3">
             {visibleItems.map((work, idx) => (
-              <ResumeCard
+              <BlurFade
                 key={`${work.companyName ?? "experience"}-${idx}`}
-                logoUrl={work.logoUrl ?? undefined}
-                altText={work.companyName ?? "Company"}
-                title={work.companyName ?? ""}
-                subtitle={work.role ?? undefined}
-                badges={work.technologies}
-                period={formatPeriod(work.start, work.end)}
-                description={normalizeDescription(work.points)}
-              />
+                delay={
+                  WIDGET_ANIMATION.delay +
+                  (idx + 1) * WIDGET_ANIMATION.staggerDelay
+                }
+                duration={WIDGET_ANIMATION.duration}
+                yOffset={WIDGET_ANIMATION.yOffset}
+                blur={WIDGET_ANIMATION.blur}
+              >
+                <ResumeCard
+                  logoUrl={work.logoUrl ?? undefined}
+                  altText={work.companyName ?? "Company"}
+                  title={work.companyName ?? ""}
+                  subtitle={work.role ?? undefined}
+                  badges={work.technologies}
+                  period={formatPeriod(work.start, work.end)}
+                  description={normalizeDescription(work.points)}
+                />
+              </BlurFade>
             ))}
           </div>
         </div>

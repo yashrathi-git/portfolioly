@@ -1,6 +1,7 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 import type { Message } from "./types";
 import type { DisplayPortfolioData } from "portfolioly-schema";
 import { AboutWidget } from "../widgets/AboutWidget";
@@ -166,15 +167,28 @@ export const Thread = ({
 }: ThreadProps) => {
   return (
     <div className="space-y-5 pt-2">
-      {messages.map((m) => {
+      {messages.map((m, messageIndex) => {
         // Parse message content to extract text and widget parts
         const parts =
           m.role === "assistant"
             ? parseMessageContent(m.content)
             : [{ type: "text" as const, content: m.content }];
 
+        // Only animate the message container on first appearance
+        // Use messageIndex to determine if this is a new message
+        const isNewMessage = messageIndex === messages.length - 1;
+
         return (
-          <div key={m.id} className="flex gap-2 sm:gap-3">
+          <motion.div
+            key={m.id}
+            initial={isNewMessage ? { opacity: 0, y: 10 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.35,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className="flex gap-2 sm:gap-3"
+          >
             {m.role === "assistant" ? (
               <div className="mt-1 size-7 sm:size-9 shrink-0 rounded-full bg-[var(--secondary)] hidden sm:flex items-center justify-center">
                 <Sparkles className="size-3.5 sm:size-4.5 text-[color:var(--secondary-foreground)]" />
@@ -252,22 +266,40 @@ export const Thread = ({
                     </div>
                   );
                 } else if (part.type === "widget") {
-                  // Render widget
+                  // Render widget with fade-in animation only for new messages
                   return (
-                    <div key={idx}>
+                    <motion.div
+                      key={idx}
+                      initial={isNewMessage ? { opacity: 0, y: 8 } : false}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.4,
+                        ease: [0.16, 1, 0.3, 1],
+                        delay: isNewMessage ? 0.2 : 0,
+                      }}
+                    >
                       {renderWidget(part.widget, part.indices, portfolioData)}
-                    </div>
+                    </motion.div>
                   );
                 }
                 return null;
               })}
             </div>
-          </div>
+          </motion.div>
         );
       })}
 
       {isThinking && (
-        <div className="flex gap-2 sm:gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{
+            duration: 0.3,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+          className="flex gap-2 sm:gap-3"
+        >
           <div className="mt-1 size-7 sm:size-9 shrink-0 rounded-full bg-[var(--secondary)] hidden sm:flex items-center justify-center">
             <Sparkles className="size-3.5 sm:size-4.5 text-[color:var(--secondary-foreground)]" />
           </div>
@@ -283,7 +315,7 @@ export const Thread = ({
               <span className="size-1.5 rounded-full bg-[color:var(--muted-foreground)] animate-bounce [animation-delay:0.2s]"></span>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

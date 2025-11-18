@@ -160,12 +160,32 @@ const ChatPortfolioComponent = ({
     );
   }
 
-  // Auto-scroll on new messages
+  // Auto-scroll on new messages with animation-aware timing
   useEffect(() => {
-    listRef.current?.scrollTo({
-      top: listRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    if (!listRef.current) return;
+
+    // Calculate animation duration based on message content
+    // Base delay + stagger delays for widgets
+    const lastMessage = messages[messages.length - 1];
+    const hasWidget = lastMessage?.content.includes("{{widget:");
+
+    // Base animation: 400ms + delays
+    // For widgets: add extra time for internal staggering
+    const animationDuration = hasWidget ? 600 : 450;
+
+    // Use requestAnimationFrame for smoother timing
+    const timeoutId = setTimeout(() => {
+      requestAnimationFrame(() => {
+        if (listRef.current) {
+          listRef.current.scrollTo({
+            top: listRef.current.scrollHeight,
+            behavior: "smooth",
+          });
+        }
+      });
+    }, animationDuration);
+
+    return () => clearTimeout(timeoutId);
   }, [messages, isThinking]);
 
   const onSubmit = (e?: React.FormEvent) => {

@@ -126,12 +126,22 @@ export const ProjectsSection = ({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {visibleItems.map((p, idx) => (
-                <ProjectCard
+                <BlurFade
                   key={p.name || `project-${idx}`}
-                  project={p}
-                  variant="widget"
-                  onExpand={(rect) => handleExpand(p, rect)}
-                />
+                  delay={
+                    WIDGET_ANIMATION.delay +
+                    (idx + 1) * WIDGET_ANIMATION.staggerDelay
+                  }
+                  duration={WIDGET_ANIMATION.duration}
+                  yOffset={WIDGET_ANIMATION.yOffset}
+                  blur={WIDGET_ANIMATION.blur}
+                >
+                  <ProjectCard
+                    project={p}
+                    variant="widget"
+                    onExpand={(rect) => handleExpand(p, rect)}
+                  />
+                </BlurFade>
               ))}
             </div>
           </div>
