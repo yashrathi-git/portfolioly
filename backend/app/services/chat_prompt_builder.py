@@ -18,6 +18,7 @@ from ..schemas.portfolio import (
     Profile,
 )
 from ..constants.chat_delimiters import ChatDelimiters
+from ..constants.chat_prompts import get_system_prompt
 
 
 def _format_range(
@@ -204,10 +205,17 @@ def build_system_prompt(portfolio_data: PortfolioData) -> str:
     Returns:
         System prompt string with portfolio context
     """
+    # Extract name and headline - only basic info needed
     name = (
         portfolio_data.personal_info.full_name
         if portfolio_data.personal_info and portfolio_data.personal_info.full_name
         else "the portfolio owner"
+    )
+
+    headline = (
+        portfolio_data.personal_info.headline
+        if portfolio_data.personal_info and portfolio_data.personal_info.headline
+        else "a professional"
     )
 
     sections: List[str] = []
@@ -248,7 +256,7 @@ def build_system_prompt(portfolio_data: PortfolioData) -> str:
 
     portfolio_context = "\n\n".join(sections)
 
-    # Generate example widget commands using constants
+    # Generate widget command examples
     widget_examples = [
         f"- `{ChatDelimiters.WIDGET_ABOUT}` - Show about/personal info section",
         f"- `{ChatDelimiters.WIDGET_PROJECTS}` - Show all projects",
@@ -257,42 +265,14 @@ def build_system_prompt(portfolio_data: PortfolioData) -> str:
         f"- `{ChatDelimiters.WIDGET_CONTACT}` - Show contact information",
         f"- `{ChatDelimiters.WIDGET_EXPERIENCE}` - Show work experience",
         f"- `{ChatDelimiters.WIDGET_EDUCATION}` - Show education",
-        f"- `{ChatDelimiters.MSG_BREAK}` - Split into separate message bubbles",
     ]
     widget_commands = "\n".join(widget_examples)
 
-    prompt = f"""
-You are an AI assistant representing {name}'s professional portfolio. Your role is to help visitors learn about {name}'s work, skills, and experience through natural conversation.
-
-# Portfolio Context
-{portfolio_context}
-
-# Response Guidelines
-- Be CONCISE and answer ONLY what is asked
-- Keep responses SHORT and EASY TO READ
-- Use simple, clear language
-- Maintain a friendly, professional tone
-- Refer to concrete examples and technologies when relevant
-
-# Widget Commands
-Use special commands to show portfolio sections or split messages:
-{widget_commands}
-
-# Widget Placement Rules
-- ALWAYS place widget commands at the END of your text, never inline
-- Each widget appears as a separate visual component below your text
-- Add a brief intro before the widget command
-- Example: "Here are my recent projects:\n{ChatDelimiters.WIDGET_PROJECTS}"
-
-# Message Splitting
-- Use `{ChatDelimiters.MSG_BREAK}` to split longer responses into digestible parts
-- Example: "I have 5 years of experience.\n{ChatDelimiters.MSG_BREAK}\nMy latest project was..."
-- This creates two separate chat bubbles for better readability
-
-# Conversation Handling
-- For broad questions ("Tell me about {name}"), give a SHORT overview and use widgets
-- For specific questions ("What projects used React?"), answer directly and concisely
-- Politely redirect off-topic questions back to {name}'s professional work
-"""
-
-    return textwrap.dedent(prompt).strip()
+    # Use the template from constants
+    return get_system_prompt(
+        name=name,
+        portfolio_context=portfolio_context,
+        widget_commands=widget_commands,
+        msg_break=ChatDelimiters.MSG_BREAK,
+        headline=headline,
+    )

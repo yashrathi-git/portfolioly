@@ -13,7 +13,7 @@ import { EducationWidget } from "../widgets/EducationWidget";
 import { typography } from "../../lib/typography";
 import { cn } from "../../lib/utils";
 import { MarkdownContent } from "../../utils/markdown";
-import { parseMessageContent } from "../../utils/parseMessageContent";
+import { parseMessageSegments } from "../../utils/parseMessageContent";
 
 type ThreadProps = {
   messages: Message[];
@@ -168,124 +168,139 @@ export const Thread = ({
   return (
     <div className="space-y-5 pt-2">
       {messages.map((m, messageIndex) => {
-        // Parse message content to extract text and widget parts
-        const parts =
+        // Parse message content to extract segments (split by MSG_BREAK)
+        const segments =
           m.role === "assistant"
-            ? parseMessageContent(m.content)
-            : [{ type: "text" as const, content: m.content }];
+            ? parseMessageSegments(m.content)
+            : [{ parts: [{ type: "text" as const, content: m.content }] }];
 
         // Only animate the message container on first appearance
-        // Use messageIndex to determine if this is a new message
         const isNewMessage = messageIndex === messages.length - 1;
 
         return (
-          <motion.div
-            key={m.id}
-            initial={isNewMessage ? { opacity: 0, y: 10 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.35,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-            className="flex gap-2 sm:gap-3"
-          >
-            {m.role === "assistant" ? (
-              <div className="mt-1 size-7 sm:size-9 shrink-0 rounded-full bg-[var(--secondary)] hidden sm:flex items-center justify-center">
-                <Sparkles className="size-3.5 sm:size-4.5 text-[color:var(--secondary-foreground)]" />
-              </div>
-            ) : (
-              <div className="mt-1 size-7 sm:size-9 shrink-0 rounded-full bg-[oklch(0.84_0.07_250)] text-white hidden sm:flex items-center justify-center text-sm sm:text-base">
-                U
-              </div>
-            )}
-
-            <div
-              className={cn(
-                "flex-1 max-w-full leading-relaxed [&_*]:text-inherit [&_*]:leading-[inherit] space-y-4",
-                typography.content.responsive
-              )}
-            >
-              {parts.map((part, idx) => {
-                if (part.type === "text") {
-                  // Only render text bubble if there's actual content
-                  if (!part.content.trim()) return null;
-
-                  return (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "rounded-2xl px-5 py-3.5 md:py-4 shadow-sm border",
-                        m.role === "assistant"
-                          ? "bg-card/80 backdrop-blur-sm border-border rounded-tl-none"
-                          : "bg-primary/10 backdrop-blur-sm border-primary/30 rounded-tr-none"
-                      )}
-                    >
-                      <MarkdownContent
-                        content={part.content}
-                        overrides={{
-                          p: {
-                            component: ({ className, ...props }) => (
-                              <p
-                                {...props}
-                                className={cn(
-                                  "m-0 whitespace-pre-wrap",
-                                  className
-                                )}
-                              />
-                            ),
-                          },
-                          ul: {
-                            component: ({ className, ...props }) => (
-                              <ul
-                                {...props}
-                                className={cn(
-                                  "ml-5 list-disc space-y-1 my-2",
-                                  className
-                                )}
-                              />
-                            ),
-                          },
-                          ol: {
-                            component: ({ className, ...props }) => (
-                              <ol
-                                {...props}
-                                className={cn(
-                                  "ml-5 list-decimal space-y-1 my-2",
-                                  className
-                                )}
-                              />
-                            ),
-                          },
-                          li: {
-                            component: ({ className, ...props }) => (
-                              <li {...props} className={cn("", className)} />
-                            ),
-                          },
-                        }}
-                      />
+          <div key={m.id} className="space-y-2.5">
+            {segments.map((segment, segmentIndex) => (
+              <motion.div
+                key={`${m.id}-${segmentIndex}`}
+                initial={isNewMessage ? { opacity: 0, y: 10 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.35,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: isNewMessage ? segmentIndex * 0.15 : 0,
+                }}
+                className="flex gap-2 sm:gap-3"
+              >
+                {m.role === "assistant" ? (
+                  segmentIndex === 0 ? (
+                    <div className="mt-1 size-7 sm:size-9 shrink-0 rounded-full bg-[var(--secondary)] hidden sm:flex items-center justify-center">
+                      <Sparkles className="size-3.5 sm:size-4.5 text-[color:var(--secondary-foreground)]" />
                     </div>
-                  );
-                } else if (part.type === "widget") {
-                  // Render widget with fade-in animation only for new messages
-                  return (
-                    <motion.div
-                      key={idx}
-                      initial={isNewMessage ? { opacity: 0, y: 8 } : false}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.4,
-                        ease: [0.16, 1, 0.3, 1],
-                        delay: isNewMessage ? 0.2 : 0,
-                      }}
-                    >
-                      {renderWidget(part.widget, part.indices, portfolioData)}
-                    </motion.div>
-                  );
-                }
-                return null;
-              })}
-            </div>
-          </motion.div>
+                  ) : (
+                    <div className="mt-1 size-7 sm:size-9 shrink-0 hidden sm:block" />
+                  )
+                ) : (
+                  <div className="mt-1 size-7 sm:size-9 shrink-0 rounded-full bg-[oklch(0.84_0.07_250)] text-white hidden sm:flex items-center justify-center text-sm sm:text-base">
+                    U
+                  </div>
+                )}
+
+                <div
+                  className={cn(
+                    "flex-1 max-w-full leading-relaxed [&_*]:text-inherit [&_*]:leading-[inherit] space-y-4",
+                    typography.content.responsive
+                  )}
+                >
+                  {segment.parts.map((part, idx) => {
+                    if (part.type === "text") {
+                      // Only render text bubble if there's actual content
+                      if (!part.content.trim()) return null;
+
+                      return (
+                        <div
+                          key={idx}
+                          className={cn(
+                            "rounded-2xl px-5 py-3.5 md:py-4 shadow-sm border",
+                            m.role === "assistant"
+                              ? "bg-card/80 backdrop-blur-sm border-border rounded-tl-none"
+                              : "bg-primary/10 backdrop-blur-sm border-primary/30 rounded-tr-none"
+                          )}
+                        >
+                          <MarkdownContent
+                            content={part.content}
+                            overrides={{
+                              p: {
+                                component: ({ className, ...props }) => (
+                                  <p
+                                    {...props}
+                                    className={cn(
+                                      "m-0 whitespace-pre-wrap",
+                                      className
+                                    )}
+                                  />
+                                ),
+                              },
+                              ul: {
+                                component: ({ className, ...props }) => (
+                                  <ul
+                                    {...props}
+                                    className={cn(
+                                      "ml-5 list-disc space-y-1 my-2",
+                                      className
+                                    )}
+                                  />
+                                ),
+                              },
+                              ol: {
+                                component: ({ className, ...props }) => (
+                                  <ol
+                                    {...props}
+                                    className={cn(
+                                      "ml-5 list-decimal space-y-1 my-2",
+                                      className
+                                    )}
+                                  />
+                                ),
+                              },
+                              li: {
+                                component: ({ className, ...props }) => (
+                                  <li
+                                    {...props}
+                                    className={cn("", className)}
+                                  />
+                                ),
+                              },
+                            }}
+                          />
+                        </div>
+                      );
+                    } else if (part.type === "widget") {
+                      // Render widget with fade-in animation only for new messages
+                      return (
+                        <motion.div
+                          key={idx}
+                          initial={isNewMessage ? { opacity: 0, y: 8 } : false}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.4,
+                            ease: [0.16, 1, 0.3, 1],
+                            delay: isNewMessage ? 0.2 + segmentIndex * 0.15 : 0,
+                          }}
+                        >
+                          {renderWidget(
+                            part.widget,
+                            part.indices,
+                            portfolioData
+                          )}
+                        </motion.div>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              </motion.div>
+            ))}
+          </div>
         );
       })}
 
