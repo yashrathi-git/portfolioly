@@ -69,5 +69,10 @@ class TestSystemPromptBuilder:
         assert "machine learning" in result.lower()
         assert "Jane Smith" in result
         assert "Data Scientist" in result
-        # LLM should analyze this data itself
-        assert "Analyze the knowledge base yourself" in result
+        # Should have strong guardrails
+        assert "STRICT BOUNDARY" in result
+        assert (
+            "ONLY discuss information explicitly stated in your knowledge_base"
+            in result
+        )
+        assert "Do NOT offer code walkthroughs" in result
