@@ -23,6 +23,8 @@ export interface EditorTopBarProps {
     username?: string;
     accessMode?: "public" | "private";
   }) => void;
+  /** Public token for deployment */
+  publicToken?: string;
 }
 
 export function EditorTopBar({
@@ -37,6 +39,7 @@ export function EditorTopBar({
   publishAccessMode,
   publishLoading,
   onPublishUpdated,
+  publicToken,
 }: EditorTopBarProps) {
   return (
     <header className="relative border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -99,7 +102,11 @@ export function EditorTopBar({
             />
 
             {/* Deploy to Vercel Button - Desktop */}
-            <DeployToVercelButton className="hidden xl:flex hover:bg-accent/50 transition-colors" />
+            <DeployToVercelButton
+              username={publishUsername}
+              publicToken={publicToken}
+              className="hidden xl:flex hover:bg-accent/50 transition-colors"
+            />
 
             {/* Publish Settings - Responsive */}
             <PublishSettingsPanel
