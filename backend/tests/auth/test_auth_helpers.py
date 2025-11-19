@@ -109,19 +109,24 @@ class TestVerifyFirebaseJWT:
 class TestVerifyPublicToken:
     """Test public token verification."""
 
+    @patch("app.services.username_service.get_username_service")
     @patch("app.routes.utils.auth_helpers.get_user_settings_service")
     @patch("app.routes.utils.auth_helpers.get_public_token_service")
     def test_verify_valid_public_token(
-        self, mock_get_token_service, mock_get_settings_service
+        self, mock_get_token_service, mock_get_settings_service, mock_get_username_service
     ):
         """Should return True for valid public token."""
         mock_settings_service = Mock()
-        mock_settings_service.get_user_settings_by_username.return_value = {
+        mock_settings_service.get_user_settings.return_value = {
             "user_id": "user123",
             "username": "johndoe",
             "public_token_ver": 1,
         }
         mock_get_settings_service.return_value = mock_settings_service
+
+        mock_username_service = Mock()
+        mock_username_service.get_user_id_by_username.return_value = "user123"
+        mock_get_username_service.return_value = mock_username_service
 
         mock_token_service = Mock()
         mock_token_service.verify_public_token.return_value = True
@@ -134,30 +139,41 @@ class TestVerifyPublicToken:
             "johndoe", "psk_validtoken", 1
         )
 
+    @patch("app.services.username_service.get_username_service")
     @patch("app.routes.utils.auth_helpers.get_user_settings_service")
-    def test_verify_token_username_not_found(self, mock_get_settings_service):
+    def test_verify_token_username_not_found(
+        self, mock_get_settings_service, mock_get_username_service
+    ):
         """Should return False if username doesn't exist."""
         mock_settings_service = Mock()
-        mock_settings_service.get_user_settings_by_username.return_value = None
         mock_get_settings_service.return_value = mock_settings_service
+
+        mock_username_service = Mock()
+        mock_username_service.get_user_id_by_username.return_value = None
+        mock_get_username_service.return_value = mock_username_service
 
         result = verify_public_token("nonexistent", "psk_token")
 
         assert result is False
 
+    @patch("app.services.username_service.get_username_service")
     @patch("app.routes.utils.auth_helpers.get_user_settings_service")
     @patch("app.routes.utils.auth_helpers.get_public_token_service")
     def test_verify_invalid_public_token(
-        self, mock_get_token_service, mock_get_settings_service
+        self, mock_get_token_service, mock_get_settings_service, mock_get_username_service
     ):
         """Should return False for invalid token."""
         mock_settings_service = Mock()
-        mock_settings_service.get_user_settings_by_username.return_value = {
+        mock_settings_service.get_user_settings.return_value = {
             "user_id": "user123",
             "username": "johndoe",
             "public_token_ver": 1,
         }
         mock_get_settings_service.return_value = mock_settings_service
+
+        mock_username_service = Mock()
+        mock_username_service.get_user_id_by_username.return_value = "user123"
+        mock_get_username_service.return_value = mock_username_service
 
         mock_token_service = Mock()
         mock_token_service.verify_public_token.return_value = False
@@ -167,19 +183,24 @@ class TestVerifyPublicToken:
 
         assert result is False
 
+    @patch("app.services.username_service.get_username_service")
     @patch("app.routes.utils.auth_helpers.get_user_settings_service")
     @patch("app.routes.utils.auth_helpers.get_public_token_service")
     def test_verify_token_version_mismatch(
-        self, mock_get_token_service, mock_get_settings_service
+        self, mock_get_token_service, mock_get_settings_service, mock_get_username_service
     ):
         """Should return False when token version doesn't match."""
         mock_settings_service = Mock()
-        mock_settings_service.get_user_settings_by_username.return_value = {
+        mock_settings_service.get_user_settings.return_value = {
             "user_id": "user123",
             "username": "johndoe",
             "public_token_ver": 2,  # Version incremented
         }
         mock_get_settings_service.return_value = mock_settings_service
+
+        mock_username_service = Mock()
+        mock_username_service.get_user_id_by_username.return_value = "user123"
+        mock_get_username_service.return_value = mock_username_service
 
         mock_token_service = Mock()
         mock_token_service.verify_public_token.return_value = False

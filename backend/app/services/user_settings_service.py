@@ -149,41 +149,44 @@ class UserSettingsService:
                 return self.create_user_settings(user_id, create_data)
 
             old_username = existing_data.get("username")
-            new_username = updates.username
+            username_provided = "username" in updates.__fields_set__
+            new_username = updates.username if username_provided else old_username
+            username_changed = username_provided and new_username != old_username
+            claimed_new_username = False
+            released_old_username = False
 
-            # Check if username is being changed
-            if new_username is not None and new_username != old_username:
-                # Check if new username is available
-                if not username_service.is_username_available(new_username):
-                    raise UserSettingsError("Username is already taken")
+            if username_changed:
+                if new_username:
+                    # Check if new username is available
+                    if not username_service.is_username_available(new_username):
+                        raise UserSettingsError("Username is already taken")
 
-                # Atomically claim new username and release old one
-                if not username_service.claim_username(new_username, user_id):
-                    raise UserSettingsError("Username is already taken")
+                    # Atomically claim new username
+                    if not username_service.claim_username(new_username, user_id):
+                        raise UserSettingsError("Username is already taken")
+                    claimed_new_username = True
 
-                # Release old username if it exists
                 if old_username:
                     try:
                         username_service.release_username(old_username, user_id)
+                        released_old_username = True
                     except Exception as e:
-                        # Rollback new username claim
                         logger.error(f"Failed to release old username: {e}")
-                        try:
-                            username_service.release_username(new_username, user_id)
-                        except Exception as rollback_error:
-                            logger.error(
-                                f"Failed to rollback new username claim: {rollback_error}"
-                            )
-                        raise UserSettingsError(
-                            f"Failed to update username: {e}"
-                        )
+                        if claimed_new_username and new_username:
+                            try:
+                                username_service.release_username(new_username, user_id)
+                            except Exception as rollback_error:
+                                logger.error(
+                                    f"Failed to rollback new username claim: {rollback_error}"
+                                )
+                        raise UserSettingsError(f"Failed to update username: {e}")
 
             # Prepare update data
             update_data = {"updated_at": datetime.utcnow()}
 
-            if updates.username is not None:
+            if username_provided:
                 update_data["username"] = (
-                    updates.username.lower() if updates.username else None
+                    new_username.lower() if new_username else None
                 )
 
             if updates.access_mode is not None:
@@ -195,10 +198,11 @@ class UserSettingsService:
                 doc_ref.update(update_data)
             except Exception as e:
                 # Rollback username changes if update failed
-                if new_username is not None and new_username != old_username:
+                if username_changed:
                     try:
-                        username_service.release_username(new_username, user_id)
-                        if old_username:
+                        if claimed_new_username and new_username:
+                            username_service.release_username(new_username, user_id)
+                        if released_old_username and old_username:
                             username_service.claim_username(old_username, user_id)
                     except Exception as rollback_error:
                         logger.error(
@@ -229,16 +233,6 @@ class UserSettingsService:
     def remove_username(self, user_id: str) -> None:
         """Remove username and set portfolio to private with atomic username release."""
         try:
-            username_service = get_username_service()
-
-            # Get current settings to find username
-            existing_data = self.get_user_settings(user_id)
-            if existing_data and existing_data.get("username"):
-                username = existing_data.get("username")
-                # Release the username
-                username_service.release_username(username, user_id)
-
-            # Update settings
             updates = UserSettingsUpdate(username=None, access_mode="private")
             self.update_user_settings(user_id, updates)
 

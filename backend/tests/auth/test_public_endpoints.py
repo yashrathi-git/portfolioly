@@ -521,7 +521,7 @@ class TestUsernameAvailability:
         return TestClient(app)
 
     # Available Username
-    @patch("app.routes.public_portfolio.get_user_settings_by_username")
+    @patch("app.services.username_service.get_username_service")
     @patch("app.routes.public_portfolio.get_user_settings_service")
     @patch("app.routes.public_portfolio.verify_firebase_jwt")
     @patch("app.routes.public_portfolio.extract_bearer_token")
@@ -530,7 +530,7 @@ class TestUsernameAvailability:
         mock_extract_token,
         mock_verify_jwt,
         mock_get_settings_service,
-        mock_get_settings_by_username,
+        mock_get_username_service,
         client,
     ):
         """Should return available=true for unused username."""
@@ -547,7 +547,9 @@ class TestUsernameAvailability:
         mock_settings_service.validate_username.return_value = {"valid": True}
         mock_get_settings_service.return_value = mock_settings_service
 
-        mock_get_settings_by_username.return_value = None  # Username not taken
+        mock_username_service = Mock()
+        mock_username_service.is_username_available.return_value = True
+        mock_get_username_service.return_value = mock_username_service
 
         response = client.get(
             "/public/username/newusername/available",
@@ -559,7 +561,7 @@ class TestUsernameAvailability:
         assert data["available"] is True
 
     # Taken Username
-    @patch("app.routes.public_portfolio.get_user_settings_by_username")
+    @patch("app.services.username_service.get_username_service")
     @patch("app.routes.public_portfolio.get_user_settings_service")
     @patch("app.routes.public_portfolio.verify_firebase_jwt")
     @patch("app.routes.public_portfolio.extract_bearer_token")
@@ -568,7 +570,7 @@ class TestUsernameAvailability:
         mock_extract_token,
         mock_verify_jwt,
         mock_get_settings_service,
-        mock_get_settings_by_username,
+        mock_get_username_service,
         client,
     ):
         """Should return available=false for taken username."""
@@ -585,10 +587,9 @@ class TestUsernameAvailability:
         mock_settings_service.validate_username.return_value = {"valid": True}
         mock_get_settings_service.return_value = mock_settings_service
 
-        mock_get_settings_by_username.return_value = {
-            "user_id": "other_user",
-            "username": "takenusername",
-        }
+        mock_username_service = Mock()
+        mock_username_service.is_username_available.return_value = False
+        mock_get_username_service.return_value = mock_username_service
 
         response = client.get(
             "/public/username/takenusername/available",
@@ -601,6 +602,7 @@ class TestUsernameAvailability:
         assert "already taken" in data["reason"].lower()
 
     # Invalid Format
+    @patch("app.services.username_service.get_username_service")
     @patch("app.routes.public_portfolio.get_user_settings_service")
     @patch("app.routes.public_portfolio.verify_firebase_jwt")
     @patch("app.routes.public_portfolio.extract_bearer_token")
@@ -609,6 +611,7 @@ class TestUsernameAvailability:
         mock_extract_token,
         mock_verify_jwt,
         mock_get_settings_service,
+        mock_get_username_service,
         client,
     ):
         """Should return available=false for invalid username format."""
@@ -627,6 +630,9 @@ class TestUsernameAvailability:
             "error": "Username must be alphanumeric",
         }
         mock_get_settings_service.return_value = mock_settings_service
+
+        mock_username_service = Mock()
+        mock_get_username_service.return_value = mock_username_service
 
         response = client.get(
             "/public/username/invalid@username/available",

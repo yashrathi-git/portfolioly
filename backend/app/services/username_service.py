@@ -11,7 +11,7 @@ import logging
 
 import firebase_admin
 from firebase_admin import firestore
-from google.cloud.firestore_v1.base_query import FieldFilter
+from google.api_core.exceptions import AlreadyExists
 
 from ..core.firebase import initialize_firebase
 
@@ -75,21 +75,21 @@ class UsernameService:
             # Reference to the username document
             username_ref = self.db.collection("usernames").document(username_lower)
 
-            # Check if username already exists
-            doc = username_ref.get()
-            if doc.exists:
+            try:
+                # Create the username document (fails if already exists)
+                username_ref.create(
+                    {
+                        "user_id": user_id,
+                        "created_at": datetime.utcnow(),
+                    }
+                )
+            except AlreadyExists:
                 logger.info(f"Username '{username}' is already taken")
                 return False
 
-            # Create the username document
-            username_ref.set(
-                {
-                    "user_id": user_id,
-                    "created_at": datetime.utcnow(),
-                }
+            logger.info(
+                f"Successfully claimed username '{username}' for user {user_id}"
             )
-
-            logger.info(f"Successfully claimed username '{username}' for user {user_id}")
             return True
 
         except Exception as e:
@@ -135,7 +135,9 @@ class UsernameService:
             # Delete the username document
             username_ref.delete()
 
-            logger.info(f"Successfully released username '{username}' for user {user_id}")
+            logger.info(
+                f"Successfully released username '{username}' for user {user_id}"
+            )
 
         except UsernameServiceError:
             raise
@@ -201,9 +203,7 @@ class UsernameService:
 
             is_available = not doc.exists
 
-            logger.debug(
-                f"Username '{username}' availability: {is_available}"
-            )
+            logger.debug(f"Username '{username}' availability: {is_available}")
             return is_available
 
         except Exception as e:

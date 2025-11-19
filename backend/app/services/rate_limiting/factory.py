@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Optional
+import logging
+from typing import Optional, TYPE_CHECKING
 
 from ...core.rate_limit_config import rate_limit_settings
 from .interface import RateLimitService
 from .mock import MockRateLimitService
-from .upstash import UpstashRateLimitService
+
+if TYPE_CHECKING:
+    from .upstash import UpstashRateLimitService
+
+logger = logging.getLogger(__name__)
 
 _service_instance: Optional[RateLimitService] = None
 
@@ -20,7 +25,15 @@ def get_rate_limit_service() -> RateLimitService:
         if rate_limit_settings.should_use_mock:
             _service_instance = MockRateLimitService()
         else:
-            _service_instance = UpstashRateLimitService()
+            try:
+                from .upstash import UpstashRateLimitService  # type: ignore
+                _service_instance = UpstashRateLimitService()
+            except ModuleNotFoundError as exc:
+                logger.warning(
+                    "Upstash rate limiter unavailable; falling back to mock implementation.",
+                    exc_info=exc,
+                )
+                _service_instance = MockRateLimitService()
 
     return _service_instance
 
