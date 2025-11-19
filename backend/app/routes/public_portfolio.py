@@ -281,6 +281,8 @@ def check_username_availability(
         {"available": true/false, "reason": "..."}
     """
     try:
+        from app.services.username_service import get_username_service
+
         # Verify Firebase JWT
         token = extract_bearer_token(authorization)
         if not token:
@@ -291,6 +293,7 @@ def check_username_availability(
             raise HTTPException(status_code=401, detail="Invalid authentication token")
 
         user_settings_service = get_user_settings_service()
+        username_service = get_username_service()
 
         # Validate username format
         validation_result = user_settings_service.validate_username(username)
@@ -300,9 +303,8 @@ def check_username_availability(
                 "reason": validation_result.get("error", "Invalid username format"),
             }
 
-        # Check if username is already taken
-        existing_settings = get_user_settings_by_username(username)
-        is_available = existing_settings is None
+        # Check if username is already taken (O(1) lookup)
+        is_available = username_service.is_username_available(username)
 
         logger.info(f"Username '{username}' availability check: {is_available}")
 

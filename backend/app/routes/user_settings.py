@@ -126,11 +126,20 @@ def update_settings(
                     detail=validation_result.get("error", "Invalid username format"),
                 )
 
-            existing_settings = user_settings_service.get_user_settings_by_username(
-                request.username
-            )
-            if existing_settings and existing_settings.get("user_id") != user.uid:
-                raise HTTPException(status_code=409, detail="Username is already taken")
+            # Check availability using username_service (O(1))
+            from ..services.username_service import get_username_service
+
+            username_service = get_username_service()
+            if not username_service.is_username_available(request.username):
+                # Double-check it's not the user's own username
+                current_settings = user_settings_service.get_user_settings(user.uid)
+                if (
+                    not current_settings
+                    or current_settings.get("username") != request.username
+                ):
+                    raise HTTPException(
+                        status_code=409, detail="Username is already taken"
+                    )
 
             user_settings_service.set_username(user.uid, request.username)
             updates["username"] = request.username

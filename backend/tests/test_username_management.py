@@ -125,8 +125,8 @@ class TestAccessControl:
         """Test username availability checking accuracy."""
         # Test available username
         with patch(
-            "app.routes.public_portfolio.get_user_settings_by_username"
-        ) as mock_get_settings, patch(
+            "app.services.username_service.get_username_service"
+        ) as mock_get_username_service, patch(
             "app.routes.public_portfolio.get_user_settings_service"
         ) as mock_get_service, patch(
             "app.routes.utils.auth_helpers.get_firebase_auth"
@@ -141,7 +141,11 @@ class TestAccessControl:
             }
             mock_firebase.return_value = mock_auth
 
-            mock_get_settings.return_value = None
+            # Mock username service for available username
+            mock_username_service = Mock()
+            mock_username_service.is_username_available.return_value = True
+            mock_get_username_service.return_value = mock_username_service
+
             mock_service = Mock()
             mock_service.validate_username.return_value = {"valid": True}
             mock_get_service.return_value = mock_service
@@ -156,8 +160,8 @@ class TestAccessControl:
 
         # Test taken username
         with patch(
-            "app.routes.public_portfolio.get_user_settings_by_username"
-        ) as mock_get_settings, patch(
+            "app.services.username_service.get_username_service"
+        ) as mock_get_username_service, patch(
             "app.routes.public_portfolio.get_user_settings_service"
         ) as mock_get_service, patch(
             "app.routes.utils.auth_helpers.get_firebase_auth"
@@ -172,10 +176,11 @@ class TestAccessControl:
             }
             mock_firebase.return_value = mock_auth
 
-            mock_get_settings.return_value = {
-                "user_id": "other_user",
-                "username": "taken_username",
-            }
+            # Mock username service for taken username
+            mock_username_service = Mock()
+            mock_username_service.is_username_available.return_value = False
+            mock_get_username_service.return_value = mock_username_service
+
             mock_service = Mock()
             mock_service.validate_username.return_value = {"valid": True}
             mock_get_service.return_value = mock_service
@@ -192,6 +197,8 @@ class TestAccessControl:
     def test_invalid_username_format_rejected(self, mock_verified_user):
         """Test that invalid username formats are rejected."""
         with patch(
+            "app.services.username_service.get_username_service"
+        ) as mock_get_username_service, patch(
             "app.routes.public_portfolio.get_user_settings_service"
         ) as mock_get_service, patch(
             "app.routes.utils.auth_helpers.get_firebase_auth"
@@ -205,6 +212,10 @@ class TestAccessControl:
                 "email_verified": True,
             }
             mock_firebase.return_value = mock_auth
+
+            # Mock username service (won't be called due to invalid format)
+            mock_username_service = Mock()
+            mock_get_username_service.return_value = mock_username_service
 
             mock_service = Mock()
             mock_service.validate_username.return_value = {

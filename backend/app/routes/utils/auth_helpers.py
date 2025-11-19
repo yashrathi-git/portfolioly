@@ -67,8 +67,19 @@ def verify_public_token(username: str, token: str) -> bool:
         True if token is valid, False otherwise
     """
     try:
+        from ...services.username_service import get_username_service
+
+        username_service = get_username_service()
         user_settings_service = get_user_settings_service()
-        user_settings = user_settings_service.get_user_settings_by_username(username)
+
+        # O(1) lookup to get user_id
+        user_id = username_service.get_user_id_by_username(username)
+
+        if not user_id:
+            return False
+
+        # Get user settings by user_id
+        user_settings = user_settings_service.get_user_settings(user_id)
 
         if not user_settings:
             return False
@@ -84,7 +95,7 @@ def verify_public_token(username: str, token: str) -> bool:
 
 def get_user_settings_by_username(username: str):
     """
-    Get user settings by username with error handling.
+    Get user settings by username with error handling using O(1) lookup.
 
     Args:
         username: Portfolio username
@@ -96,8 +107,20 @@ def get_user_settings_by_username(username: str):
         HTTPException: On service errors
     """
     try:
+        from ...services.username_service import get_username_service
+
+        username_service = get_username_service()
         user_settings_service = get_user_settings_service()
-        return user_settings_service.get_user_settings_by_username(username)
+
+        # O(1) lookup to get user_id
+        user_id = username_service.get_user_id_by_username(username)
+
+        if not user_id:
+            return None
+
+        # Get user settings by user_id
+        return user_settings_service.get_user_settings(user_id)
+
     except UserSettingsError as e:
         logger.error(f"User settings error for username '{username}': {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve user settings")

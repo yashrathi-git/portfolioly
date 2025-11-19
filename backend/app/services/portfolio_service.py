@@ -185,9 +185,9 @@ class PortfolioService:
 
     def get_portfolio_by_username(self, username: str) -> Optional[PortfolioData]:
         """
-        Retrieve portfolio data by username.
+        Retrieve portfolio data by username using O(1) lookup.
 
-        This method looks up the user_id from user_settings collection by username,
+        This method uses the username service for fast user_id lookup,
         then retrieves the portfolio data.
 
         Args:
@@ -200,27 +200,15 @@ class PortfolioService:
             FirebaseError: If retrieval operation fails
         """
         try:
-            # Query user_settings collection to find user_id by username
-            user_settings_ref = self.db.collection("user_settings")
-            query = user_settings_ref.where(
-                filter=FieldFilter("username", "==", username)
-            ).limit(1)
-            docs = query.stream()
+            from .username_service import get_username_service
 
-            # Get the first matching document
-            user_doc = next(docs, None)
+            username_service = get_username_service()
 
-            if not user_doc:
-                logger.info(f"No user found with username: {username}")
-                return None
-
-            user_settings = user_doc.to_dict()
-            user_id = user_settings.get("user_id")
+            # O(1) lookup to get user_id by username
+            user_id = username_service.get_user_id_by_username(username)
 
             if not user_id:
-                logger.error(
-                    f"User settings found for username '{username}' but no user_id"
-                )
+                logger.info(f"No user found with username: {username}")
                 return None
 
             # Now get the portfolio data using the user_id

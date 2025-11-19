@@ -19,6 +19,7 @@ from ..schemas.user_settings import (
     UserSettingsCreate,
     UserSettingsUpdate,
 )
+from .username_service import get_username_service, UsernameServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -73,39 +74,15 @@ class UserSettingsService:
             logger.error(f"Error retrieving user settings for user {user_id}: {e}")
             raise UserSettingsError(f"Failed to retrieve user settings: {e}")
 
-    def get_user_settings_by_username(self, username: str) -> Optional[Dict[str, Any]]:
-        """Get user settings by username."""
-        try:
-            # Normalize username to lowercase for lookup
-            username_lower = username.lower()
 
-            query = (
-                self.db.collection("user_settings")
-                .where("username", "==", username_lower)
-                .limit(1)
-            )
-            docs = query.stream()
-
-            for doc in docs:
-                data = doc.to_dict()
-                logger.debug(f"Retrieved user settings for username {username}")
-                return data
-
-            logger.debug(f"No user settings found for username {username}")
-            return None
-
-        except Exception as e:
-            logger.error(f"Error retrieving user settings for username {username}: {e}")
-            raise UserSettingsError(
-                f"Failed to retrieve user settings by username: {e}"
-            )
 
     def create_user_settings(
         self, user_id: str, settings: UserSettingsCreate
     ) -> UserSettings:
-        """Create new user settings."""
+        """Create new user settings with atomic username claim."""
         try:
             now = datetime.utcnow()
+            username_service = get_username_service()
 
             user_settings = UserSettings(
                 user_id=user_id,
@@ -117,19 +94,39 @@ class UserSettingsService:
 
             # Check if username is already taken (if provided)
             if user_settings.username:
-                existing = self.get_user_settings_by_username(user_settings.username)
-                if existing and existing.get("user_id") != user_id:
+                if not username_service.is_username_available(user_settings.username):
+                    raise UserSettingsError("Username is already taken")
+
+                # Atomically claim username and create settings
+                if not username_service.claim_username(
+                    user_settings.username, user_id
+                ):
                     raise UserSettingsError("Username is already taken")
 
             # Store in Firestore
-            doc_ref = self.db.collection("user_settings").document(user_id)
-            doc_ref.set(user_settings.dict())
-
-            logger.info(f"Created user settings for user {user_id}")
-            return user_settings
+            try:
+                doc_ref = self.db.collection("user_settings").document(user_id)
+                doc_ref.set(user_settings.dict())
+                logger.info(f"Created user settings for user {user_id}")
+                return user_settings
+            except Exception as e:
+                # Rollback username claim if settings creation failed
+                if user_settings.username:
+                    try:
+                        username_service.release_username(
+                            user_settings.username, user_id
+                        )
+                    except Exception as rollback_error:
+                        logger.error(
+                            f"Failed to rollback username claim: {rollback_error}"
+                        )
+                raise e
 
         except UserSettingsError:
             raise
+        except UsernameServiceError as e:
+            logger.error(f"Username service error creating user settings: {e}")
+            raise UserSettingsError(f"Failed to create user settings: {e}")
         except Exception as e:
             logger.error(f"Error creating user settings for user {user_id}: {e}")
             raise UserSettingsError(f"Failed to create user settings: {e}")
@@ -137,8 +134,10 @@ class UserSettingsService:
     def update_user_settings(
         self, user_id: str, updates: UserSettingsUpdate
     ) -> UserSettings:
-        """Update existing user settings."""
+        """Update existing user settings with atomic username claim/release."""
         try:
+            username_service = get_username_service()
+
             # Get existing settings
             existing_data = self.get_user_settings(user_id)
             if not existing_data:
@@ -149,11 +148,35 @@ class UserSettingsService:
                 )
                 return self.create_user_settings(user_id, create_data)
 
-            # Check if username is already taken (if being updated)
-            if updates.username and updates.username != existing_data.get("username"):
-                existing = self.get_user_settings_by_username(updates.username)
-                if existing and existing.get("user_id") != user_id:
+            old_username = existing_data.get("username")
+            new_username = updates.username
+
+            # Check if username is being changed
+            if new_username is not None and new_username != old_username:
+                # Check if new username is available
+                if not username_service.is_username_available(new_username):
                     raise UserSettingsError("Username is already taken")
+
+                # Atomically claim new username and release old one
+                if not username_service.claim_username(new_username, user_id):
+                    raise UserSettingsError("Username is already taken")
+
+                # Release old username if it exists
+                if old_username:
+                    try:
+                        username_service.release_username(old_username, user_id)
+                    except Exception as e:
+                        # Rollback new username claim
+                        logger.error(f"Failed to release old username: {e}")
+                        try:
+                            username_service.release_username(new_username, user_id)
+                        except Exception as rollback_error:
+                            logger.error(
+                                f"Failed to rollback new username claim: {rollback_error}"
+                            )
+                        raise UserSettingsError(
+                            f"Failed to update username: {e}"
+                        )
 
             # Prepare update data
             update_data = {"updated_at": datetime.utcnow()}
@@ -167,8 +190,21 @@ class UserSettingsService:
                 update_data["chat_settings.access_mode"] = updates.access_mode
 
             # Update in Firestore
-            doc_ref = self.db.collection("user_settings").document(user_id)
-            doc_ref.update(update_data)
+            try:
+                doc_ref = self.db.collection("user_settings").document(user_id)
+                doc_ref.update(update_data)
+            except Exception as e:
+                # Rollback username changes if update failed
+                if new_username is not None and new_username != old_username:
+                    try:
+                        username_service.release_username(new_username, user_id)
+                        if old_username:
+                            username_service.claim_username(old_username, user_id)
+                    except Exception as rollback_error:
+                        logger.error(
+                            f"Failed to rollback username changes: {rollback_error}"
+                        )
+                raise e
 
             # Return updated settings
             updated_data = self.get_user_settings(user_id)
@@ -178,6 +214,9 @@ class UserSettingsService:
 
         except UserSettingsError:
             raise
+        except UsernameServiceError as e:
+            logger.error(f"Username service error updating user settings: {e}")
+            raise UserSettingsError(f"Failed to update user settings: {e}")
         except Exception as e:
             logger.error(f"Error updating user settings for user {user_id}: {e}")
             raise UserSettingsError(f"Failed to update user settings: {e}")
@@ -188,9 +227,27 @@ class UserSettingsService:
         self.update_user_settings(user_id, updates)
 
     def remove_username(self, user_id: str) -> None:
-        """Remove username and set portfolio to private."""
-        updates = UserSettingsUpdate(username=None, access_mode="private")
-        self.update_user_settings(user_id, updates)
+        """Remove username and set portfolio to private with atomic username release."""
+        try:
+            username_service = get_username_service()
+
+            # Get current settings to find username
+            existing_data = self.get_user_settings(user_id)
+            if existing_data and existing_data.get("username"):
+                username = existing_data.get("username")
+                # Release the username
+                username_service.release_username(username, user_id)
+
+            # Update settings
+            updates = UserSettingsUpdate(username=None, access_mode="private")
+            self.update_user_settings(user_id, updates)
+
+        except UsernameServiceError as e:
+            logger.error(f"Username service error removing username: {e}")
+            raise UserSettingsError(f"Failed to remove username: {e}")
+        except Exception as e:
+            logger.error(f"Error removing username for user {user_id}: {e}")
+            raise UserSettingsError(f"Failed to remove username: {e}")
 
     def update_access_mode(self, user_id: str, access_mode: str) -> None:
         """Update the access mode for a user's portfolio."""
@@ -288,6 +345,8 @@ class UserSettingsService:
             UserSettingsError: If unable to generate unique username after max attempts
         """
         try:
+            username_service = get_username_service()
+
             # Extract and sanitize email prefix
             email_prefix = email.split("@")[0]
             base_username = re.sub(r"[^a-zA-Z0-9_-]", "", email_prefix).lower()
@@ -301,7 +360,7 @@ class UserSettingsService:
                 base_username = base_username + "user"
 
             # Try base username first
-            if not self.get_user_settings_by_username(base_username):
+            if username_service.is_username_available(base_username):
                 logger.info(f"Generated username from email: {base_username}")
                 return base_username
 
@@ -313,7 +372,7 @@ class UserSettingsService:
                 suffix = "".join(secrets.choice(chars) for _ in range(6))
                 username = f"{base_username}_{suffix}"
 
-                if not self.get_user_settings_by_username(username):
+                if username_service.is_username_available(username):
                     logger.info(
                         f"Generated username from email with suffix: {username}"
                     )
@@ -326,6 +385,9 @@ class UserSettingsService:
 
         except UserSettingsError:
             raise
+        except UsernameServiceError as e:
+            logger.error(f"Username service error generating username: {e}")
+            raise UserSettingsError(f"Failed to generate username: {e}")
         except Exception as e:
             logger.error(f"Error generating username from email {email}: {e}")
             raise UserSettingsError(f"Failed to generate username: {e}")
