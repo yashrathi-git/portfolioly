@@ -37,7 +37,7 @@ export default function HeaderBar() {
               {user.emailVerified && (
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="ghost" asChild>
-                    <Link href="/dashboard">Create</Link>
+                    <Link href="/upload">Create</Link>
                   </Button>
                   <Button size="sm" variant="ghost" asChild>
                     <Link href="/edit">Edit</Link>
