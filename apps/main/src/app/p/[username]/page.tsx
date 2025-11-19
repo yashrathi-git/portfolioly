@@ -13,14 +13,15 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Portfolio } from "portfolioly-template-components";
 import type { PortfolioData } from "portfolioly-schema";
+import { use } from "react";
 
 // Import the compiled CSS styles to ensure they're loaded
 import "portfolioly-template-components/style.css";
 
 interface PublicPortfolioPageProps {
-  params: {
+  params: Promise<{
     username: string;
-  };
+  }>;
 }
 
 /**
@@ -31,12 +32,12 @@ export default function PublicPortfolioPage({
   params,
 }: PublicPortfolioPageProps) {
   const router = useRouter();
+  const resolvedParams = use(params);
+  const { username } = resolvedParams;
   const [data, setData] = useState<PortfolioData | null>(null);
   const [publicToken, setPublicToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const { username } = params;
 
   useEffect(() => {
     const loadPortfolio = async () => {
