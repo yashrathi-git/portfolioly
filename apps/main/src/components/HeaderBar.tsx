@@ -12,7 +12,7 @@ export default function HeaderBar() {
 
   return (
     <div className="w-full border-b sticky top-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
-      <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
+      <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
         <Link
           href="/"
           className="font-semibold tracking-tight hover:opacity-80 transition-opacity"
@@ -37,10 +37,10 @@ export default function HeaderBar() {
               {user.emailVerified && (
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="ghost" asChild>
-                    <Link href="/dashboard">Dashboard</Link>
+                    <Link href="/dashboard">Create</Link>
                   </Button>
                   <Button size="sm" variant="ghost" asChild>
-                    <Link href="/edit">Edit Portfolio</Link>
+                    <Link href="/edit">Edit</Link>
                   </Button>
                 </div>
               )}

@@ -46,7 +46,7 @@ export function EditorTopBar({
 }: EditorTopBarProps) {
   return (
     <header className="relative border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="flex h-14 md:h-16 items-center justify-between">
           {/* Left side */}
           <div className="flex items-center gap-3">
