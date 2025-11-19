@@ -41,6 +41,7 @@ type SuggestionsProps = {
   onShowMore?: () => void;
   showMoreLabel?: string;
   className?: string;
+  disabled?: boolean;
 };
 
 export const Suggestions = ({
@@ -51,6 +52,7 @@ export const Suggestions = ({
   onShowMore,
   showMoreLabel = "Show more",
   className,
+  disabled = false,
 }: SuggestionsProps) => {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
@@ -111,6 +113,7 @@ export const Suggestions = ({
               key={s.id}
               type="button"
               onClick={() => handlePick(s)}
+              disabled={disabled}
               initial={
                 prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 8 }
               }
@@ -125,7 +128,7 @@ export const Suggestions = ({
                     }
               }
               whileHover={
-                prefersReducedMotion
+                prefersReducedMotion || disabled
                   ? {}
                   : {
                       y: -2,
@@ -133,14 +136,17 @@ export const Suggestions = ({
                     }
               }
               whileTap={
-                prefersReducedMotion
+                prefersReducedMotion || disabled
                   ? {}
                   : {
                       scale: 0.98,
                       transition: { duration: 0.1 },
                     }
               }
-              className="group flex flex-col items-center gap-2 rounded-2xl px-4 py-3 min-w-[90px] bg-white/40 dark:bg-white/5 backdrop-blur-[12px] border border-black/[0.05] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)] hover:bg-white/60 dark:hover:bg-white/[0.08] hover:border-black/10 dark:hover:border-white/15 hover:shadow-[0_4px_8px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className={cn(
+                "group flex flex-col items-center gap-2 rounded-2xl px-4 py-3 min-w-[90px] bg-white/40 dark:bg-white/5 backdrop-blur-[12px] border border-black/[0.05] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)] hover:bg-white/60 dark:hover:bg-white/[0.08] hover:border-black/10 dark:hover:border-white/15 hover:shadow-[0_4px_8px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                disabled && "opacity-50 cursor-not-allowed hover:bg-white/40 dark:hover:bg-white/5 hover:border-black/[0.05] dark:hover:border-white/10 hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)]"
+              )}
               aria-label={getFullPrompt(s.label)}
             >
               <Icon className="size-5 text-[color:var(--muted-foreground)] opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-200" />
@@ -167,8 +173,9 @@ export const Suggestions = ({
             key={s.id}
             type="button"
             onClick={() => handlePick(s)}
+            disabled={disabled}
             whileHover={
-              prefersReducedMotion
+              prefersReducedMotion || disabled
                 ? {}
                 : {
                     y: -2,
@@ -176,14 +183,17 @@ export const Suggestions = ({
                   }
             }
             whileTap={
-              prefersReducedMotion
+              prefersReducedMotion || disabled
                 ? {}
                 : {
                     scale: 0.98,
                     transition: { duration: 0.1 },
                   }
             }
-            className="group inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-white/40 dark:bg-white/5 backdrop-blur-[12px] border border-black/[0.05] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)] hover:bg-white/60 dark:hover:bg-white/[0.08] hover:border-black/10 dark:hover:border-white/15 hover:shadow-[0_4px_8px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className={cn(
+              "group inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-white/40 dark:bg-white/5 backdrop-blur-[12px] border border-black/[0.05] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)] hover:bg-white/60 dark:hover:bg-white/[0.08] hover:border-black/10 dark:hover:border-white/15 hover:shadow-[0_4px_8px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              disabled && "opacity-50 cursor-not-allowed hover:bg-white/40 dark:hover:bg-white/5 hover:border-black/[0.05] dark:hover:border-white/10 hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)]"
+            )}
             aria-label={getFullPrompt(s.label)}
           >
             <Icon className="size-4 text-[color:var(--muted-foreground)] opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-200" />

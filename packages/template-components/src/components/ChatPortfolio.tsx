@@ -91,6 +91,7 @@ const ChatPortfolioComponent = ({
     append,
     isLoading: aiIsLoading,
     error: aiError,
+    stop,
   } = useChat({
     api: `${apiBaseUrl}/public/chat/${username}`,
     headers: {
@@ -259,6 +260,7 @@ const ChatPortfolioComponent = ({
                 onSubmit={onSubmit}
                 onPick={onPickSuggestion}
                 avatarUrl={effectiveProfile?.avatarUrl}
+                disabled={aiIsLoading}
               />
             ) : (
               <div
@@ -299,6 +301,7 @@ const ChatPortfolioComponent = ({
                     onShowMore={() => setInlineMax((v) => v + 5)}
                     showMoreLabel="⋯"
                     className="mb-2 sm:mb-3"
+                    disabled={aiIsLoading}
                   />
 
                   {/* Subtle loading animation */}
@@ -341,6 +344,8 @@ const ChatPortfolioComponent = ({
                     }}
                     onSubmit={onSubmit}
                     placeholder="Type your message…"
+                    disabled={aiIsLoading}
+                    onStop={stop}
                   />
                   {/* Tech tags (subtle) - wrap on mobile to prevent overflow */}
                   <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-[13px] text-[color:var(--muted-foreground)]">

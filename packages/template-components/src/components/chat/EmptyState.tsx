@@ -17,6 +17,7 @@ type EmptyStateProps = {
   onSubmit: () => void;
   onPick?: (s: Suggestion) => void;
   avatarUrl?: string;
+  disabled?: boolean;
 };
 
 export const EmptyState = ({
@@ -29,6 +30,7 @@ export const EmptyState = ({
   onSubmit,
   onPick,
   avatarUrl,
+  disabled = false,
 }: EmptyStateProps) => {
   const [animationComplete, setAnimationComplete] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -203,6 +205,7 @@ export const EmptyState = ({
             onChange={onInputChange}
             onSubmit={onSubmit}
             className="w-full"
+            disabled={disabled}
           />
         </motion.div>
 
@@ -239,6 +242,7 @@ export const EmptyState = ({
               }
               variant="initial"
               maxVisible={5}
+              disabled={disabled}
             />
           </motion.div>
         ) : null}

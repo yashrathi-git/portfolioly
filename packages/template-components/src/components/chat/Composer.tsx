@@ -1,7 +1,7 @@
 "use client";
 
-import { ArrowUp } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowUp, Square } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../lib/utils";
 import { typography } from "../../lib/typography";
 
@@ -13,6 +13,8 @@ type ComposerProps = {
   layoutId?: string;
   className?: string;
   autoFocus?: boolean;
+  disabled?: boolean;
+  onStop?: () => void;
 };
 
 export const Composer = ({
@@ -23,6 +25,8 @@ export const Composer = ({
   layoutId,
   className,
   autoFocus,
+  disabled = false,
+  onStop,
 }: ComposerProps) => {
   return (
     <motion.div layoutId={layoutId} className={cn("w-full", className)}>
@@ -39,6 +43,7 @@ export const Composer = ({
           placeholder={placeholder}
           rows={1}
           autoFocus={autoFocus}
+          disabled={disabled}
           className={cn(
             // Size - 48px mobile, 56px desktop
             "w-full resize-none h-12 md:h-14",
@@ -62,6 +67,8 @@ export const Composer = ({
             // Placeholder styling - only hide when there's text
             "placeholder:text-[color:var(--muted-foreground)]",
             "placeholder:opacity-50",
+            // Disabled state
+            disabled && "opacity-60 cursor-not-allowed",
             typography.input.responsive
           )}
           onKeyDown={(e) => {
@@ -71,13 +78,40 @@ export const Composer = ({
             }
           }}
         />
-        <button
-          type="submit"
-          className="absolute right-2 top-1/2 -translate-y-1/2 grid place-items-center size-10 rounded-full bg-[color:var(--primary)] text-[color:var(--primary-foreground)] shadow-sm hover:opacity-95 transition active:scale-[0.98]"
-          aria-label="Send message"
-        >
-          <ArrowUp className="size-5" />
-        </button>
+        <AnimatePresence mode="wait">
+          {disabled && onStop ? (
+            <motion.button
+              key="stop"
+              type="button"
+              onClick={onStop}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.15 }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 grid place-items-center size-10 rounded-full bg-[color:var(--muted)] text-[color:var(--muted-foreground)] shadow-sm hover:bg-[color:var(--muted)]/80 transition active:scale-[0.98]"
+              aria-label="Stop generating"
+            >
+              <Square className="size-3.5 fill-current" />
+            </motion.button>
+          ) : (
+            <motion.button
+              key="submit"
+              type="submit"
+              disabled={disabled}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.15 }}
+              className={cn(
+                "absolute right-2 top-1/2 -translate-y-1/2 grid place-items-center size-10 rounded-full bg-[color:var(--primary)] text-[color:var(--primary-foreground)] shadow-sm hover:opacity-95 transition active:scale-[0.98]",
+                disabled && "opacity-50 cursor-not-allowed hover:opacity-50"
+              )}
+              aria-label="Send message"
+            >
+              <ArrowUp className="size-5" />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </form>
     </motion.div>
   );
