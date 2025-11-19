@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Rocket, MessageCircle } from "lucide-react";
+import { ExternalLink, Rocket, MessageCircle, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,12 +17,14 @@ import { env } from "@/lib/env";
 interface DeployToVercelButtonProps {
   username?: string;
   publicToken?: string;
+  isLoading?: boolean;
   className?: string;
 }
 
 export function DeployToVercelButton({
   username,
   publicToken,
+  isLoading = false,
   className,
 }: DeployToVercelButtonProps) {
   const [showDialog, setShowDialog] = useState(false);
@@ -84,7 +86,11 @@ export function DeployToVercelButton({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {!isConfigured ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : !isConfigured ? (
             <div className="rounded-lg bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-900 p-4">
               <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">
                 ⚠️ Setup Required
@@ -97,11 +103,15 @@ export function DeployToVercelButton({
           ) : (
             <>
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Vercel will open for deployment. Login to your Vercel account,
-                  and everything will be pre-filled. Just click next and deploy
-                  the application.
+                <p className="text-sm text-muted-foreground font-medium">
+                  Deployment steps:
                 </p>
+                <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                  <li>Vercel will open in a new tab</li>
+                  <li>Login to your Vercel account</li>
+                  <li>All environment variables will be pre-filled</li>
+                  <li>Click next and deploy your portfolio</li>
+                </ul>
               </div>
 
               {discordLink && (
@@ -134,7 +144,7 @@ export function DeployToVercelButton({
           </Button>
           <Button
             onClick={handleDeploy}
-            disabled={!isConfigured}
+            disabled={!isConfigured || isLoading}
             className="gap-2"
           >
             <ExternalLink className="h-4 w-4" />

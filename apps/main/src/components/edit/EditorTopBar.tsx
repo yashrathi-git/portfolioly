@@ -25,6 +25,8 @@ export interface EditorTopBarProps {
   }) => void;
   /** Public token for deployment */
   publicToken?: string;
+  /** Whether publish settings are being loaded */
+  publishSettingsLoading?: boolean;
 }
 
 export function EditorTopBar({
@@ -40,6 +42,7 @@ export function EditorTopBar({
   publishLoading,
   onPublishUpdated,
   publicToken,
+  publishSettingsLoading = false,
 }: EditorTopBarProps) {
   return (
     <header className="relative border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -101,11 +104,12 @@ export function EditorTopBar({
               className="hidden lg:flex hover:bg-accent/50 transition-colors"
             />
 
-            {/* Deploy to Vercel Button - Desktop */}
+            {/* Deploy to Vercel Button - Responsive */}
             <DeployToVercelButton
               username={publishUsername}
               publicToken={publicToken}
-              className="hidden xl:flex hover:bg-accent/50 transition-colors"
+              isLoading={publishSettingsLoading}
+              className="hidden md:flex hover:bg-accent/50 transition-colors"
             />
 
             {/* Publish Settings - Responsive */}

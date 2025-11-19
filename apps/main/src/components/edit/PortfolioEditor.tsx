@@ -55,6 +55,7 @@ export function PortfolioEditor({
   const [activeSection, setActiveSection] = useState<string>(sections[0].id);
   const [activeMode, setActiveMode] = useState<"edit" | "preview">("edit");
   const [publicToken, setPublicToken] = useState<string | undefined>(undefined);
+  const [isLoadingToken, setIsLoadingToken] = useState(false);
   const {
     publishStatus,
     isLoading: isLoadingPublishStatus,
@@ -72,9 +73,11 @@ export function PortfolioEditor({
     async function fetchPublicToken() {
       if (!publishStatus?.username) {
         setPublicToken(undefined);
+        setIsLoadingToken(false);
         return;
       }
 
+      setIsLoadingToken(true);
       try {
         const { ensurePublicToken } = await import("@/lib/api/publicToken");
         const token = await ensurePublicToken(publishStatus.username);
@@ -82,6 +85,8 @@ export function PortfolioEditor({
       } catch (error) {
         console.error("Failed to fetch public token:", error);
         setPublicToken(undefined);
+      } finally {
+        setIsLoadingToken(false);
       }
     }
 
@@ -188,6 +193,7 @@ export function PortfolioEditor({
         publishLoading={isLoadingPublishStatus}
         onPublishUpdated={() => refetchPublishStatus()}
         publicToken={publicToken}
+        publishSettingsLoading={isLoadingPublishStatus || isLoadingToken}
       />
 
       {/* Content Area - Both sections always rendered, visibility controlled by CSS */}
