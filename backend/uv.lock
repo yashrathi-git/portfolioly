@@ -204,6 +204,8 @@ dependencies = [
     { name = "python-magic" },
     { name = "python-multipart" },
     { name = "tiktoken" },
+    { name = "upstash-ratelimit" },
+    { name = "upstash-redis" },
 ]
 
 [package.dev-dependencies]
@@ -232,6 +234,8 @@ requires-dist = [
     { name = "python-magic", specifier = ">=0.4.27" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "tiktoken", specifier = ">=0.8.0" },
+    { name = "upstash-ratelimit", specifier = ">=1.1.0" },
+    { name = "upstash-redis", specifier = ">=1.5.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -2161,6 +2165,30 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f8/b1/0c11f5058406b3af7609f121aaa6b609744687f1d158b3c3a5bf4cc94238/typing_inspection-0.4.1.tar.gz", hash = "sha256:6ae134cc0203c33377d43188d4064e9b357dba58cff3185f22924610e70a9d28", size = 75726 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl", hash = "sha256:389055682238f53b04f7badcb49b989835495a96700ced5dab2d8feae4b26f51", size = 14552 },
+]
+
+[[package]]
+name = "upstash-ratelimit"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "upstash-redis" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6f/95/74a3a7547a68f5e8d9f8cb99a6a73da96f13a359c6f7f4f15deceecabb35/upstash_ratelimit-1.1.0.tar.gz", hash = "sha256:b396332ef42392c255b01958e3af3b45cd86ca2e2f78f9ea34c4714d64e56f15", size = 12198 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f3/bc/893430e103b36be54e7a7b105b102273bda7e8c7567cd72fb1d44473a857/upstash_ratelimit-1.1.0-py3-none-any.whl", hash = "sha256:cb3944063df199f47e4b24fd9a3760131a71cfeacd7a0182fc6ff5b920d16a8b", size = 13245 },
+]
+
+[[package]]
+name = "upstash-redis"
+version = "1.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a8/62/bc53c35fbf4e2b774ab0eb02f3908cfe89b6636e87cdc40b264a4fc1dcce/upstash_redis-1.5.0.tar.gz", hash = "sha256:1917d4d009ca803815092892d92c7da9138b4ada6b353974fb74caf063c6d2a3", size = 39356 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/87/d24541a1d9c29033e74aa05b5d8b4857feff79344ebd8fca410eb4683795/upstash_redis-1.5.0-py3-none-any.whl", hash = "sha256:e08de1f74d3fb48a81b383c00398cc9336c43b65b82e6d9266312143970800b9", size = 41088 },
 ]
 
 [[package]]

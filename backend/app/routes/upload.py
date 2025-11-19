@@ -30,6 +30,8 @@ from ..services.upload_processor import get_upload_processor
 from ..dependencies.rate_limiting import (
     check_pdf_upload_rate_limit,
     check_github_api_rate_limit,
+    rate_limited_core_user,
+    limit_healthcheck_requests,
 )
 from ..core.config import settings
 
@@ -302,7 +304,7 @@ async def get_github_repos(
 async def submit_upload_data(
     request: UploadSubmissionRequest,
     background_tasks: BackgroundTasks,
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ) -> UploadSubmissionResponse:
     """
     Submit complete upload data including PDFs and GitHub repositories.
@@ -355,7 +357,7 @@ async def submit_upload_data(
 
 
 @router.get("/upload/config")
-async def get_upload_config(user: UserToken = Depends(require_verified_email)) -> dict:
+async def get_upload_config(user: UserToken = Depends(rate_limited_core_user)) -> dict:
     """
     Get upload configuration for the frontend.
 
@@ -381,7 +383,9 @@ async def get_upload_config(user: UserToken = Depends(require_verified_email)) -
 
 
 @router.get("/upload/health")
-async def upload_health_check() -> dict:
+async def upload_health_check(
+    _rate_limit: None = Depends(limit_healthcheck_requests),
+) -> dict:
     """
     Health check endpoint for upload services.
 

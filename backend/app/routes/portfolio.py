@@ -7,7 +7,7 @@ from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
-from ..auth.middleware import require_verified_email
+from ..dependencies.rate_limiting import rate_limited_core_user
 from ..schemas.auth import UserToken
 from ..schemas.portfolio import PortfolioData
 from ..services.portfolio_service import get_portfolio_service, FirebaseError
@@ -74,7 +74,7 @@ def _flush_stale_profile_labels(
 
 @router.get("/", response_model=Optional[PortfolioData])
 def get_user_portfolio(
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Get the current user's portfolio data.
@@ -95,7 +95,7 @@ def get_user_portfolio(
 @router.put("/", response_model=dict)
 def save_user_portfolio(
     portfolio_data: PortfolioData,
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Save or update the current user's portfolio data.
@@ -129,7 +129,7 @@ def save_user_portfolio(
 
 @router.delete("/", response_model=dict)
 def delete_user_portfolio(
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Delete the current user's portfolio data.
@@ -148,7 +148,7 @@ def delete_user_portfolio(
 
 @router.get("/exists", response_model=dict)
 def check_portfolio_exists(
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Check if the current user has an existing portfolio.
@@ -174,7 +174,7 @@ def check_portfolio_exists(
 @router.post("/profile-photo", response_model=dict)
 async def upload_profile_photo(
     file: UploadFile = File(...),
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Upload or replace user's profile photo.
@@ -202,7 +202,7 @@ async def upload_profile_photo(
 @router.post("/project-images", response_model=dict)
 async def upload_project_images(
     files: List[UploadFile] = File(...),
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Upload multiple project images (max 5).
@@ -227,7 +227,7 @@ async def upload_project_images(
 
 @router.delete("/profile-photo", response_model=dict)
 async def delete_profile_photo(
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Delete user's profile photo from storage and portfolio data.
@@ -250,7 +250,7 @@ async def delete_profile_photo(
 @router.delete("/project-images/{image_url:path}", response_model=dict)
 async def delete_project_image(
     image_url: str,
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Delete a specific project image from storage.

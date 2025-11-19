@@ -9,8 +9,9 @@ from fastapi import HTTPException, Request
 from typing import Tuple
 import time
 
-from ..services.rate_limiter import get_rate_limiter, RateLimiter
 from ..constants.chat_config import ChatConfig
+from ..core.rate_limit_config import RateLimitGroup, RateLimitRules
+from ..services.rate_limiting import get_rate_limit_service
 
 
 async def check_chat_ip_rate_limit(
@@ -35,46 +36,40 @@ async def check_chat_ip_rate_limit(
     Raises:
         HTTPException with 429 status if rate limit exceeded
     """
-    rate_limiter = get_rate_limiter()
+    rate_limit_service = get_rate_limit_service()
 
     # Get IP address from request
     ip_address = request.client.host if request.client else "unknown"
+    print(f"IP address: {ip_address}")
 
     # Use first 8 characters of token for rate limit key
     token_hash = token[:8] if len(token) >= 8 else token
-
+    print(f"Token hash: {token_hash}")
     # Create composite key: IP + username + token_hash
     # This ensures different tokens get separate rate limit buckets
     composite_key = f"{ip_address}_{username}_{token_hash}"
     endpoint = "chat_ip"
-
-    is_allowed, current_count, reset_time = await rate_limiter.check_rate_limit(
-        user_id=composite_key,
-        endpoint=endpoint,
-        limit=ChatConfig.IP_REQUESTS_PER_HOUR,
-        window_seconds=ChatConfig.RATE_LIMIT_WINDOW_SECONDS,
+    print(f"Composite key: {composite_key}")
+    is_allowed, current_count, reset_time = await rate_limit_service.check(
+        identifier=composite_key,
+        group=RateLimitGroup.CHAT,
     )
-
+    print(f"Is allowed: {is_allowed}")
+    print(f"Current count: {current_count}")
+    print(f"Reset time: {reset_time}")
     if not is_allowed:
         retry_after = reset_time - int(time.time())
         raise HTTPException(
             status_code=429,
             detail={
-                "message": f"Rate limit exceeded. Maximum {ChatConfig.IP_REQUESTS_PER_HOUR} chat requests per hour from your IP address.",
+                "message": f"Rate limit exceeded. Maximum {RateLimitRules.CHAT.requests} chat requests per hour from your IP address.",
                 "error_code": "CHAT_IP_RATE_LIMIT_EXCEEDED",
                 "retry_after": retry_after,
                 "current_count": current_count,
-                "limit": ChatConfig.IP_REQUESTS_PER_HOUR,
+                "limit": RateLimitRules.CHAT.requests,
             },
             headers={"Retry-After": str(retry_after)},
         )
-
-    # Increment counter after successful check
-    await rate_limiter.increment_counter(
-        user_id=composite_key,
-        endpoint=endpoint,
-        window_seconds=ChatConfig.RATE_LIMIT_WINDOW_SECONDS,
-    )
 
     return ip_address
 

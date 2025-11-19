@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any, Literal
 import logging
 
-from ..auth.middleware import require_verified_email
+from ..dependencies.rate_limiting import rate_limited_core_user
 from ..schemas.auth import UserToken
 from ..schemas.user_settings import AccessModeUpdateRequest
 from ..services.user_settings_service import (
@@ -72,7 +72,7 @@ class SettingsUpdateRequest(BaseModel):
 
 @router.get("", response_model=UserSettingsResponse)
 def get_user_settings(
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Get the current user's settings (username, visibility, etc.).
@@ -106,7 +106,7 @@ def get_user_settings(
 @router.patch("", response_model=UserSettingsResponse)
 def update_settings(
     request: SettingsUpdateRequest,
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Update username or visibility settings in a single call.
@@ -171,7 +171,7 @@ def update_settings(
 @router.put("/visibility", response_model=dict)
 def set_portfolio_access_mode(
     request: AccessModeUpdateRequest,
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Set the portfolio's public/private visibility.
@@ -216,7 +216,7 @@ def set_portfolio_access_mode(
 
 @router.delete("/username", response_model=dict)
 def remove_username(
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Remove the user's public username and make portfolio private.
@@ -241,7 +241,7 @@ def remove_username(
 @router.patch("/access-mode", response_model=dict)
 def update_access_mode(
     request: AccessModeUpdateRequest,
-    user: UserToken = Depends(require_verified_email),
+    user: UserToken = Depends(rate_limited_core_user),
 ):
     """
     Update the portfolio access mode (public/private).

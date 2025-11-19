@@ -2,7 +2,7 @@
 Public portfolio API routes for accessing published portfolios.
 """
 
-from fastapi import APIRouter, HTTPException, Path, Header, Request
+from fastapi import APIRouter, HTTPException, Path, Header, Request, Depends
 from typing import Optional
 import logging
 
@@ -27,6 +27,10 @@ from .utils.auth_helpers import (
     validate_portfolio_access,
 )
 from ..routes.public_portfolio_chat import handle_chat_request
+from ..dependencies.rate_limiting import (
+    limit_public_portfolio_requests,
+    limit_public_username_requests,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -39,6 +43,7 @@ def get_public_portfolio(
     authorization: Optional[str] = Header(
         None, description="Firebase JWT or Public token for authentication"
     ),
+    _rate_limit: None = Depends(limit_public_portfolio_requests),
 ):
     """
     Get a public portfolio by username.
@@ -98,6 +103,7 @@ def get_public_portfolio(
 def ensure_username(
     request: EnsureUsernameRequest,
     authorization: str = Header(..., description="Firebase JWT token required"),
+    _rate_limit: None = Depends(limit_public_username_requests),
 ):
     """
     Get or generate a username for a user.
@@ -168,6 +174,7 @@ def ensure_token(
     authorization: Optional[str] = Header(
         None, description="Optional Firebase JWT token"
     ),
+    _rate_limit: None = Depends(limit_public_username_requests),
 ):
     """
     Generate a public token for a username.
@@ -263,6 +270,7 @@ def ensure_token(
 def check_username_availability(
     username: str = Path(..., description="Username to check availability for"),
     authorization: str = Header(..., description="Firebase JWT token required"),
+    _rate_limit: None = Depends(limit_public_username_requests),
 ):
     """
     Check if a username is available for registration.
@@ -316,6 +324,7 @@ async def chat_with_public_portfolio(
     username: str,
     request: Request,
     authorization: str = Header(..., description="Bearer token for authentication"),
+    _rate_limit: None = Depends(limit_public_portfolio_requests),
 ):
     """Chat with an AI assistant about a public portfolio using token authentication."""
 
