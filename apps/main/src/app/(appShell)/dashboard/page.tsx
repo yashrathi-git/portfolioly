@@ -1,13 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
   Pencil,
@@ -15,14 +7,15 @@ import {
   MessageSquare,
   FileText,
   Bell,
-  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import withAuth from "@/lib/auth/withAuth";
-import Link from "next/link";
 import { getUserSettings } from "@/lib/api/userSettings";
 import { getIdToken } from "@/lib/firebase";
 import { env } from "@/lib/env";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { DashboardCard } from "@/components/dashboard/DashboardCard";
 
 function DashboardPage() {
   const { user } = useAuth();
@@ -74,171 +67,138 @@ function DashboardPage() {
     }
   };
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  };
+
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background selection:bg-primary/10 selection:text-primary">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-primary/10 to-background border-b">
-        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
-        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:py-12">
-          <div className="space-y-2">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Welcome back, {user?.displayName?.split(" ")[0] || "there"}!
+      <div className="relative border-b bg-background pt-12 pb-12 lg:pt-16 lg:pb-16">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="max-w-3xl"
+          >
+            <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm text-muted-foreground mb-4 bg-muted/50">
+              <Sparkles className="mr-2 h-3.5 w-3.5" />
+              <span>Welcome back</span>
+            </div>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl text-foreground">
+              Hello, {user?.displayName?.split(" ")[0] || "Creator"}
             </h1>
-            <p className="text-base text-muted-foreground max-w-2xl">
-              Manage your portfolio, create new content, and track your
-              professional presence.
+            <p className="mt-3 text-lg text-muted-foreground max-w-2xl leading-relaxed">
+              Manage your professional presence and analyze your impact.
             </p>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="space-y-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="space-y-12"
+        >
           {/* Quick Actions Section */}
           <section>
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold tracking-tight">
-                Quick Actions
-              </h2>
-              <p className="text-muted-foreground">
-                Get started with your portfolio
-              </p>
-            </div>
+            <motion.div variants={item} className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-medium tracking-tight text-foreground">
+                  Quick Actions
+                </h2>
+              </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Edit Portfolio Card */}
-              <Link href="/edit" className="block group">
-                <Card className="h-full cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 hover:border-primary/50 bg-gradient-to-br from-card to-card/50">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between">
-                      <div className="rounded-lg bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
-                        <Pencil className="h-7 w-7 text-primary" />
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </div>
-                    <CardTitle className="text-xl mt-4">
-                      Edit Portfolio
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-base">
-                      Customize and refine your existing portfolio with our
-                      powerful editor
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </Link>
+              <motion.div variants={item}>
+                <DashboardCard
+                  title="Edit Portfolio"
+                  description="Customize and refine your existing portfolio"
+                  icon={Pencil}
+                  href="/edit"
+                />
+              </motion.div>
 
               {/* Create New Card */}
-              <Link href="/upload" className="block group">
-                <Card className="h-full cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 hover:border-primary/50 bg-gradient-to-br from-card to-card/50">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between">
-                      <div className="rounded-lg bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
-                        <Upload className="h-7 w-7 text-primary" />
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </div>
-                    <CardTitle className="text-xl mt-4">Create New</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-base">
-                      Build a portfolio from LinkedIn, Resume, or GitHub in
-                      minutes
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </Link>
+              <motion.div variants={item}>
+                <DashboardCard
+                  title="Create New"
+                  description="Build a portfolio from LinkedIn or Resume"
+                  icon={Upload}
+                  href="/upload"
+                />
+              </motion.div>
 
               {/* Analyze Chats Card */}
-              <Link href="/dashboard" className="block group">
-                <Card className="h-full cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 hover:border-primary/50 bg-gradient-to-br from-card to-card/50">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between">
-                      <div className="rounded-lg bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
-                        <MessageSquare className="h-7 w-7 text-primary" />
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </div>
-                    <CardTitle className="text-xl mt-4">
-                      Analyze Chats
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-base">
-                      View analytics and insights from your portfolio
-                      conversations
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </Link>
+              <motion.div variants={item}>
+                <DashboardCard
+                  title="Analyze Chats"
+                  description="View analytics and insights"
+                  icon={MessageSquare}
+                  href="/dashboard"
+                />
+              </motion.div>
             </div>
           </section>
 
           {/* Coming Soon Section */}
           <section>
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold tracking-tight">
+            <motion.div variants={item} className="mb-6">
+              <h2 className="text-xl font-medium tracking-tight text-foreground">
                 Coming Soon
               </h2>
-              <p className="text-muted-foreground">
-                Exciting features we're working on
-              </p>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Resume Maker Card */}
-              <button
-                onClick={handleNotifyMe}
-                disabled={notifyForResume || isUpdatingNotification}
-                className="text-left group disabled:cursor-default"
-              >
-                <Card className="h-full relative cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 hover:border-primary/50 bg-gradient-to-br from-card to-card/50 group-disabled:cursor-default group-disabled:hover:shadow-none group-disabled:hover:scale-100 group-disabled:hover:border-border">
-                  <Badge
-                    variant="secondary"
-                    className="absolute top-4 right-4 text-xs font-semibold bg-primary/20 text-primary border-primary/30"
-                  >
-                    Coming Soon
-                  </Badge>
-                  <CardHeader className="pb-4">
-                    <div className="rounded-lg bg-primary/10 p-3 w-fit group-hover:bg-primary/20 transition-colors">
-                      <FileText className="h-7 w-7 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl mt-4">Resume Maker</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <CardDescription className="text-base">
-                      Create professional, ATS-friendly resumes with AI-powered
-                      suggestions
-                    </CardDescription>
-
-                    {/* CTA Button */}
-                    <div className="pt-4">
-                      {notifyForResume ? (
-                        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/10 text-primary">
-                          <Bell className="h-4 w-4" />
-                          <span className="text-sm font-medium">
-                            Notification set
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground group-hover:bg-primary/90 transition-colors">
-                          <Bell className="h-4 w-4" />
-                          <span className="text-sm font-medium">Notify me</span>
-                          <ArrowRight className="h-4 w-4 ml-auto group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </button>
+              <motion.div variants={item}>
+                <DashboardCard
+                  title="Resume Maker"
+                  description="Create professional, ATS-friendly resumes"
+                  icon={FileText}
+                  badge="Soon"
+                  onClick={handleNotifyMe}
+                  disabled={notifyForResume || isUpdatingNotification}
+                >
+                  <div className="mt-2">
+                    {notifyForResume ? (
+                      <div className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <Bell className="h-4 w-4" />
+                        <span>Notification set</span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium shadow-sm">
+                        <Bell className="h-4 w-4" />
+                        <span>Notify me</span>
+                      </div>
+                    )}
+                  </div>
+                </DashboardCard>
+              </motion.div>
             </div>
           </section>
-        </div>
+        </motion.div>
       </div>
     </main>
   );
 }
 
 export default withAuth(DashboardPage, { requireVerification: true });
+
