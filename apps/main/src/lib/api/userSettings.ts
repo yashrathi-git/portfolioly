@@ -19,6 +19,7 @@ export interface UserSettings {
   updated_at?: string;
   public_token_enabled?: boolean;
   public_token_ver?: number;
+  notify_for_resume_feature?: boolean;
 }
 
 export interface UsernameAvailabilityResponse {

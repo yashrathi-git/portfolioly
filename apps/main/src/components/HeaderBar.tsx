@@ -10,11 +10,14 @@ export default function HeaderBar() {
   const { isDark, toggleTheme } = useTheme();
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Portfolioly";
 
+  // Dynamic home route based on auth status
+  const homeRoute = user?.emailVerified ? "/dashboard" : "/";
+
   return (
     <div className="w-full border-b sticky top-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
         <Link
-          href="/"
+          href={homeRoute}
           className="font-semibold tracking-tight hover:opacity-80 transition-opacity"
         >
           {appName}

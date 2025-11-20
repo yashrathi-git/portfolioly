@@ -50,6 +50,9 @@ class UserSettings(BaseModel):
     chat_settings: PortfolioChatSettings = Field(
         default_factory=PortfolioChatSettings, description="Chat-specific settings"
     )
+    notify_for_resume_feature: bool = Field(
+        False, description="Whether to notify user when resume maker feature launches"
+    )
 
     @validator("username")
     def validate_username(cls, v):

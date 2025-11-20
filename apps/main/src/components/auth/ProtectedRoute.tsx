@@ -19,9 +19,9 @@ export default function ProtectedRoute({
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        // No user signed in, redirect to sign in
-        console.log("ProtectedRoute - No user, redirecting to sign-in");
-        router.push("/auth/sign-in");
+        // No user signed in, redirect to landing page
+        console.log("ProtectedRoute - No user, redirecting to landing page");
+        router.push("/");
       } else if (requireVerification && !user.emailVerified) {
         // User signed in but not verified, redirect to verification
         console.log(

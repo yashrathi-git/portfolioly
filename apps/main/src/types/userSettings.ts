@@ -42,6 +42,8 @@ export interface UserSettings {
   updated_at?: string;
   /** Chat-specific settings */
   chat_settings?: PortfolioChatSettings;
+  /** Whether to notify user when resume maker feature launches */
+  notify_for_resume_feature?: boolean;
 }
 
 /**
