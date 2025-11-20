@@ -13,23 +13,23 @@ const features = [
   },
   {
     icon: MessageSquare,
-    title: "Standout with chat mode",
+    title: "Stand out with chat mode",
     description:
       "Transform your portfolio into an interactive chat experience. Let visitors explore your work through natural conversation.",
     imagePosition: "left" as const,
   },
   {
     icon: Rocket,
-    title: "Instant Deploy - for free",
+    title: "Instant deploy for free",
     description:
       "One-click deployment to Vercel. Your portfolio goes live in seconds with a custom domain, completely free.",
     imagePosition: "right" as const,
   },
   {
     icon: Code2,
-    title: "Customize - Open-source fork and have complete control",
+    title: "Customize with open-source control",
     description:
-      "Fork the repository and customize every aspect. Full control over your portfolio's design, features, and hosting.",
+      "Fork the repository and customize every aspect. Full control over your portfolio design, features, and hosting.",
     imagePosition: "left" as const,
   },
 ];
@@ -41,7 +41,7 @@ const FADE_UP_VARIANTS = {
 
 export function FeaturesSection() {
   return (
-    <section className="relative bg-background py-24 sm:py-32">
+    <section className="relative bg-background py-32 sm:py-40">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
           className="mx-auto max-w-2xl text-center mb-16"
@@ -59,7 +59,7 @@ export function FeaturesSection() {
           </p>
         </motion.div>
 
-        <div className="space-y-32">
+        <div className="space-y-40">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             const isImageRight = feature.imagePosition === "right";
@@ -67,7 +67,7 @@ export function FeaturesSection() {
             return (
               <motion.div
                 key={feature.title}
-                className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-center"
+                className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-20 items-center"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, margin: "-100px" }}
@@ -78,7 +78,7 @@ export function FeaturesSection() {
                 <div
                   className={`${
                     isImageRight ? "lg:order-1" : "lg:order-2"
-                  } space-y-4`}
+                  } lg:col-span-4 space-y-4`}
                 >
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary">
                     <Icon className="w-6 h-6" />
@@ -86,7 +86,7 @@ export function FeaturesSection() {
                   <h3 className="text-2xl font-bold text-foreground">
                     {feature.title}
                   </h3>
-                  <p className="text-lg text-muted-foreground leading-relaxed">
+                  <p className="text-base text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
@@ -95,11 +95,11 @@ export function FeaturesSection() {
                 <div
                   className={`${
                     isImageRight ? "lg:order-2" : "lg:order-1"
-                  } relative`}
+                  } lg:col-span-8 relative`}
                 >
-                  <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-border overflow-hidden">
+                  <div className="aspect-[16/10] rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-border overflow-hidden">
                     <div className="w-full h-full flex items-center justify-center">
-                      <Icon className="w-24 h-24 text-primary/20" />
+                      <Icon className="w-32 h-32 text-primary/20" />
                     </div>
                   </div>
                 </div>
