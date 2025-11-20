@@ -4,8 +4,9 @@ import { ArrowRight, Github } from "lucide-react";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { motion } from "framer-motion";
 import { LandingHeader } from "./LandingHeader";
-import { useTheme } from "@/hooks/useTheme";
+import { DemoCarousel } from "./DemoCarousel";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 
 const ENTRY_VARIANTS = {
   hidden: {
@@ -21,8 +22,6 @@ const ENTRY_VARIANTS = {
 };
 
 export function Hero() {
-  const { isDark } = useTheme();
-
   return (
     <div className="relative bg-background">
       <LandingHeader />
@@ -135,25 +134,19 @@ Share it with the world in seconds.`}
           </div>
         </div>
 
-        {/* Large Demo Section - Fully Visible */}
-        <div className="mx-auto max-w-screen-xl px-3 pb-16">
-          <motion.div
-            className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-border shadow-2xl"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.8,
-              ease: "easeOut",
-            }}
-          >
-            <img
-              src={isDark ? "/demo-dark.png" : "/demo-light.png"}
-              alt="Portfolioly demo showing portfolio creation interface"
-              className="w-full h-full object-cover object-top"
-            />
-          </motion.div>
-        </div>
+        {/* Large Demo Section - Auto-rotating Carousel */}
+        <motion.div
+          className="mx-auto max-w-screen-xl px-3 pb-16"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.8,
+            delay: 0.8,
+            ease: "easeOut",
+          }}
+        >
+          <DemoCarousel />
+        </motion.div>
       </div>
     </div>
   );
