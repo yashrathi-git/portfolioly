@@ -39,20 +39,7 @@ export function Hero() {
                 ease: "easeOut",
               }}
             >
-              Open Source
-            </motion.div>
-            <motion.div
-              className="rounded-full px-3 py-1 text-xs font-medium bg-secondary text-secondary-foreground"
-              variants={ENTRY_VARIANTS}
-              initial="hidden"
-              animate="visible"
-              transition={{
-                duration: 0.5,
-                delay: 0.4,
-                ease: "easeOut",
-              }}
-            >
-              Free
+              Free & Open Source
             </motion.div>
             <motion.div
               className="rounded-full px-3 py-1 text-xs font-medium bg-secondary text-secondary-foreground"
