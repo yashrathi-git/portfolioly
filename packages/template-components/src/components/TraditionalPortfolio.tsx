@@ -25,6 +25,7 @@ import {
   useComponentDataTracking,
 } from "../utils/component-flags";
 import { BLUR_FADE_DELAY } from "../lib/constants/animations";
+import { ThemeToggle } from "./ThemeToggle";
 
 export type TraditionalPortfolioProps = {
   data?: DisplayPortfolioData | null;
@@ -72,8 +73,11 @@ const TraditionalPortfolioComponent = ({
   if (isLoading && !data) {
     return (
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] relative`}
       >
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
         <div className="text-center">
           <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-[var(--muted-foreground)]">Loading portfolio...</p>
@@ -86,8 +90,11 @@ const TraditionalPortfolioComponent = ({
   if (error && !data) {
     return (
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] relative`}
       >
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
         <div className="text-center max-w-md">
           <div className="text-red-500 mb-4 text-2xl">⚠️</div>
           <h2 className="text-xl font-semibold mb-2">
@@ -126,8 +133,13 @@ const TraditionalPortfolioComponent = ({
   return (
     <PortfolioErrorBoundary>
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full bg-[var(--background)] text-[var(--foreground)] relative`}
       >
+        {/* Theme toggle - top right */}
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
+
         <Hero profile={effectiveData.profile} />
         {effectiveData.experience && effectiveData.experience.length > 0 && (
           <WorkExperience items={effectiveData.experience} />

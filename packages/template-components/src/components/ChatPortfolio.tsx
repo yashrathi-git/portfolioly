@@ -16,6 +16,7 @@ import {
   requiresExternalData,
   useComponentDataTracking,
 } from "../utils/component-flags";
+import { ThemeToggle } from "./ThemeToggle";
 
 export type ChatPortfolioProps = {
   profile?: ChatProfile;
@@ -128,8 +129,11 @@ const ChatPortfolioComponent = ({
   if (isLoading && !portfolioData) {
     return (
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] relative`}
       >
+        <div className="absolute top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
         <div className="text-center">
           <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-[var(--muted-foreground)]">Loading portfolio...</p>
@@ -142,8 +146,11 @@ const ChatPortfolioComponent = ({
   if (error && !portfolioData) {
     return (
       <div
-        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] relative`}
       >
+        <div className="absolute top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
         <div className="text-center max-w-md">
           <div className="text-red-500 mb-4">⚠️</div>
           <h2 className="text-xl font-semibold mb-2">
@@ -235,6 +242,11 @@ const ChatPortfolioComponent = ({
         <div className="pointer-events-none absolute inset-0">
           {/* subtle grid overlay */}
           <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,rgba(0,0,0,0.35)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.35)_1px,transparent_1px)] [background-size:24px_24px] dark:opacity-[0.08]" />
+        </div>
+
+        {/* Theme toggle - top right */}
+        <div className="absolute top-4 right-4 z-50">
+          <ThemeToggle />
         </div>
 
         {/* Full-width header (not boxed) */}
