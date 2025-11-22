@@ -50,9 +50,9 @@ export function ProfileToPortfolioSteps() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           {/* Left Side: Steps */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:col-span-5">
             {steps.map((step, index) => (
               <div
                 key={step.id}
@@ -118,7 +118,7 @@ export function ProfileToPortfolioSteps() {
           </div>
 
           {/* Right Side: Carousel */}
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border bg-muted shadow-sm">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border bg-muted shadow-sm lg:col-span-7">
             <AnimatePresence mode="wait">
               <motion.img
                 key={activeStep}
