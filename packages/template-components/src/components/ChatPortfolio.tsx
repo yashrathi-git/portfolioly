@@ -353,15 +353,6 @@ const ChatPortfolioComponent = ({
                     disabled={aiIsLoading}
                     onStop={stop}
                   />
-                  {/* Tech tags (subtle) - wrap on mobile to prevent overflow */}
-                  <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-[13px] text-[color:var(--muted-foreground)]">
-                    <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                      React • Next.js • TypeScript
-                    </span>
-                    <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                      Tailwind v4 • Shadcn/UI
-                    </span>
-                  </div>
                 </div>
               </motion.div>
             )}
