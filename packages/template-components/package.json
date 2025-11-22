@@ -1,6 +1,6 @@
 {
   "name": "portfolioly-template-components",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Reusable portfolio components for Portfolioly templates",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -75,7 +75,7 @@
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
     "markdown-to-jsx": "^7.7.14",
-    "portfolioly-schema": "^0.2.0",
+    "portfolioly-schema": "^0.3.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {

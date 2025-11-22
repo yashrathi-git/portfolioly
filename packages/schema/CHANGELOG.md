@@ -1,5 +1,11 @@
 # portfolioly-schema
 
+## 0.3.0
+
+### Minor Changes
+
+- 36bed08: Update UI
+
 ## 0.2.0
 
 ### Minor Changes
