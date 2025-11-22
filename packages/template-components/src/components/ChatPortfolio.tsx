@@ -238,12 +238,6 @@ const ChatPortfolioComponent = ({
       <div
         className={`${styles.portfolioTheme} min-h-[100svh] w-full relative overflow-hidden bg-[var(--background)] text-[var(--foreground)] flex flex-col px-3 sm:px-0`}
       >
-        {/* Ambient gradient orbs */}
-        <div className="pointer-events-none absolute inset-0">
-          {/* subtle grid overlay */}
-          <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,rgba(0,0,0,0.35)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.35)_1px,transparent_1px)] [background-size:24px_24px] dark:opacity-[0.08]" />
-        </div>
-
         {/* Theme toggle - top right */}
         <div className="absolute top-4 right-4 z-50">
           <ThemeToggle />
