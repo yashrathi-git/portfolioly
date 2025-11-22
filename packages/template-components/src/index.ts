@@ -1,3 +1,6 @@
+// Import styles to be bundled
+import "./styles.css";
+
 // Re-export components and utilities
 export * from "./components/ChatPortfolio";
 export * from "./components/TraditionalPortfolio";
