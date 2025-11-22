@@ -5,8 +5,8 @@
 
 export const UPLOAD_CONFIG = {
   // Image upload limits
-  MAX_IMAGE_SIZE_BYTES: 800 * 1024, // 800KB
-  MAX_IMAGE_SIZE_MB: 0.8,
+  MAX_IMAGE_SIZE_BYTES: 5 * 1024 * 1024, // 800KB
+  MAX_IMAGE_SIZE_MB: 5,
   MAX_PROJECT_IMAGES: 5, // Maximum images per project
   MAX_IMAGE_CAPTION_LENGTH: 100, // Maximum characters for image captions
 

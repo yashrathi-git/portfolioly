@@ -24,7 +24,7 @@ class UploadSettings(BaseModel):
     ALLOWED_FILE_TYPES: List[str] = ["application/pdf"]
 
     # Image upload configuration
-    MAX_IMAGE_SIZE_BYTES: int = 800 * 1024  # 800KB
+    MAX_IMAGE_SIZE_BYTES: int = 5 * 1024 * 1024  # 5024KB
     MAX_PROJECT_IMAGES: int = 5  # Maximum images per project
     MAX_IMAGE_CAPTION_LENGTH: int = 100  # Maximum characters for image captions
     ALLOWED_IMAGE_TYPES: List[str] = [
