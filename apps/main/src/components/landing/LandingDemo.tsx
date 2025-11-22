@@ -21,29 +21,27 @@ export function LandingDemo() {
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <YouTubePlayer
             videoId={DEMO_VIDEO.id}
-            title={DEMO_VIDEO.title}
+            // Title removed from player for cleaner look
             // customThumbnail={DEMO_VIDEO.thumbnail} // Uncomment when real thumbnail is available
             defaultExpanded={false}
             // Container styling
             className="mb-8"
-            containerClassName="border-2 border-border/50 rounded-xl overflow-hidden shadow-2xl bg-card"
-            expandedClassName="border-none shadow-2xl"
+            containerClassName="rounded-xl overflow-hidden shadow-2xl bg-card ring-1 ring-white/10"
+            expandedClassName="shadow-2xl ring-0"
             // Thumbnail styling
             thumbnailClassName="bg-gradient-to-br from-primary/5 to-secondary/5"
             thumbnailImageClassName="opacity-90 transition-opacity hover:opacity-100"
             // Play button styling
-            playButtonClassName="bg-background/90 hover:bg-background border-2 border-primary/20 shadow-xl backdrop-blur-md"
-            playIconClassName="text-primary fill-primary"
-            // Title styling
-            titleClassName="text-foreground font-bold text-lg drop-shadow-sm"
+            playButtonClassName="bg-background/90 hover:bg-background hover:scale-110 transition-all duration-300 border-0 shadow-xl backdrop-blur-md group/play"
+            playIconClassName="text-primary fill-primary group-hover/play:scale-110 transition-transform duration-300"
             // Controls styling
-            controlsClassName="right-3 top-3"
-            expandButtonClassName="bg-background/50 hover:bg-background/70 border border-border/20 text-foreground"
+            controlsClassName="right-4 top-4"
+            expandButtonClassName="bg-background/50 hover:bg-background/70 border-0 text-foreground backdrop-blur-sm"
             // Modal styling
-            backdropClassName="bg-background/80 backdrop-blur-md"
+            backdropClassName="bg-background/90 backdrop-blur-xl"
             playerClassName="bg-black rounded-lg"
           />
         </div>
