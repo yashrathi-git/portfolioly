@@ -5,6 +5,9 @@ import { ProfileToPortfolioSteps } from "@/components/landing/ProfileToPortfolio
 import { LandingDemo } from "@/components/landing/LandingDemo";
 import { FAQSection } from "@/components/landing/FAQSection";
 
+import { FinalCTA } from "@/components/landing/FinalCTA";
+import { Footer } from "@/components/landing/Footer";
+
 export default function HomePage() {
   return (
     <>
@@ -14,6 +17,8 @@ export default function HomePage() {
       {/* <FeaturesSection /> */}
       <BentoFeaturesSection />
       <FAQSection />
+      <FinalCTA />
+      <Footer />
     </>
   );
 }
