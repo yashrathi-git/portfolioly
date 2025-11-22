@@ -7777,7 +7777,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"portfolioly-template-components@npm:^0.3.0, portfolioly-template-components@workspace:*, portfolioly-template-components@workspace:packages/template-components":
+"portfolioly-template-components@npm:^0.4.0, portfolioly-template-components@workspace:*, portfolioly-template-components@workspace:packages/template-components":
   version: 0.0.0-use.local
   resolution: "portfolioly-template-components@workspace:packages/template-components"
   dependencies:
@@ -8947,7 +8947,7 @@ __metadata:
     framer-motion: "npm:^12.23.21"
     lucide-react: "npm:^0.544.0"
     next: "npm:15.5.3"
-    portfolioly-template-components: "npm:^0.3.0"
+    portfolioly-template-components: "npm:^0.4.0"
     react: "npm:19.1.0"
     react-dom: "npm:19.1.0"
     tailwindcss: "npm:^4"
