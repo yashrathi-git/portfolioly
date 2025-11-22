@@ -1,5 +1,16 @@
 # portfolioly-template-components
 
+## 0.3.0
+
+### Minor Changes
+
+- 36bed08: Update UI
+
+### Patch Changes
+
+- Updated dependencies [36bed08]
+  - portfolioly-schema@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
