@@ -90,6 +90,7 @@ class Settings(BaseSettings):
 
     # Firebase settings
     google_application_credentials: Optional[str] = None
+    firebase_credentials: Optional[str] = None
     firebase_project_id: Optional[str] = None
 
     # Security settings

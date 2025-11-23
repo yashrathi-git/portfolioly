@@ -80,6 +80,14 @@ DEBUG=false
 FRONTEND_ORIGIN=http://localhost:3000
 GOOGLE_APPLICATION_CREDENTIALS=./firebaseServiceKeyJson/firebaseServiceKey.json
 REQUIRE_EMAIL_VERIFICATION=true
+FIREBASE_CREDENTIALS={"type":"service_account","project_id":"..."}
+```
+
+When you cannot mount the JSON file (for example on Azure Container Apps), flatten the service account file into a single string and place it in `FIREBASE_CREDENTIALS`:
+
+```bash
+python -c "import sys, json; print(json.dumps(json.load(sys.stdin), separators=(',', ':')))" \
+  < firebaseServiceKeyJson/firebaseServiceKey.json
 ```
 
 ## Usage Examples

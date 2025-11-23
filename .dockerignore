@@ -1,0 +1,47 @@
+# Global ignores
+.git
+.gitignore
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/*.pyd
+**/*.so
+**/*.dylib
+**/.DS_Store
+**/.Python
+
+# Node / frontend artifacts
+node_modules
+**/.next
+**/.turbo
+**/.vercel
+**/dist
+
+# Python virtual environments and caches
+**/.venv
+**/.ruff_cache
+**/.mypy_cache
+**/.pytest_cache
+**/.coverage
+**/.hypothesis
+
+# Environment files and logs
+.env
+.env.*
+*.env
+*.env.*
+*.log
+
+# Backend-specific secrets & junk
+backend/firebaseServiceKeyJson/
+backend/.env
+backend/.venv
+backend/.pytest_cache
+backend/.mypy_cache
+backend/.ruff_cache
+backend/.coverage
+
+# IDE / tooling
+**/.idea
+**/.vscode
+
