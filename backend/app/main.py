@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
     )
 
     # Add CORS middleware
+    # Global CORS: Restricted to frontend origins only
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
@@ -46,6 +47,30 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Path-specific CORS: Allow all origins for public routes only
+    @app.middleware("http")
+    async def public_routes_cors(request: Request, call_next):
+        """Allow unrestricted CORS for /public/* routes only."""
+        if request.url.path.startswith("/public/"):
+            # Handle preflight
+            if request.method == "OPTIONS":
+                return JSONResponse(
+                    content={},
+                    headers={
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                        "Access-Control-Allow-Headers": "*",
+                    },
+                )
+
+            # Handle actual request
+            response = await call_next(request)
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            return response
+
+        # Non-public routes use global CORS middleware
+        return await call_next(request)
 
     # Exception handlers
     @app.exception_handler(AuthenticationError)

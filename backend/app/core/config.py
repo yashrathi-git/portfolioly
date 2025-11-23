@@ -137,6 +137,24 @@ class Settings(BaseSettings):
             )
         return v
 
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, v) -> List[str]:
+        """Parse comma-separated origins or return wildcard."""
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            if v.strip() == "*":
+                return ["*"]
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        if v is None:
+            return ["http://localhost:3000"]
+        # Fallback: cast everything else to string then parse
+        value = str(v)
+        if value.strip() == "*":
+            return ["*"]
+        return [origin.strip() for origin in value.split(",") if origin.strip()]
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # Add frontend origin to allowed origins if specified
