@@ -4,8 +4,9 @@
 
 import type { PortfolioData } from "portfolioly-schema";
 import { getIdToken } from "../firebase";
+import { env } from "@/lib/env";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = env.API_BASE_URL;
 
 export class PortfolioAPIError extends Error {
   constructor(message: string, public status?: number, public code?: string) {

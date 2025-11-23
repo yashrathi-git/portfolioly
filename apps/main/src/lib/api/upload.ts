@@ -6,6 +6,7 @@
  */
 
 import { getFirebaseAuth } from "@/lib/firebase";
+import { env } from "@/lib/env";
 // Simple in-memory cache and in-flight dedupe for config and other GETs
 const memoryCache = new Map<string, unknown>();
 // const inflightRequests = new Map<string, Promise<unknown>>();
@@ -17,8 +18,7 @@ function cacheKey(url: string, method: string = "GET"): string {
 // Reserved for future use; currently getUploadConfig uses manual caching
 
 // API Base URL
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = env.API_BASE_URL;
 
 /**
  * PDF upload response interface
