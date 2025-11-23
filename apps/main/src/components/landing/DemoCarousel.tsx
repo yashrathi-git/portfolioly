@@ -2,60 +2,116 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "@/hooks/useTheme";
 
 interface DemoSlide {
-  light: string;
-  dark: string;
+  video: string;
   alt: string;
-  duration?: number;
+  fallbackDuration?: number;
+  poster?: string;
 }
 
 const DEMO_SLIDES: DemoSlide[] = [
   {
-    light: "/demo-1-light.png",
-    dark: "/demo-1-dark.png",
+    video:
+      "https://pub-2d848092fcca45dda1fe493291d9cb04.r2.dev/hero/traditional_portfolio_demo.webm",
     alt: "Portfolio upload interface",
-    duration: 4000,
+    fallbackDuration: 16000,
+    poster: "/demo-1-poster.jpg",
   },
   {
-    light: "/demo-2-light.png",
-    dark: "/demo-2-dark.png",
+    video: "/demo-2.mp4",
     alt: "AI processing your content",
-    duration: 4000,
+    fallbackDuration: 10000,
   },
   {
-    light: "/demo-3-light.png",
-    dark: "/demo-3-dark.png",
+    video: "/demo-3.mp4",
     alt: "Beautiful portfolio result",
-    duration: 4000,
+    fallbackDuration: 10000,
   },
 ];
 
-const DEFAULT_DURATION = 4000;
+const DEFAULT_FALLBACK_DURATION = 10000;
 
 export function DemoCarousel() {
-  const { isDark } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [loadedVideos, setLoadedVideos] = useState<Set<number>>(new Set([0]));
+  const [videoDurations, setVideoDurations] = useState<Map<number, number>>(
+    new Map()
+  );
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const startTimeRef = useRef<number>(Date.now());
 
   const currentSlide = DEMO_SLIDES[currentIndex];
-  const currentImage = isDark ? currentSlide.dark : currentSlide.light;
-  const duration = currentSlide.duration || DEFAULT_DURATION;
+  const currentVideo = currentSlide.video;
+  const currentPoster = currentSlide.poster;
+
+  // Get duration: use actual video duration if available, fallback to config
+  const duration =
+    videoDurations.get(currentIndex) ||
+    currentSlide.fallbackDuration ||
+    DEFAULT_FALLBACK_DURATION;
 
   const goToNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % DEMO_SLIDES.length);
+    const nextIndex = (currentIndex + 1) % DEMO_SLIDES.length;
+    setCurrentIndex(nextIndex);
     setProgress(0);
     startTimeRef.current = Date.now();
-  }, []);
 
-  const goToSlide = useCallback((index: number) => {
-    setCurrentIndex(index);
-    setProgress(0);
-    startTimeRef.current = Date.now();
-  }, []);
+    // Preload next video
+    if (!loadedVideos.has(nextIndex)) {
+      setLoadedVideos((prev) => new Set(prev).add(nextIndex));
+    }
+  }, [currentIndex, loadedVideos]);
+
+  const goToSlide = useCallback(
+    (index: number) => {
+      setCurrentIndex(index);
+      setProgress(0);
+      startTimeRef.current = Date.now();
+
+      // Preload selected video
+      if (!loadedVideos.has(index)) {
+        setLoadedVideos((prev) => new Set(prev).add(index));
+      }
+    },
+    [loadedVideos]
+  );
+
+  // Handle video metadata loaded - extract duration
+  const handleVideoMetadata = useCallback(
+    (index: number, video: HTMLVideoElement) => {
+      if (
+        video.duration &&
+        !isNaN(video.duration) &&
+        isFinite(video.duration)
+      ) {
+        const durationMs = Math.floor(video.duration * 1000);
+        setVideoDurations((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(index, durationMs);
+          return newMap;
+        });
+      }
+    },
+    []
+  );
+
+  // Control video playback based on current index
+  useEffect(() => {
+    videoRefs.current.forEach((video, index) => {
+      if (!video) return;
+
+      if (index === currentIndex) {
+        video.play().catch(() => {
+          // Autoplay failed, user interaction required
+        });
+      } else {
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+  }, [currentIndex]);
 
   // Progress animation
   useEffect(() => {
@@ -77,17 +133,66 @@ export function DemoCarousel() {
       {/* Carousel Container */}
       <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-border shadow-2xl bg-card">
         <AnimatePresence mode="wait">
-          <motion.img
-            key={currentImage}
-            src={currentImage}
-            alt={currentSlide.alt}
-            className="w-full h-full object-cover object-top"
+          <motion.div
+            key={currentIndex}
+            className="w-full h-full"
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
-          />
+          >
+            <video
+              ref={(el) => {
+                videoRefs.current[currentIndex] = el;
+              }}
+              src={currentVideo}
+              poster={currentPoster}
+              className="w-full h-full object-cover object-top"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload={currentIndex === 0 ? "auto" : "metadata"}
+              onLoadedMetadata={(e) => {
+                handleVideoMetadata(currentIndex, e.currentTarget);
+              }}
+              onLoadedData={() => {
+                if (!loadedVideos.has(currentIndex)) {
+                  setLoadedVideos((prev) => new Set(prev).add(currentIndex));
+                }
+              }}
+              aria-label={currentSlide.alt}
+            />
+          </motion.div>
         </AnimatePresence>
+
+        {/* Preload other videos in background */}
+        {DEMO_SLIDES.map((slide, index) => {
+          if (index === currentIndex) return null;
+          const shouldLoad = loadedVideos.has(index);
+
+          return (
+            <video
+              key={`preload-${index}`}
+              ref={(el) => {
+                videoRefs.current[index] = el;
+              }}
+              src={slide.video}
+              className="hidden"
+              preload={shouldLoad ? "metadata" : "none"}
+              muted
+              playsInline
+              onLoadedMetadata={(e) => {
+                handleVideoMetadata(index, e.currentTarget);
+              }}
+              onLoadedData={() => {
+                if (!loadedVideos.has(index)) {
+                  setLoadedVideos((prev) => new Set(prev).add(index));
+                }
+              }}
+            />
+          );
+        })}
       </div>
 
       {/* Animated Progress Indicators */}
