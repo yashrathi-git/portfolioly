@@ -1,5 +1,11 @@
 # portfolioly-schema
 
+## 0.3.1
+
+### Patch Changes
+
+- df9f994: Final build
+
 ## 0.3.0
 
 ### Minor Changes

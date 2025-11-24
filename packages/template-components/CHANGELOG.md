@@ -1,5 +1,13 @@
 # portfolioly-template-components
 
+## 0.4.1
+
+### Patch Changes
+
+- df9f994: Final build
+- Updated dependencies [df9f994]
+  - portfolioly-schema@0.3.1
+
 ## 0.4.0
 
 ### Minor Changes
