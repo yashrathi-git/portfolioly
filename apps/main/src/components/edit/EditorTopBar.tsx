@@ -106,9 +106,6 @@ export function EditorTopBar({
 
             {/* Deploy to Vercel Button - Responsive */}
             <DeployToVercelButton
-              username={publishUsername}
-              publicToken={publicToken}
-              isLoading={publishSettingsLoading}
               className="hidden md:flex hover:bg-accent/50 transition-colors"
             />
 

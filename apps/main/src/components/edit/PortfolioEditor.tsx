@@ -3,7 +3,7 @@
 import { useEffect, useState, startTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Globe, Link, ShieldCheck, User } from "lucide-react";
+import { Link, ShieldCheck, User } from "lucide-react";
 import type { PortfolioData } from "portfolioly-schema";
 import { EditorTopBar } from "./EditorTopBar";
 import { NavigationSidebar } from "./NavigationSidebar";
@@ -122,11 +122,11 @@ export function PortfolioEditor({
   // Find the active section configuration
   const activeSectionConfig = sections.find((s) => s.id === activeSection);
 
-  // Determine if we should show publish prompts
+  // Determine if we should show publish prompts (only show username prompt, not private status)
   const shouldShowPublishPrompt =
     !isLoadingPublishStatus &&
     publishStatus &&
-    (!publishStatus.hasUsername || !publishStatus.isPublic);
+    !publishStatus.hasUsername;
 
   const renderPublishBanner = () => {
     if (!publishStatus) {
@@ -144,20 +144,6 @@ export function PortfolioEditor({
             <p className="mt-1">
               You already have a default username. Click the settings icon in
               the top bar if you&apos;d like to edit it or tweak visibility.
-            </p>
-          </AlertDescription>
-        </Alert>
-      );
-    }
-
-    if (!publishStatus.isPublic) {
-      return (
-        <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900">
-          <Globe className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-          <AlertDescription className="text-sm text-amber-900 dark:text-amber-100">
-            <strong className="font-semibold">Your portfolio is private</strong>
-            <p className="mt-1">
-              Toggle the publish switch in settings to share your link.
             </p>
           </AlertDescription>
         </Alert>
