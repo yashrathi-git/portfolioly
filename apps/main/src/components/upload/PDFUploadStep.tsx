@@ -34,6 +34,7 @@ export type PDFUploadStepProps = {
   description?: string;
   helpTitle?: string;
   helpImageUrl?: string;
+  helpDefaultOpen?: boolean;
   source: "linkedin" | "resume";
   uploadState: PDFUploadState;
   onUpload: (file: File) => Promise<void>;
@@ -52,6 +53,7 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
     description,
     helpTitle,
     helpImageUrl,
+    helpDefaultOpen,
     source,
     uploadState,
     onUpload,
@@ -181,33 +183,31 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
 
           {/* Help Section - Only show if helpTitle or helpImageUrl is provided */}
           {(helpTitle || helpImageUrl) && (
-            <Collapsible>
+            <Collapsible defaultOpen={helpDefaultOpen}>
               <CollapsibleTrigger className="text-sm inline-flex items-center gap-2 underline underline-offset-4 cursor-help">
                 <HelpCircle className="h-4 w-4" />
                 {source === "linkedin"
-                  ? "Where to export LinkedIn PDF"
+                  ? "Where to export LinkedIn PDF?"
                   : helpTitle}
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-3">
                 {source === "linkedin" ? (
-                  <div className="space-y-3">
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+                    <ol className="text-sm text-foreground list-decimal pl-5 space-y-1">
+                      <li>Go to your profile page</li>
+                      <li>From Resources, click on &quot;Save to PDF&quot;</li>
+                    </ol>
                     {helpImageUrl && (
-                      <div className="rounded-md overflow-hidden border">
+                      <div className="rounded-md overflow-hidden border shadow-sm">
                         <Image
                           src={helpImageUrl}
                           alt="LinkedIn export help"
-                          className="w-full aspect-video object-cover"
+                          className="w-full"
                           width={600}
                           height={338}
                         />
                       </div>
                     )}
-                    <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
-                      <li>Open LinkedIn and go to your Profile.</li>
-                      <li>Click the More button and choose Save to PDF.</li>
-                      <li>Download the PDF to your computer.</li>
-                      <li>Upload it here to pre-fill your profile details.</li>
-                    </ol>
                   </div>
                 ) : (
                   <div>

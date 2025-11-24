@@ -104,6 +104,8 @@ export function UploadWizard({
             label="Import LinkedIn Profile"
             description="Upload your LinkedIn PDF to automatically extract your experience, skills, and headline."
             helpTitle="Where to export LinkedIn PDF?"
+            helpImageUrl="https://media.portfolioly.app/linkedin-pdf/linkedin_pdf.png"
+            helpDefaultOpen={true}
             source="linkedin"
             uploadState={upload.linkedin}
             onUpload={upload.uploadLinkedInPDF}
