@@ -35,20 +35,6 @@ export function PersonalInfoForm({ value, onChange }: PersonalInfoFormProps) {
         />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="chatfolio_headline">ChatFolio Headline</Label>
-        <Input
-          id="chatfolio_headline"
-          value={v.chatfolio_headline ?? ""}
-          onChange={(e) =>
-            onChange({ ...v, chatfolio_headline: e.target.value })
-          }
-          placeholder="Your chat portfolio headline"
-        />
-        <p className="text-sm text-muted-foreground">
-          This headline will be shown on the front page of your chat portfolio
-        </p>
-      </div>
-      <div className="grid gap-2">
         <Label htmlFor="summary">Summary</Label>
         <Textarea
           id="summary"
