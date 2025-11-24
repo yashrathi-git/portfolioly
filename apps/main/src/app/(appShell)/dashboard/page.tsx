@@ -10,7 +10,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import withAuth from "@/lib/auth/withAuth";
-import { getUserSettings } from "@/lib/api/userSettings";
 import { getIdToken } from "@/lib/firebase";
 import { env } from "@/lib/env";
 import { toast } from "sonner";
@@ -20,48 +19,67 @@ import { DashboardCard } from "@/components/dashboard/DashboardCard";
 function DashboardPage() {
   const { user } = useAuth();
   const [notifyForResume, setNotifyForResume] = useState(false);
+  const [notifyForAnalytics, setNotifyForAnalytics] = useState(false);
   const [isUpdatingNotification, setIsUpdatingNotification] = useState(false);
 
   useEffect(() => {
-    const fetchNotificationPreference = async () => {
+    const fetchNotificationStatus = async () => {
       try {
-        const settings = await getUserSettings();
-        setNotifyForResume(settings.notify_for_resume_feature || false);
+        const token = await getIdToken();
+        if (!token) return;
+
+        const response = await fetch(`${env.API_BASE_URL}/notifications`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setNotifyForResume(data.resume_feature || false);
+          setNotifyForAnalytics(data.analytics_feature || false);
+        }
       } catch (error) {
-        console.error("Failed to fetch notification preference:", error);
-        setNotifyForResume(false);
+        console.error("Failed to fetch notification status:", error);
       }
     };
 
-    fetchNotificationPreference();
+    fetchNotificationStatus();
   }, []);
 
-  const handleNotifyMe = async () => {
-    if (isUpdatingNotification || notifyForResume) return;
+  const handleNotifyMe = async (type: "resume" | "analytics") => {
+    const isResume = type === "resume";
+    const currentState = isResume ? notifyForResume : notifyForAnalytics;
 
-    setNotifyForResume(true);
-    toast.success("You'll be notified when Resume Maker launches!");
+    if (isUpdatingNotification || currentState) return;
+
+    const setState = isResume ? setNotifyForResume : setNotifyForAnalytics;
+    const notificationType = isResume ? "resume_feature" : "analytics_feature";
+    const message = isResume
+      ? "You'll be notified when Resume Maker launches!"
+      : "You'll be notified when Analytics launches!";
+
+    setState(true);
+    toast.success(message);
 
     setIsUpdatingNotification(true);
     try {
       const token = await getIdToken();
       if (!token) throw new Error("No auth token");
 
-      const response = await fetch(`${env.API_BASE_URL}/users/me/settings`, {
-        method: "PATCH",
+      const response = await fetch(`${env.API_BASE_URL}/notifications`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          notify_for_resume_feature: true,
+          notification_type: notificationType,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to update notification");
+      if (!response.ok) throw new Error("Failed to signup for notification");
     } catch (error) {
-      console.error("Failed to update notification:", error);
-      setNotifyForResume(false);
+      console.error("Failed to signup for notification:", error);
+      setState(false);
     } finally {
       setIsUpdatingNotification(false);
     }
@@ -148,16 +166,6 @@ function DashboardPage() {
                   href="/upload"
                 />
               </motion.div>
-
-              {/* Analyze Chats Card */}
-              <motion.div variants={item}>
-                <DashboardCard
-                  title="Analyze Chats"
-                  description="View analytics and insights"
-                  icon={MessageSquare}
-                  href="/dashboard"
-                />
-              </motion.div>
             </div>
           </section>
 
@@ -177,11 +185,37 @@ function DashboardPage() {
                   description="Create professional, ATS-friendly resumes"
                   icon={FileText}
                   badge="Soon"
-                  onClick={handleNotifyMe}
+                  onClick={() => handleNotifyMe("resume")}
                   disabled={notifyForResume || isUpdatingNotification}
                 >
                   <div className="mt-2">
                     {notifyForResume ? (
+                      <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Bell className="h-3 w-3" />
+                        <span>Notification set</span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-medium">
+                        <Bell className="h-3 w-3" />
+                        <span>Notify me</span>
+                      </div>
+                    )}
+                  </div>
+                </DashboardCard>
+              </motion.div>
+
+              {/* Analytics Card */}
+              <motion.div variants={item}>
+                <DashboardCard
+                  title="Analytics"
+                  description="View chat analytics and insights"
+                  icon={MessageSquare}
+                  badge="Soon"
+                  onClick={() => handleNotifyMe("analytics")}
+                  disabled={notifyForAnalytics || isUpdatingNotification}
+                >
+                  <div className="mt-2">
+                    {notifyForAnalytics ? (
                       <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Bell className="h-3 w-3" />
                         <span>Notification set</span>

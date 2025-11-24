@@ -17,6 +17,7 @@ from .routes import (
 )
 from .routes.public_portfolio import router as public_portfolio_router
 from .routes.user_settings import router as user_settings_router
+from .routes.notifications import router as notifications_router
 
 
 # Configure logging
@@ -103,6 +104,7 @@ def create_app() -> FastAPI:
     app.include_router(portfolio_router)
     app.include_router(public_portfolio_router)
     app.include_router(user_settings_router, prefix="/users/me/settings")
+    app.include_router(notifications_router)
 
     @app.on_event("startup")
     async def startup_event():

@@ -31,7 +31,6 @@ class UserSettingsResponse(BaseModel):
     chat_settings: Optional[Dict[str, Any]] = None
     public_token_enabled: Optional[bool] = None
     public_token_ver: Optional[int] = None
-    notify_for_resume_feature: Optional[bool] = None
 
     @classmethod
     def from_document(cls, settings: Dict[str, Any]) -> "UserSettingsResponse":
@@ -63,14 +62,12 @@ class UserSettingsResponse(BaseModel):
             chat_settings=chat_settings,
             public_token_enabled=settings.get("public_token_enabled"),
             public_token_ver=settings.get("public_token_ver"),
-            notify_for_resume_feature=settings.get("notify_for_resume_feature", False),
         )
 
 
 class SettingsUpdateRequest(BaseModel):
     username: Optional[str] = None
     access_mode: Optional[Literal["public", "private"]] = None
-    notify_for_resume_feature: Optional[bool] = None
 
 
 @router.get("", response_model=UserSettingsResponse)
@@ -94,7 +91,6 @@ def get_user_settings(
                 chat_settings={"access_mode": "private"},
                 public_token_enabled=True,
                 public_token_ver=1,
-                notify_for_resume_feature=False,
             )
 
         return UserSettingsResponse.from_document(settings)
@@ -159,20 +155,6 @@ def update_settings(
 
             user_settings_service.update_access_mode(user.uid, request.access_mode)
             updates["access_mode"] = request.access_mode
-
-        if request.notify_for_resume_feature is not None:
-            from firebase_admin import firestore as admin_firestore
-
-            doc_ref = user_settings_service.db.collection("user_settings").document(
-                user.uid
-            )
-            doc_ref.update(
-                {
-                    "notify_for_resume_feature": request.notify_for_resume_feature,
-                    "updated_at": admin_firestore.SERVER_TIMESTAMP,
-                }
-            )
-            updates["notify_for_resume_feature"] = request.notify_for_resume_feature
 
         if not updates:
             logger.info("No updates provided for user settings request")
