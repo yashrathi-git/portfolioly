@@ -31,6 +31,7 @@ const emptyPortfolioData: PortfolioData = {
   layout_settings: {
     layout_mode: "both",
     default_layout: "chat",
+    chat_mode_footer: true,
   },
 };
 
