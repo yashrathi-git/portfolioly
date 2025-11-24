@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { Sun, Moon } from "lucide-react";
 import Link from "next/link";
+import { WandIcon } from "@/components/icons/PortfoliolyWandIcon";
 
 export default function HeaderBar() {
   const { user, signOut } = useAuth();
@@ -18,9 +19,10 @@ export default function HeaderBar() {
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
         <Link
           href={homeRoute}
-          className="font-semibold tracking-tight hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 font-semibold tracking-tight hover:opacity-80 transition-opacity"
         >
-          {appName}
+          <WandIcon className="h-6 w-6" />
+          <span>Portfolioly</span>
         </Link>
         <div className="flex items-center gap-2 text-sm">
           <Button

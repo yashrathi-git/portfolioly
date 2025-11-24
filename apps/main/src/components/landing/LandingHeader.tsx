@@ -3,6 +3,7 @@
 import { ArrowRight, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import Link from "next/link";
+import { WandIcon } from "@/components/icons/PortfoliolyWandIcon";
 
 export function LandingHeader() {
   const { isDark, toggleTheme } = useTheme();
@@ -14,10 +15,10 @@ export function LandingHeader() {
         <div className="flex lg:flex-1">
           <Link
             href="/"
-            className="font-semibold tracking-tight text-lg text-foreground"
+            className="flex items-center gap-2 font-semibold tracking-tight text-lg text-foreground hover:opacity-80 transition-opacity"
           >
-            <span className="sr-only">{appName}</span>
-            {appName}
+            <WandIcon className="h-6 w-6" />
+            <span>Portfolioly</span>
           </Link>
         </div>
         <div className="hidden lg:flex lg:gap-x-12">

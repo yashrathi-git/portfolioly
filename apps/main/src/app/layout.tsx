@@ -7,6 +7,9 @@ import { getThemeScript } from "@/lib/theme";
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_APP_NAME || "Portfolioly",
   description: "Your portfolio management platform",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
