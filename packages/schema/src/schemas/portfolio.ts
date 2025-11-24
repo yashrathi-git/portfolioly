@@ -84,9 +84,11 @@ export const PortfolioDataSchema = z.object({
   layout_settings: LayoutSettingsSchema.catch({
     layout_mode: "both",
     default_layout: "chat",
+    chat_mode_footer: true,
   }).default({
     layout_mode: "both",
     default_layout: "chat",
+    chat_mode_footer: true,
   }),
 });
 

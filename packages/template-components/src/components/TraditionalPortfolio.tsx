@@ -26,6 +26,7 @@ import {
 } from "../utils/component-flags";
 import { BLUR_FADE_DELAY } from "../lib/constants/animations";
 import { ThemeToggle } from "./ThemeToggle";
+import { PortfolioFooter } from "./PortfolioFooter";
 
 export type TraditionalPortfolioProps = {
   data?: DisplayPortfolioData | null;
@@ -68,6 +69,9 @@ const TraditionalPortfolioComponent = ({
   });
 
   const effectiveData = data;
+
+  // Check if footer should be shown
+  const showFooter = effectiveData?.layout_settings?.chat_mode_footer !== false;
 
   // Show loading state
   if (isLoading && !data) {
@@ -235,6 +239,9 @@ const TraditionalPortfolioComponent = ({
               </div>
             </section>
           )}
+
+        {/* Footer */}
+        {showFooter && <PortfolioFooter variant="traditional" />}
       </div>
     </PortfolioErrorBoundary>
   );

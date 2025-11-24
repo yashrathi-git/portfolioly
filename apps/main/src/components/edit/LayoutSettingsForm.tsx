@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { MessageSquare, FileText, Eye } from "lucide-react";
 import { FormSection } from "./FormSection";
 import type { LayoutSettings } from "portfolioly-schema";
@@ -39,6 +40,15 @@ export function LayoutSettingsForm({
     const newValue = {
       ...localValue,
       default_layout: defaultLayout as "chat" | "traditional",
+    };
+    setLocalValue(newValue);
+    onChange(newValue);
+  };
+
+  const handleFooterToggle = (checked: boolean) => {
+    const newValue = {
+      ...localValue,
+      chat_mode_footer: checked,
     };
     setLocalValue(newValue);
     onChange(newValue);
@@ -163,6 +173,22 @@ export function LayoutSettingsForm({
             </RadioGroup>
           </div>
         )}
+
+        {/* Footer Toggle */}
+        <div className="space-y-3 pt-3 border-t">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Show Footer</Label>
+              <p className="text-sm text-muted-foreground">
+                Display small "Built with Portfolioly" footer.
+              </p>
+            </div>
+            <Switch
+              checked={localValue.chat_mode_footer ?? true}
+              onCheckedChange={handleFooterToggle}
+            />
+          </div>
+        </div>
       </div>
     </FormSection>
   );

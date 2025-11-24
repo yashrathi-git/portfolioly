@@ -34,10 +34,13 @@ export const LayoutSettingsSchema = z
       .catch("chat")
       .optional()
       .default("chat"),
+    /** Show "Built with Portfolioly" footer */
+    chat_mode_footer: z.boolean().optional().default(true),
   })
   .catch({
     layout_mode: "both",
     default_layout: "chat",
+    chat_mode_footer: true,
   });
 
 export type LayoutSettings = z.infer<typeof LayoutSettingsSchema>;

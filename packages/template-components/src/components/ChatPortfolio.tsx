@@ -17,6 +17,7 @@ import {
   useComponentDataTracking,
 } from "../utils/component-flags";
 import { ThemeToggle } from "./ThemeToggle";
+import { PortfolioFooter } from "./PortfolioFooter";
 
 export type ChatPortfolioProps = {
   profile?: ChatProfile;
@@ -124,6 +125,10 @@ const ChatPortfolioComponent = ({
   // Determine thinking state: show only until first assistant message chunk arrives
   const isThinking =
     aiIsLoading && messages[messages.length - 1]?.role !== "assistant";
+
+  // Check if footer should be shown
+  const showFooter =
+    effectivePortfolioData?.layout_settings?.chat_mode_footer !== false;
 
   // Show loading state
   if (isLoading && !portfolioData) {
@@ -353,6 +358,9 @@ const ChatPortfolioComponent = ({
                     disabled={aiIsLoading}
                     onStop={stop}
                   />
+
+                  {/* Footer - only show when chat has started and setting is enabled */}
+                  {showFooter && <PortfolioFooter variant="chat" />}
                 </div>
               </motion.div>
             )}

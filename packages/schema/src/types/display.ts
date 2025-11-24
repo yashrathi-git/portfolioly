@@ -135,5 +135,6 @@ export interface DisplayPortfolioData {
   layout_settings?: {
     layout_mode?: string;
     default_layout?: string;
+    chat_mode_footer?: boolean;
   };
 }

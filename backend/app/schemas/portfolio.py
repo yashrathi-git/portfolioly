@@ -165,6 +165,10 @@ class LayoutSettings(BaseModel):
         default="chat",
         description="Default layout when both are available: chat, traditional",
     )
+    chat_mode_footer: Optional[bool] = Field(
+        default=True,
+        description='Show "Built with Portfolioly" footer',
+    )
 
 
 class PortfolioMetadata(BaseModel):
