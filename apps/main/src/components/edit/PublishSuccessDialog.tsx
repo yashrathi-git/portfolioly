@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import {
   Dialog,
@@ -18,34 +18,31 @@ import {
   Check,
   Star,
 } from "lucide-react";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { LinkedInIcon } from "@/components/icons/LinkedInIcon";
 import { RedditIcon } from "@/components/icons/RedditIcon";
 
-interface DeploymentSuccessDialogProps {
+interface PublishSuccessDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  deployedUrl: string;
+  portfolioUrl: string;
 }
 
-export function DeploymentSuccessDialog({
+export function PublishSuccessDialog({
   open,
   onOpenChange,
-  deployedUrl,
-}: DeploymentSuccessDialogProps) {
+  portfolioUrl,
+}: PublishSuccessDialogProps) {
   const [copied, setCopied] = useState(false);
   const hasLaunchedConfetti = useRef(false);
 
   const discordLink = process.env.NEXT_PUBLIC_DISCORD_LINK;
   const githubRepoUrl = "https://github.com/yashrathi-git/portfolioly";
 
-  // Fire confetti when dialog opens
   useEffect(() => {
     if (open && !hasLaunchedConfetti.current) {
       hasLaunchedConfetti.current = true;
 
-      // Side cannons confetti effect
       const end = Date.now() + 3 * 1000;
       const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
 
@@ -76,7 +73,6 @@ export function DeploymentSuccessDialog({
     }
   }, [open]);
 
-  // Reset confetti flag when dialog closes
   useEffect(() => {
     if (!open) {
       hasLaunchedConfetti.current = false;
@@ -85,7 +81,7 @@ export function DeploymentSuccessDialog({
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(deployedUrl);
+      await navigator.clipboard.writeText(portfolioUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -94,11 +90,10 @@ export function DeploymentSuccessDialog({
   };
 
   const handleShare = (platform: "linkedin" | "reddit") => {
-    const encodedUrl = encodeURIComponent(deployedUrl);
+    const encodedUrl = encodeURIComponent(portfolioUrl);
 
-    // Platform-optimized share text
     const linkedInText = encodeURIComponent(
-      `I just launched my personal portfolio website using Portfolioly! 🚀\n\nCheck it out: ${deployedUrl}\n\nBuilt with AI-powered portfolio generation - it was incredibly easy to set up.\n\n#portfolio #webdev #career`
+      `I just created my personal portfolio website using Portfolioly! 🚀\n\nCheck it out: ${portfolioUrl}\n\nBuilt with AI-powered portfolio generation - super easy to set up and looks great.\n\n#portfolio #webdev #career #personalbranding`
     );
 
     const redditTitle = encodeURIComponent(
@@ -110,7 +105,6 @@ export function DeploymentSuccessDialog({
     const height = 600;
 
     if (platform === "linkedin") {
-      // LinkedIn share with pre-filled text
       shareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${linkedInText}`;
     } else if (platform === "reddit") {
       shareUrl = `https://www.reddit.com/submit?url=${encodedUrl}&title=${redditTitle}`;
@@ -134,10 +128,11 @@ export function DeploymentSuccessDialog({
             <PartyPopper className="h-8 w-8 text-white" />
           </div>
           <DialogTitle className="text-2xl font-bold">
-            Congratulations! 🎉
+            Your Portfolio is Live! 🎉
           </DialogTitle>
           <DialogDescription className="text-base mt-2">
-            Your portfolio has been successfully deployed to Vercel!
+            Congratulations! Your portfolio is now published and accessible to
+            everyone.
           </DialogDescription>
         </DialogHeader>
 
@@ -145,11 +140,11 @@ export function DeploymentSuccessDialog({
           {/* Portfolio Link */}
           <div className="rounded-lg border bg-muted/50 p-4">
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              Your live portfolio
+              Your portfolio URL
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-sm font-mono bg-background rounded px-3 py-2 truncate border">
-                {deployedUrl}
+                {portfolioUrl}
               </code>
               <Button
                 variant="outline"
@@ -166,7 +161,7 @@ export function DeploymentSuccessDialog({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => window.open(deployedUrl, "_blank")}
+                onClick={() => window.open(portfolioUrl, "_blank")}
                 className="shrink-0"
               >
                 <ExternalLink className="h-4 w-4" />

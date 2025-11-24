@@ -33,6 +33,7 @@ import {
   UserSettingsError,
 } from "@/lib/api/userSettings";
 import { useToast } from "@/hooks/useToast";
+import { PublishSuccessDialog } from "./PublishSuccessDialog";
 
 export interface PublishSettingsPanelProps {
   /** Trigger element for the popover */
@@ -240,6 +241,8 @@ export function PublishSettingsPanel({
   const [usernameValidation, setUsernameValidation] =
     useState<UsernameValidation>({ state: "idle" });
   const [copied, setCopied] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState("");
 
   const effectiveUsername = username || initialUsername || "";
   const effectiveAccessMode = accessMode;
@@ -423,16 +426,30 @@ export function PublishSettingsPanel({
         }
       }
 
+      // Track if this is a first-time publish (going from private to public)
+      const isFirstPublish =
+        accessModeChanged &&
+        originalAccessMode === "private" &&
+        targetAccessMode === "public";
+
       if (accessModeChanged) {
         try {
           await updateAccessMode(targetAccessMode);
           setOriginalAccessMode(targetAccessMode);
           setAccessMode(targetAccessMode);
-          showSuccess(
-            `Portfolio is now ${
-              targetAccessMode === "public" ? "public" : "private"
-            }`
-          );
+
+          // Show success dialog for first publish, otherwise just toast
+          if (isFirstPublish) {
+            const url = `${window.location.origin}/p/${pendingUsername}`;
+            setPublishedUrl(url);
+            setShowSuccessDialog(true);
+          } else {
+            showSuccess(
+              `Portfolio is now ${
+                targetAccessMode === "public" ? "public" : "private"
+              }`
+            );
+          }
         } catch (error) {
           const errorInfo = getErrorMessage(error);
           showError(errorInfo.message);
@@ -486,282 +503,292 @@ export function PublishSettingsPanel({
   const hostname = typeof window !== "undefined" ? window.location.origin : "";
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        {trigger || (
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1.5"
-          >
-            <Globe className="h-4 w-4" />
-            Publish
-          </Button>
-        )}
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        sideOffset={8}
-        collisionPadding={16}
-        className="w-[360px] max-w-[calc(100vw-3rem)] p-4 sm:w-[400px]"
-      >
-        {loading || externalLoading ? (
-          <div className="flex items-center justify-center py-6">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : loadError ? (
-          <div className="space-y-3">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Connection Error</p>
-                <p className="text-xs text-muted-foreground">
-                  {loadError.message}
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          {trigger || (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1.5"
+            >
+              <Globe className="h-4 w-4" />
+              Publish
+            </Button>
+          )}
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          sideOffset={8}
+          collisionPadding={16}
+          className="w-[360px] max-w-[calc(100vw-3rem)] p-4 sm:w-[400px]"
+        >
+          {loading || externalLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : loadError ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Connection Error</p>
+                  <p className="text-xs text-muted-foreground">
+                    {loadError.message}
+                  </p>
+                </div>
+              </div>
+              {loadError.canRetry && (
+                <Button
+                  onClick={loadSettings}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  Try Again
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Header */}
+              <div>
+                <h4 className="font-semibold text-sm">Portfolio URL</h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Configure your public portfolio settings
                 </p>
               </div>
-            </div>
-            {loadError.canRetry && (
-              <Button
-                onClick={loadSettings}
-                variant="outline"
-                size="sm"
-                className="w-full"
-              >
-                Try Again
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Header */}
-            <div>
-              <h4 className="font-semibold text-sm">Portfolio URL</h4>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Configure your public portfolio settings
-              </p>
-            </div>
 
-            {/* URL Editor */}
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="min-w-0 flex-1 flex items-center gap-1 bg-muted/50 rounded-md border px-3 py-2">
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    {hostname}/p/
-                  </span>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => handleUsernameChange(e.target.value)}
-                    placeholder="username"
-                    className={cn(
-                      "flex-1 bg-transparent text-sm outline-none min-w-0",
-                      (usernameValidation.state === "invalid" ||
-                        usernameValidation.state === "taken") &&
-                        "text-destructive"
-                    )}
-                  />
-                  <div className="flex-shrink-0">
-                    {usernameValidation.state === "validating" && (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                    )}
-                    {usernameValidation.state === "valid" && (
-                      <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                    )}
-                    {(usernameValidation.state === "invalid" ||
-                      usernameValidation.state === "taken") && (
-                      <AlertCircle className="h-3.5 w-3.5 text-destructive" />
-                    )}
+              {/* URL Editor */}
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="min-w-0 flex-1 flex items-center gap-1 bg-muted/50 rounded-md border px-3 py-2">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {hostname}/p/
+                    </span>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => handleUsernameChange(e.target.value)}
+                      placeholder="username"
+                      className={cn(
+                        "flex-1 bg-transparent text-sm outline-none min-w-0",
+                        (usernameValidation.state === "invalid" ||
+                          usernameValidation.state === "taken") &&
+                          "text-destructive"
+                      )}
+                    />
+                    <div className="flex-shrink-0">
+                      {usernameValidation.state === "validating" && (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      )}
+                      {usernameValidation.state === "valid" && (
+                        <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                      )}
+                      {(usernameValidation.state === "invalid" ||
+                        usernameValidation.state === "taken") && (
+                        <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                      )}
+                    </div>
                   </div>
-                </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleSave()}
-                        disabled={
-                          !hasChanges ||
-                          saving ||
-                          usernameValidation.state === "validating" ||
-                          usernameValidation.state === "invalid" ||
-                          usernameValidation.state === "taken" ||
-                          usernameValidation.state === "error"
-                        }
-                        className="h-9 w-9 shrink-0"
-                        aria-label="Save publish settings"
-                      >
-                        {saving ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Save className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{hasChanges ? "Save changes" : "All changes saved"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                {hasUsername && isPublic && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={handleCopyUrl}
+                          onClick={() => handleSave()}
+                          disabled={
+                            !hasChanges ||
+                            saving ||
+                            usernameValidation.state === "validating" ||
+                            usernameValidation.state === "invalid" ||
+                            usernameValidation.state === "taken" ||
+                            usernameValidation.state === "error"
+                          }
                           className="h-9 w-9 shrink-0"
-                          aria-label="Copy published URL"
+                          aria-label="Save publish settings"
                         >
-                          {copied ? (
-                            <Check className="h-4 w-4" />
+                          {saving ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Copy className="h-4 w-4" />
+                            <Save className="h-4 w-4" />
                           )}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{copied ? "Copied!" : "Copy published URL"}</p>
+                        <p>
+                          {hasChanges ? "Save changes" : "All changes saved"}
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                )}
-              </div>
-
-              {/* Validation Message */}
-              {usernameValidation.message && (
-                <div className="flex items-center gap-2">
-                  <p
-                    className={cn(
-                      "text-xs flex-1",
-                      usernameValidation.state === "valid"
-                        ? "text-green-600"
-                        : "text-destructive"
-                    )}
-                  >
-                    {usernameValidation.message}
-                  </p>
-                  {usernameValidation.state === "error" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => validateUsername(username)}
-                      className="h-6 px-2 text-xs"
-                    >
-                      Retry
-                    </Button>
+                  {hasUsername && isPublic && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleCopyUrl}
+                            className="h-9 w-9 shrink-0"
+                            aria-label="Copy published URL"
+                          >
+                            {copied ? (
+                              <Check className="h-4 w-4" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{copied ? "Copied!" : "Copy published URL"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                 </div>
-              )}
 
-              {usernameValidation.state === "valid" &&
-                !usernameValidation.message && (
-                  <p className="text-xs text-green-600">
-                    Username is available
+                {/* Validation Message */}
+                {usernameValidation.message && (
+                  <div className="flex items-center gap-2">
+                    <p
+                      className={cn(
+                        "text-xs flex-1",
+                        usernameValidation.state === "valid"
+                          ? "text-green-600"
+                          : "text-destructive"
+                      )}
+                    >
+                      {usernameValidation.message}
+                    </p>
+                    {usernameValidation.state === "error" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => validateUsername(username)}
+                        className="h-6 px-2 text-xs"
+                      >
+                        Retry
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {usernameValidation.state === "valid" &&
+                  !usernameValidation.message && (
+                    <p className="text-xs text-green-600">
+                      Username is available
+                    </p>
+                  )}
+
+                {usernameValidation.state === "idle" && username && (
+                  <p className="text-xs text-muted-foreground">
+                    3-30 characters, letters, numbers, hyphens, and underscores
                   </p>
                 )}
 
-              {usernameValidation.state === "idle" && username && (
-                <p className="text-xs text-muted-foreground">
-                  3-30 characters, letters, numbers, hyphens, and underscores
-                </p>
-              )}
-
-              {/* Username Suggestions */}
-              {usernameValidation.state === "taken" &&
-                usernameValidation.suggestions &&
-                usernameValidation.suggestions.length > 0 && (
-                  <div className="space-y-1.5">
-                    <p className="text-xs text-muted-foreground">
-                      Suggestions:
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {usernameValidation.suggestions.map((suggestion) => (
-                        <Button
-                          key={suggestion}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUsernameChange(suggestion)}
-                          className="h-6 px-2 text-xs"
-                        >
-                          {suggestion}
-                        </Button>
-                      ))}
+                {/* Username Suggestions */}
+                {usernameValidation.state === "taken" &&
+                  usernameValidation.suggestions &&
+                  usernameValidation.suggestions.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground">
+                        Suggestions:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {usernameValidation.suggestions.map((suggestion) => (
+                          <Button
+                            key={suggestion}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUsernameChange(suggestion)}
+                            className="h-6 px-2 text-xs"
+                          >
+                            {suggestion}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-            </div>
+                  )}
+              </div>
 
-            {/* Actions */}
-            <div className="space-y-3">
-              {hasUsername ? (
-                isPublic ? (
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => handleSave({ nextAccessMode: "private" })}
-                    disabled={saving}
-                  >
-                    <Lock className="h-4 w-4 mr-2" />
-                    Make Private
-                  </Button>
+              {/* Actions */}
+              <div className="space-y-3">
+                {hasUsername ? (
+                  isPublic ? (
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => handleSave({ nextAccessMode: "private" })}
+                      disabled={saving}
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Make Private
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      onClick={() => handleSave({ nextAccessMode: "public" })}
+                      disabled={
+                        saving ||
+                        !hasUsername ||
+                        usernameValidation.state === "validating" ||
+                        usernameValidation.state === "invalid" ||
+                        usernameValidation.state === "taken" ||
+                        usernameValidation.state === "error"
+                      }
+                    >
+                      <Globe className="h-4 w-4 mr-2" />
+                      Publish Portfolio
+                    </Button>
+                  )
                 ) : (
-                  <Button
-                    className="w-full"
-                    onClick={() => handleSave({ nextAccessMode: "public" })}
-                    disabled={
-                      saving ||
-                      !hasUsername ||
-                      usernameValidation.state === "validating" ||
-                      usernameValidation.state === "invalid" ||
-                      usernameValidation.state === "taken" ||
-                      usernameValidation.state === "error"
-                    }
-                  >
+                  <Button className="w-full" variant="outline" disabled>
                     <Globe className="h-4 w-4 mr-2" />
                     Publish Portfolio
                   </Button>
-                )
-              ) : (
-                <Button className="w-full" variant="outline" disabled>
-                  <Globe className="h-4 w-4 mr-2" />
-                  Publish Portfolio
-                </Button>
-              )}
+                )}
 
-              <div className="text-xs text-center text-muted-foreground space-y-1">
-                {!hasUsername && (
-                  <p>Set a username to publish your portfolio.</p>
-                )}
-                {hasUsername && !isPublic && (
-                  <p>Your portfolio is currently private.</p>
-                )}
-                {hasUsername && isPublic && publicUrl && (
-                  <div className="flex flex-col items-center gap-1 text-green-600">
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      <span>Portfolio is live</span>
+                <div className="text-xs text-center text-muted-foreground space-y-1">
+                  {!hasUsername && (
+                    <p>Set a username to publish your portfolio.</p>
+                  )}
+                  {hasUsername && !isPublic && (
+                    <p>Your portfolio is currently private.</p>
+                  )}
+                  {hasUsername && isPublic && publicUrl && (
+                    <div className="flex flex-col items-center gap-1 text-green-600">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        <span>Portfolio is live</span>
+                      </div>
+                      <p className="text-xs text-center">
+                        Anyone can access it{" "}
+                        <a
+                          href={publicUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium underline hover:text-green-700"
+                        >
+                          here
+                        </a>
+                        {"."}
+                      </p>
                     </div>
-                    <p className="text-xs text-center">
-                      Anyone can access it{" "}
-                      <a
-                        href={publicUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium underline hover:text-green-700"
-                      >
-                        here
-                      </a>
-                      {"."}
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+          )}
+        </PopoverContent>
+      </Popover>
+
+      <PublishSuccessDialog
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        portfolioUrl={publishedUrl}
+      />
+    </>
   );
 }
