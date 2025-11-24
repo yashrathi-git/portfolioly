@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Rocket, MessageCircle, Loader2 } from "lucide-react";
+import { ExternalLink, MessageCircle, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { env } from "@/lib/env";
+import { VercelIcon } from "@/components/icons/VercelIcon";
 
 interface DeployToVercelButtonProps {
   username?: string;
@@ -68,15 +69,19 @@ export function DeployToVercelButton({
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className={className}>
-          <Rocket className="h-4 w-4" />
-          <span className="hidden sm:inline">Deploy to Vercel</span>
+        <Button
+          variant="outline"
+          size="sm"
+          className={className}
+        >
+          <VercelIcon className="h-4 w-4" />
+          <span className="hidden sm:inline">Deploy</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Rocket className="h-5 w-5" />
+            <VercelIcon className="h-5 w-5" />
             Deploy to Vercel
           </DialogTitle>
           <DialogDescription>
