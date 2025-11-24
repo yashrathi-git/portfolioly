@@ -81,6 +81,10 @@ export function DeployToVercelButton({
     deployUrl.searchParams.set("envDefaults", JSON.stringify(envDefaults));
   }
 
+  // Add redirect URL to return user to dashboard after deployment
+  const redirectUrl = `${window.location.origin}/dashboard?vercel_deployed=true`;
+  deployUrl.searchParams.set("redirect-url", redirectUrl);
+
   const handleDeploy = () => {
     window.open(deployUrl.toString(), "_blank");
     setShowDialog(false);

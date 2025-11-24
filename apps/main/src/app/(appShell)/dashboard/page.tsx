@@ -15,12 +15,64 @@ import { env } from "@/lib/env";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
+import { DeploymentSuccessDialog } from "@/components/dashboard/DeploymentSuccessDialog";
+import { saveDeploymentUrl } from "@/lib/api/deployment";
 
 function DashboardPage() {
   const { user } = useAuth();
   const [notifyForResume, setNotifyForResume] = useState(false);
   const [notifyForAnalytics, setNotifyForAnalytics] = useState(false);
   const [isUpdatingNotification, setIsUpdatingNotification] = useState(false);
+  
+  // Deployment success dialog state
+  const [showDeploymentSuccess, setShowDeploymentSuccess] = useState(false);
+  const [deployedUrl, setDeployedUrl] = useState<string>("");
+
+  // Check for Vercel deployment redirect
+  useEffect(() => {
+    // Vercel redirect has malformed query string with multiple '?' instead of '&'
+    // e.g., ?vercel_deployed=true?deployment-url=...
+    // We need to parse this manually from the full URL
+    const fullUrl = window.location.href;
+    
+    // Check if this is a Vercel redirect
+    if (!fullUrl.includes("vercel_deployed=true")) {
+      return;
+    }
+    
+    // Parse all params - replace extra '?' with '&' to fix malformed query string
+    const urlParts = fullUrl.split('?');
+    if (urlParts.length < 2) return;
+    
+    // Join all query parts with '&' and parse
+    const queryString = urlParts.slice(1).join('&');
+    const params = new URLSearchParams(queryString);
+    
+    // Extract all Vercel deployment params
+    const deploymentUrl = params.get("deployment-url");
+    const deploymentDashboardUrl = params.get("deployment-dashboard-url");
+    const projectDashboardUrl = params.get("project-dashboard-url");
+    const projectName = params.get("project-name");
+    const repositoryUrl = params.get("repository-url");
+    
+    // We need at least the deployment URL to show success
+    if (deploymentUrl) {
+      setDeployedUrl(deploymentUrl);
+      setShowDeploymentSuccess(true);
+      
+      // Save complete deployment info to backend (fire and forget)
+      saveDeploymentUrl({
+        deployedUrl: deploymentUrl,
+        deploymentDashboardUrl: deploymentDashboardUrl || undefined,
+        projectDashboardUrl: projectDashboardUrl || undefined,
+        projectName: projectName || undefined,
+        repositoryUrl: repositoryUrl || undefined,
+      });
+    }
+    
+    // Clean up URL - remove all query params
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
 
   useEffect(() => {
     const fetchNotificationStatus = async () => {
@@ -101,8 +153,16 @@ function DashboardPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background selection:bg-primary/10 selection:text-primary">
-      {/* Hero Section */}
+    <>
+      {/* Deployment Success Dialog */}
+      <DeploymentSuccessDialog
+        open={showDeploymentSuccess}
+        onOpenChange={setShowDeploymentSuccess}
+        deployedUrl={deployedUrl}
+      />
+      
+      <main className="min-h-screen bg-background selection:bg-primary/10 selection:text-primary">
+        {/* Hero Section */}
       <div className="relative border-b bg-background pt-12 pb-12 lg:pt-16 lg:pb-16">
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -233,7 +293,8 @@ function DashboardPage() {
           </section>
         </motion.div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
 
