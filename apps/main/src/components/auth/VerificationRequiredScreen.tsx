@@ -23,7 +23,7 @@ export default function VerificationRequiredScreen() {
   const { isPolling, startPolling, pollingError } = useVerificationPolling(
     user,
     async () => {
-      // When verification is detected, refresh user and force-refresh token, then redirect
+      // When verification is detected, refresh user and force-refresh token
       const refreshed = await refreshUser();
       try {
         if (refreshed) {
@@ -31,7 +31,8 @@ export default function VerificationRequiredScreen() {
         }
       } catch {}
       if (refreshed) {
-        router.push(getPostAuthRedirectPath(refreshed));
+        // New users who just verified go to upload for onboarding
+        router.push("/upload");
       } else {
         router.push("/auth/sign-in");
       }
@@ -78,7 +79,8 @@ export default function VerificationRequiredScreen() {
   }
 
   if (user.emailVerified) {
-    router.push(getPostAuthRedirectPath(user));
+    // New users who just verified go to upload for onboarding
+    router.push("/upload");
     return null;
   }
 

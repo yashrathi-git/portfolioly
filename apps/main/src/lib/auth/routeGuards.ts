@@ -3,13 +3,16 @@ import { User } from "firebase/auth";
 
 /**
  * Returns the canonical path to navigate to for an authenticated user.
- * - Verified → "/upload" (onboarding flow)
- * - Unverified → "/auth/verify-email"
+ * - Unverified → "/auth/verify-email" (new users need verification first)
+ * - Verified → "/dashboard" (existing users who are logging in)
+ *
+ * Note: Users coming from verification screen are redirected to /upload
+ * since they're new users completing onboarding.
  */
 export function getPostAuthRedirectPath(
   user: User
-): "/upload" | "/auth/verify-email" {
-  return user.emailVerified ? "/upload" : "/auth/verify-email";
+): "/dashboard" | "/auth/verify-email" {
+  return user.emailVerified ? "/dashboard" : "/auth/verify-email";
 }
 
 /**

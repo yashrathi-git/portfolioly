@@ -44,7 +44,7 @@ export default function LoginForm({ onDone }: { onDone?: () => void }) {
     setLoading(true);
     try {
       await signInWithGoogle();
-      onDone?.();
+      // Parent page will handle redirect based on user metadata
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Google sign-in failed");
     } finally {

@@ -117,7 +117,10 @@ function DashboardPage() {
         >
           {/* Quick Actions Section */}
           <section>
-            <motion.div variants={item} className="mb-6 flex items-center justify-between">
+            <motion.div
+              variants={item}
+              className="mb-6 flex items-center justify-between"
+            >
               <div>
                 <h2 className="text-xl font-medium tracking-tight text-foreground">
                   Quick Actions
@@ -179,13 +182,13 @@ function DashboardPage() {
                 >
                   <div className="mt-2">
                     {notifyForResume ? (
-                      <div className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                        <Bell className="h-4 w-4" />
+                      <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Bell className="h-3 w-3" />
                         <span>Notification set</span>
                       </div>
                     ) : (
-                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium shadow-sm">
-                        <Bell className="h-4 w-4" />
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-medium">
+                        <Bell className="h-3 w-3" />
                         <span>Notify me</span>
                       </div>
                     )}
@@ -201,4 +204,3 @@ function DashboardPage() {
 }
 
 export default withAuth(DashboardPage, { requireVerification: true });
-
