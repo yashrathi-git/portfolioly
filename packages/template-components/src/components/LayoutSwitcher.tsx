@@ -25,13 +25,13 @@ export const LayoutSwitcher = ({
   }
 
   const layoutConfig = {
-    chat: {
-      icon: MessageSquare,
-      label: "Chat",
-    },
     traditional: {
       icon: FileText,
       label: "Traditional",
+    },
+    chat: {
+      icon: MessageSquare,
+      label: "Chat",
     },
   };
 

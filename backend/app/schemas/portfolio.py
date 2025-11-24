@@ -162,7 +162,7 @@ class LayoutSettings(BaseModel):
         description="Available layout modes: chat-only, traditional-only, both",
     )
     default_layout: Optional[str] = Field(
-        default="chat",
+        default="traditional",
         description="Default layout when both are available: chat, traditional",
     )
     chat_mode_footer: Optional[bool] = Field(

@@ -37,7 +37,7 @@ export const PortfolioLayoutContainer = ({
   portfolioData,
   layoutSettings = {
     layoutMode: "both",
-    defaultLayout: "chat",
+    defaultLayout: "traditional",
   },
   isLoading = false,
   error,
@@ -60,7 +60,7 @@ export const PortfolioLayoutContainer = ({
         return ["traditional"];
       case "both":
       default:
-        return ["chat", "traditional"];
+        return ["traditional", "chat"];
     }
   };
 

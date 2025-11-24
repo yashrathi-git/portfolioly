@@ -31,15 +31,15 @@ export const LayoutSettingsSchema = z
     /** Default layout when both are available: chat, traditional */
     default_layout: z
       .enum(["chat", "traditional"])
-      .catch("chat")
+      .catch("traditional")
       .optional()
-      .default("chat"),
+      .default("traditional"),
     /** Show "Built with Portfolioly" footer */
     chat_mode_footer: z.boolean().optional().default(true),
   })
   .catch({
     layout_mode: "both",
-    default_layout: "chat",
+    default_layout: "traditional",
     chat_mode_footer: true,
   });
 
