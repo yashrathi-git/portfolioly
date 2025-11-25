@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
-import RootProviders from "@/components/RootProviders";
 import { getThemeScript } from "@/lib/theme";
 
 export const metadata: Metadata = {
@@ -35,7 +34,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://media.portfolioly.app" />
       </head>
       <body className="min-h-dvh antialiased bg-background text-foreground">
-        <RootProviders>{children}</RootProviders>
+        {children}
       </body>
     </html>
   );

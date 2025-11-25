@@ -180,7 +180,7 @@ export function LayoutSettingsForm({
             <div className="space-y-1">
               <Label className="text-sm font-medium">Show Footer</Label>
               <p className="text-sm text-muted-foreground">
-                Display small "Built with Portfolioly" footer.
+                Display small &quot;Built with Portfolioly&quot; footer.
               </p>
             </div>
             <Switch

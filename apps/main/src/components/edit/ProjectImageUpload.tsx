@@ -432,7 +432,7 @@ export function ProjectImageUpload({
           <ImageIcon className="h-10 w-10 mx-auto mb-2 opacity-50" />
           <p className="text-sm">No images uploaded yet</p>
           <p className="text-xs mt-1">
-            Click "Add Images" to upload up to{" "}
+            Click &quot;Add Images&quot; to upload up to{" "}
             {UPLOAD_CONFIG.MAX_PROJECT_IMAGES} images
           </p>
         </div>
