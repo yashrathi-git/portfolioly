@@ -43,7 +43,10 @@ packages/*/dist/
 .env.development.local
 .env.test.local
 .env.production.local
-
+.env.production
+.env.development
+.env.local
+.env.*.local
 # debug
 npm-debug.log*
 yarn-debug.log*

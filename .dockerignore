@@ -1,47 +1,44 @@
-# Global ignores
+# Dependencies (will be installed fresh)
+node_modules
+**/node_modules
+
+# Build outputs
+**/.next
+**/dist
+**/out
+
+# Development files (keep .env.production for build)
+**/.env
+**/.env.local
+**/.env.development
+**/.env.development.local
+**/.env.test
+**/.env.test.local
+!**/.env.production
+
+# Git
 .git
 .gitignore
-**/__pycache__/
-**/*.py[cod]
-**/*.pyo
-**/*.pyd
-**/*.so
-**/*.dylib
+
+# IDE
+.vscode
+.idea
 **/.DS_Store
-**/.Python
 
-# Node / frontend artifacts
-node_modules
-**/.next
-**/.turbo
-**/.vercel
-**/dist
+# Documentation and specs (not needed for build)
+.kiro
+documentation
 
-# Python virtual environments and caches
-**/.venv
-**/.ruff_cache
-**/.mypy_cache
-**/.pytest_cache
-**/.coverage
-**/.hypothesis
+# Backend (not needed for frontend build)
+backend
 
-# Environment files and logs
-.env
-.env.*
-*.env
-*.env.*
+# Tests
+**/__tests__
+**/tests
+**/*.test.*
+**/*.spec.*
+
+# Misc
 *.log
-
-# Backend-specific secrets & junk
-backend/firebaseServiceKeyJson/
-backend/.env
-backend/.venv
-backend/.pytest_cache
-backend/.mypy_cache
-backend/.ruff_cache
-backend/.coverage
-
-# IDE / tooling
-**/.idea
-**/.vscode
-
+.dockerignore
+Dockerfile

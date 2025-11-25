@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+.yarn/cache
+.yarn/unplugged
+.yarn/install-state.gz
+
+# Build outputs
+.next
+out
+dist
+
+# Development
+*.log
+.env*.local
+.DS_Store
+
+# Testing
+coverage
+.nyc_output
+
+# IDE
+.vscode
+.idea
+
+# Git
+.git
+.gitignore
