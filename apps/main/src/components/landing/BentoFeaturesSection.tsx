@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ImportDataBeamDemo } from "./ImportDataBeamDemo";
 
 const BENTO_CONTENT = {
   eyebrow: "Ship portfolios faster",
@@ -12,21 +13,16 @@ const BENTO_CONTENT = {
       description:
         "Edge caching keeps your latest edits live without manual redeploys, so every share link stays blazing fast.",
       image: {
-        src: "https://tailwindcss.com/plus-assets/img/component-images/bento-01-performance.png",
+        src: "https://media.portfolioly.app/hero/bento/final.webp",
         alt: "Analytics dashboard showing performance metrics",
         objectPosition: "object-left",
       },
     },
-    releases: {
-      label: "Releases",
-      title: "Push to deploy",
+    importData: {
+      label: "Import",
+      title: "Import data in one click",
       description:
-        "Preview changes, collect feedback, and publish with a single click—perfect for iterating on launch-day polish.",
-      image: {
-        src: "https://tailwindui.com/plus/img/component-images/bento-01-releases.png",
-        alt: "UI showing deployment workflow",
-        objectPosition: "object-left lg:object-right",
-      },
+        "Connect your LinkedIn, GitHub, or upload a resume—our AI extracts and structures your data instantly.",
     },
     speed: {
       label: "Speed",
@@ -66,7 +62,7 @@ const BENTO_CONTENT = {
 
 export function BentoFeaturesSection() {
   const { eyebrow, heading, description, cards } = BENTO_CONTENT;
-  const { performance, releases, speed, integrations, network } = cards;
+  const { performance, importData, speed, integrations, network } = cards;
 
   return (
     <section className="bg-background py-32 sm:py-40">
@@ -111,23 +107,18 @@ export function BentoFeaturesSection() {
           <div className="relative lg:col-span-3">
             <div className="absolute inset-px rounded-lg bg-card/50 backdrop-blur-xl border border-border/50 lg:rounded-tr-[2rem]" />
             <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)] lg:rounded-tr-[calc(2rem+1px)]">
-              <Image
-                alt={releases.image.alt}
-                src={releases.image.src}
-                width={800}
-                height={320}
-                className={`h-80 w-full object-cover ${releases.image.objectPosition}`}
-                sizes="(min-width: 1024px) 33vw, 100vw"
-              />
+              <div className="h-80 w-full">
+                <ImportDataBeamDemo className="h-full" />
+              </div>
               <div className="p-10 pt-4">
                 <h3 className="text-sm/4 font-semibold text-primary">
-                  {releases.label}
+                  {importData.label}
                 </h3>
                 <p className="mt-2 text-lg/7 font-medium tracking-tight text-foreground">
-                  {releases.title}
+                  {importData.title}
                 </p>
                 <p className="mt-2 max-w-lg text-sm/6 text-muted-foreground">
-                  {releases.description}
+                  {importData.description}
                 </p>
               </div>
             </div>
