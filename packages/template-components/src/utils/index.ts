@@ -6,3 +6,4 @@ export * from "./data-mapper";
 export * from "./component-flags";
 export * from "./debug";
 export * from "./markdown";
+export * from "./chat-error-handler";

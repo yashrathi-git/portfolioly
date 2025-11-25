@@ -269,10 +269,18 @@ def build_system_prompt(portfolio_data: PortfolioData) -> str:
     widget_commands = "\n".join(widget_examples)
 
     # Use the template from constants
-    return get_system_prompt(
+    final_prompt = get_system_prompt(
         name=name,
         portfolio_context=portfolio_context,
         widget_commands=widget_commands,
         msg_break=ChatDelimiters.MSG_BREAK,
         headline=headline,
     )
+
+    # Truncate system prompt if it exceeds the character limit (for abuse prevention)
+    from ..constants.chat_config import ChatConfig
+
+    if len(final_prompt) > ChatConfig.MAX_SYSTEM_PROMPT_CHARS:
+        final_prompt = final_prompt[: ChatConfig.MAX_SYSTEM_PROMPT_CHARS - 3] + "..."
+
+    return final_prompt

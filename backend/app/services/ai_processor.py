@@ -49,7 +49,7 @@ class AIProcessor:
     """
 
     # Token counting configuration
-    MAX_TOKENS_PER_REQUEST = 50000  # Default token limit
+    MAX_TOKENS_PER_REQUEST = 5000  # Default token limit for abuse prevention
     MODEL_ENCODING = "cl100k_base"  # Default encoding for GPT models
 
     # Request configuration

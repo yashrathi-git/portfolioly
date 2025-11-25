@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast, Toaster } from "sonner";
 import ChatHeader from "./chat/Header";
 import { EmptyState } from "./chat/EmptyState";
 import { Thread } from "./chat/Thread";
@@ -18,6 +19,10 @@ import {
 } from "../utils/component-flags";
 import { ThemeToggle } from "./ThemeToggle";
 import { PortfolioFooter } from "./PortfolioFooter";
+import {
+  parseApiError,
+  getChatErrorMessage,
+} from "../utils/chat-error-handler";
 
 export type ChatPortfolioProps = {
   profile?: ChatProfile;
@@ -110,6 +115,10 @@ const ChatPortfolioComponent = ({
     },
     onError: (error) => {
       console.error("Chat error:", error);
+      // Parse the error and show user-friendly toast
+      const parsedError = parseApiError(error);
+      const userMessage = getChatErrorMessage(parsedError, username);
+      toast.error(userMessage);
     },
   });
 
@@ -235,11 +244,18 @@ const ChatPortfolioComponent = ({
     }
   };
 
-  // Show API error if present
-  const displayError = aiError?.message;
-
   return (
     <PortfolioErrorBoundary>
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          style: {
+            background: "var(--background)",
+            color: "var(--foreground)",
+            border: "1px solid var(--border)",
+          },
+        }}
+      />
       <div
         className={`${styles.portfolioTheme} min-h-[100svh] w-full relative overflow-hidden bg-[var(--background)] text-[var(--foreground)] flex flex-col px-3 sm:px-0`}
       >
@@ -339,13 +355,6 @@ const ChatPortfolioComponent = ({
                       </motion.div>
                     )}
                   </AnimatePresence>
-
-                  {/* Show error message if present */}
-                  {displayError && (
-                    <div className="mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-800 dark:text-red-200">
-                      {displayError}
-                    </div>
-                  )}
 
                   <Composer
                     value={localInput || input}

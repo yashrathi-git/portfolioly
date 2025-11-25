@@ -12,14 +12,14 @@ class ChatConfig:
     RATE_LIMIT_WINDOW_SECONDS = 3600  # 1 hour
 
     # Input validation
-    MAX_USER_INPUT_CHARS = 240  # ~60 tokens with a buffer
-    MAX_SYSTEM_PROMPT_CHARS = 16000
+    MAX_USER_INPUT_CHARS = 280  # ~70 tokens with a buffer
+    MAX_SYSTEM_PROMPT_CHARS = 10000  # ~2500 tokens
     MAX_TOOL_ARGUMENT_CHARS = 4000
 
     # AI processing
     CHAT_MODEL_NAME = "gpt-5-mini"  # Azure AI model
     PROCESSOR_MODEL_NAME = "gpt-5-mini"  # Default model for AIProcessor
-    MAX_CONVERSATION_HISTORY = 10  # Number of previous messages to include
+    MAX_CONVERSATION_HISTORY = 5  # Number of previous messages to include
     MAX_RESPONSE_TOKENS = 500  # Keep token limit to control Azure response size
 
     # Storage

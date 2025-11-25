@@ -62,11 +62,9 @@ async def check_chat_ip_rate_limit(
         raise HTTPException(
             status_code=429,
             detail={
-                "message": f"Rate limit exceeded. Maximum {RateLimitRules.CHAT.requests} chat requests per hour from your IP address.",
+                "message": "Too many requests. Please wait a moment and try again.",
                 "error_code": "CHAT_IP_RATE_LIMIT_EXCEEDED",
                 "retry_after": retry_after,
-                "current_count": current_count,
-                "limit": RateLimitRules.CHAT.requests,
             },
             headers={"Retry-After": str(retry_after)},
         )
@@ -161,10 +159,8 @@ async def check_portfolio_owner_usage_limit(
         raise HTTPException(
             status_code=429,
             detail={
-                "message": f"Portfolio owner has reached their monthly message limit of {monthly_limit} messages.",
+                "message": "AI services are currently unavailable.",
                 "error_code": "PORTFOLIO_OWNER_LIMIT_EXCEEDED",
-                "current_count": monthly_count,
-                "limit": monthly_limit,
             },
         )
 
@@ -217,12 +213,8 @@ def validate_chat_input_length(message: str) -> None:
         raise HTTPException(
             status_code=400,
             detail={
-                "message": (
-                    f"Message too long. Maximum {ChatConfig.MAX_USER_INPUT_CHARS} characters allowed."
-                ),
+                "message": "Message is too long. Please shorten your message.",
                 "error_code": "INPUT_LENGTH_EXCEEDED",
-                "char_count": len(message),
-                "limit": ChatConfig.MAX_USER_INPUT_CHARS,
             },
         )
 

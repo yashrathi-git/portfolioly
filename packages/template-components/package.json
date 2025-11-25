@@ -76,6 +76,7 @@
     "embla-carousel-react": "^8.6.0",
     "markdown-to-jsx": "^7.7.14",
     "portfolioly-schema": "^0.3.1",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
