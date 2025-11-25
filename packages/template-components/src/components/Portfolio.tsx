@@ -90,6 +90,14 @@ export const Portfolio = ({
       });
     }
 
+    if (portfolioData?.education && portfolioData.education.length > 0) {
+      generatedSuggestions.push({
+        id: "education",
+        label: "Education",
+        icon: "graduationCap",
+      });
+    }
+
     if (
       portfolioData?.profile?.email ||
       portfolioData?.profile?.socials?.length

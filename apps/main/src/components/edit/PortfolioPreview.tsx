@@ -102,82 +102,14 @@ const PortfolioPreviewComponent = ({ data }: PortfolioPreviewProps) => {
   // templateData.projects[0].primaryCardImage =
   //   "https://user-images.githubusercontent.com/57002207/147270294-de0ec3f9-7bfa-4c63-84de-b4239fd4995e.gif";
 
-  // Dynamic suggestions based on available data
-  const suggestions = useMemo(() => {
-    const availableSuggestions: { id: string; label: string; icon: string }[] =
-      [];
-
-    if (
-      data.personal_info?.summary ||
-      data.personal_info?.headline ||
-      data.personal_info?.full_name
-    ) {
-      availableSuggestions.push({ id: "me", label: "About Me", icon: "user" });
-    }
-
-    if (data.projects && data.projects.length > 0) {
-      availableSuggestions.push({
-        id: "projects",
-        label: "Projects",
-        icon: "folderGit2",
-      });
-    }
-
-    const hasSkills =
-      data.work_experiences?.some((exp) => exp.technologies?.length) ||
-      data.projects?.some((proj) => proj.technologies?.length);
-    if (hasSkills) {
-      availableSuggestions.push({
-        id: "skills",
-        label: "Skills",
-        icon: "wrench",
-      });
-    }
-
-    if (data.work_experiences && data.work_experiences.length > 0) {
-      availableSuggestions.push({
-        id: "experience",
-        label: "Experience",
-        icon: "briefcase",
-      });
-    }
-
-    if (data.education && data.education.length > 0) {
-      availableSuggestions.push({
-        id: "education",
-        label: "Education",
-        icon: "graduationCap",
-      });
-    }
-
-    const hasContact = Boolean(
-      data.personal_info?.email ||
-        data.personal_info?.profiles?.some(
-          (p) =>
-            ["linkedin", "github", "website", "portfolio"].includes(
-              p.type ?? ""
-            ) && p.url
-        )
-    );
-
-    if (hasContact) {
-      availableSuggestions.push({
-        id: "contact",
-        label: "Contact",
-        icon: "mail",
-      });
-    }
-
-    return availableSuggestions;
-  }, [data]);
-
   const hasContent = Boolean(
     profile ||
-      suggestions.length > 0 ||
       (templateData.profile &&
         (templateData.profile.name ||
           templateData.profile.headline ||
-          templateData.profile.location))
+          templateData.profile.location)) ||
+      (templateData.projects && templateData.projects.length > 0) ||
+      (templateData.experience && templateData.experience.length > 0)
   );
 
   if (!hasContent) {
@@ -209,7 +141,6 @@ const PortfolioPreviewComponent = ({ data }: PortfolioPreviewProps) => {
             isOwner={true}
             isPreview={true}
             profile={profile}
-            suggestions={suggestions}
             username={username}
             apiBaseUrl={env.API_BASE_URL}
             authToken={authToken}
