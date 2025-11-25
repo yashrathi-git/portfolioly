@@ -1,6 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
 import { ImportDataBeamDemo } from "./ImportDataBeamDemo";
 import { Globe } from "@/components/ui/globe";
+import { OpenSourceGraphic } from "./OpenSourceGraphic";
+import { SEOGraphic } from "./SEOGraphic";
 
 const BENTO_CONTENT = {
   eyebrow: "Ship portfolios faster",
@@ -31,35 +34,31 @@ const BENTO_CONTENT = {
       description:
         "Deploy in seconds to Vercel or publish to portfolioly.app, just one click away!",
     },
-    integrations: {
-      label: "Integrations",
-      title: "Connect your favorite tools",
+    customizeFreely: {
+      label: "Open Source",
+      title: "Customize Freely",
       description:
-        "Drop in metrics, demos, and live embeds from the rest of your stack without leaving the builder.",
-      image: {
-        src: "https://tailwindui.com/plus/img/component-images/bento-01-integrations.png",
-        alt: "Integrations gallery",
-        objectPosition: "object-center",
-      },
+        "Portfolioly is fully open source. Fork the repo and customize every aspect of your template to match your style.",
+      githubUrl: "https://github.com/yashrathi-git/portfolioly",
     },
-    network: {
-      label: "Network",
-      title: "Globally distributed CDN",
+    seoOptimized: {
+      label: "SEO Optimized",
+      title: "Get Discovered",
       description:
-        "Automatic image optimization, video poster frames, and GIF support keep visuals crisp for recruiters everywhere.",
-      image: {
-        src: "https://tailwindui.com/plus/img/component-images/bento-01-network.png",
-        alt: "Network map illustration",
-        objectPosition: "object-center",
-      },
+        "Built-in SEO best practices ensure your profile ranks on search engines, making it easier for recruiters to find you.",
     },
   },
 } as const;
 
 export function BentoFeaturesSection() {
   const { eyebrow, heading, description, cards } = BENTO_CONTENT;
-  const { performance, importData, oneClickDeploy, integrations, network } =
-    cards;
+  const {
+    performance,
+    importData,
+    oneClickDeploy,
+    customizeFreely,
+    seoOptimized,
+  } = cards;
 
   return (
     <section className="bg-background py-32 sm:py-40">
@@ -148,23 +147,25 @@ export function BentoFeaturesSection() {
           <div className="relative lg:col-span-2">
             <div className="absolute inset-px rounded-lg bg-card/50 backdrop-blur-xl border border-border/50" />
             <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]">
-              <Image
-                alt={integrations.image.alt}
-                src={integrations.image.src}
-                width={600}
-                height={320}
-                className={`h-80 w-full object-cover ${integrations.image.objectPosition}`}
-                sizes="(min-width: 1024px) 25vw, 100vw"
-              />
+              <OpenSourceGraphic className="h-80 w-full" />
               <div className="p-10 pt-4">
                 <h3 className="text-sm/4 font-semibold text-primary">
-                  {integrations.label}
+                  {customizeFreely.label}
                 </h3>
                 <p className="mt-2 text-lg/7 font-medium tracking-tight text-foreground">
-                  {integrations.title}
+                  {customizeFreely.title}
                 </p>
                 <p className="mt-2 max-w-lg text-sm/6 text-muted-foreground">
-                  {integrations.description}
+                  <Link
+                    href={customizeFreely.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Portfolioly
+                  </Link>{" "}
+                  is fully open source. Fork the repo and customize every aspect
+                  of your template to match your style.
                 </p>
               </div>
             </div>
@@ -174,23 +175,16 @@ export function BentoFeaturesSection() {
           <div className="relative lg:col-span-2">
             <div className="absolute inset-px rounded-lg bg-card/50 backdrop-blur-xl border border-border/50 max-lg:rounded-b-[2rem] lg:rounded-br-[2rem]" />
             <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)] max-lg:rounded-b-[calc(2rem+1px)] lg:rounded-br-[calc(2rem+1px)]">
-              <Image
-                alt={network.image.alt}
-                src={network.image.src}
-                width={600}
-                height={320}
-                className={`h-80 w-full object-cover ${network.image.objectPosition}`}
-                sizes="(min-width: 1024px) 25vw, 100vw"
-              />
+              <SEOGraphic className="h-80 w-full" />
               <div className="p-10 pt-4">
                 <h3 className="text-sm/4 font-semibold text-primary">
-                  {network.label}
+                  {seoOptimized.label}
                 </h3>
                 <p className="mt-2 text-lg/7 font-medium tracking-tight text-foreground">
-                  {network.title}
+                  {seoOptimized.title}
                 </p>
                 <p className="mt-2 max-w-lg text-sm/6 text-muted-foreground">
-                  {network.description}
+                  {seoOptimized.description}
                 </p>
               </div>
             </div>
