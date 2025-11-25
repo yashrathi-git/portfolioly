@@ -29,9 +29,6 @@ node_modules
 .kiro
 documentation
 
-# Backend (not needed for frontend build)
-backend
-
 # Tests
 **/__tests__
 **/tests
