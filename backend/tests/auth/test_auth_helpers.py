@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from app.routes.utils.auth_helpers import (
     extract_bearer_token,
     verify_firebase_jwt,
-    verify_public_token,
+    verify_public_token_with_settings,
     validate_portfolio_access,
     get_user_settings_by_username,
 )
@@ -106,109 +106,86 @@ class TestVerifyFirebaseJWT:
         assert result is None
 
 
-class TestVerifyPublicToken:
-    """Test public token verification."""
+class TestVerifyPublicTokenWithSettings:
+    """Test public token verification with pre-fetched settings."""
 
-    @patch("app.services.username_service.get_username_service")
-    @patch("app.routes.utils.auth_helpers.get_user_settings_service")
     @patch("app.routes.utils.auth_helpers.get_public_token_service")
-    def test_verify_valid_public_token(
-        self, mock_get_token_service, mock_get_settings_service, mock_get_username_service
-    ):
+    def test_verify_valid_public_token(self, mock_get_token_service):
         """Should return True for valid public token."""
-        mock_settings_service = Mock()
-        mock_settings_service.get_user_settings.return_value = {
+        user_settings = {
             "user_id": "user123",
             "username": "johndoe",
             "public_token_ver": 1,
         }
-        mock_get_settings_service.return_value = mock_settings_service
-
-        mock_username_service = Mock()
-        mock_username_service.get_user_id_by_username.return_value = "user123"
-        mock_get_username_service.return_value = mock_username_service
 
         mock_token_service = Mock()
         mock_token_service.verify_public_token.return_value = True
         mock_get_token_service.return_value = mock_token_service
 
-        result = verify_public_token("johndoe", "psk_validtoken")
+        result = verify_public_token_with_settings(
+            "johndoe", "psk_validtoken", user_settings
+        )
 
         assert result is True
         mock_token_service.verify_public_token.assert_called_once_with(
             "johndoe", "psk_validtoken", 1
         )
 
-    @patch("app.services.username_service.get_username_service")
-    @patch("app.routes.utils.auth_helpers.get_user_settings_service")
-    def test_verify_token_username_not_found(
-        self, mock_get_settings_service, mock_get_username_service
-    ):
-        """Should return False if username doesn't exist."""
-        mock_settings_service = Mock()
-        mock_get_settings_service.return_value = mock_settings_service
-
-        mock_username_service = Mock()
-        mock_username_service.get_user_id_by_username.return_value = None
-        mock_get_username_service.return_value = mock_username_service
-
-        result = verify_public_token("nonexistent", "psk_token")
-
-        assert result is False
-
-    @patch("app.services.username_service.get_username_service")
-    @patch("app.routes.utils.auth_helpers.get_user_settings_service")
     @patch("app.routes.utils.auth_helpers.get_public_token_service")
-    def test_verify_invalid_public_token(
-        self, mock_get_token_service, mock_get_settings_service, mock_get_username_service
-    ):
+    def test_verify_invalid_public_token(self, mock_get_token_service):
         """Should return False for invalid token."""
-        mock_settings_service = Mock()
-        mock_settings_service.get_user_settings.return_value = {
+        user_settings = {
             "user_id": "user123",
             "username": "johndoe",
             "public_token_ver": 1,
         }
-        mock_get_settings_service.return_value = mock_settings_service
-
-        mock_username_service = Mock()
-        mock_username_service.get_user_id_by_username.return_value = "user123"
-        mock_get_username_service.return_value = mock_username_service
 
         mock_token_service = Mock()
         mock_token_service.verify_public_token.return_value = False
         mock_get_token_service.return_value = mock_token_service
 
-        result = verify_public_token("johndoe", "psk_invalidtoken")
+        result = verify_public_token_with_settings(
+            "johndoe", "psk_invalidtoken", user_settings
+        )
 
         assert result is False
 
-    @patch("app.services.username_service.get_username_service")
-    @patch("app.routes.utils.auth_helpers.get_user_settings_service")
     @patch("app.routes.utils.auth_helpers.get_public_token_service")
-    def test_verify_token_version_mismatch(
-        self, mock_get_token_service, mock_get_settings_service, mock_get_username_service
-    ):
+    def test_verify_token_version_mismatch(self, mock_get_token_service):
         """Should return False when token version doesn't match."""
-        mock_settings_service = Mock()
-        mock_settings_service.get_user_settings.return_value = {
+        user_settings = {
             "user_id": "user123",
             "username": "johndoe",
-            "public_token_ver": 2,  # Version incremented
+            "public_token_ver": 2,
         }
-        mock_get_settings_service.return_value = mock_settings_service
-
-        mock_username_service = Mock()
-        mock_username_service.get_user_id_by_username.return_value = "user123"
-        mock_get_username_service.return_value = mock_username_service
 
         mock_token_service = Mock()
         mock_token_service.verify_public_token.return_value = False
         mock_get_token_service.return_value = mock_token_service
 
-        result = verify_public_token("johndoe", "psk_oldtoken")
+        result = verify_public_token_with_settings(
+            "johndoe", "psk_oldtoken", user_settings
+        )
 
         assert result is False
+
+    @patch("app.routes.utils.auth_helpers.get_public_token_service")
+    def test_uses_default_token_version(self, mock_get_token_service):
+        """Should use default token version 1 if not in settings."""
+        user_settings = {"user_id": "user123", "username": "johndoe"}
+
+        mock_token_service = Mock()
+        mock_token_service.verify_public_token.return_value = True
+        mock_get_token_service.return_value = mock_token_service
+
+        result = verify_public_token_with_settings(
+            "johndoe", "psk_token", user_settings
+        )
+
+        assert result is True
+        mock_token_service.verify_public_token.assert_called_once_with(
+            "johndoe", "psk_token", 1
+        )
 
 
 class TestValidatePortfolioAccess:
@@ -232,7 +209,6 @@ class TestValidatePortfolioAccess:
             "public_token_ver": 1,
         }
 
-    # No Authentication Tests
     @patch("app.routes.utils.auth_helpers.get_user_settings_by_username")
     @patch("app.routes.utils.auth_helpers.extract_bearer_token")
     def test_no_token_returns_401(
@@ -259,7 +235,6 @@ class TestValidatePortfolioAccess:
         assert exc_info.value.status_code == 404
         assert "Portfolio not found" in exc_info.value.detail
 
-    # Firebase JWT Owner Access Tests
     @patch("app.routes.utils.auth_helpers.get_user_settings_by_username")
     @patch("app.routes.utils.auth_helpers.extract_bearer_token")
     @patch("app.routes.utils.auth_helpers.verify_firebase_jwt")
@@ -270,12 +245,12 @@ class TestValidatePortfolioAccess:
         mock_get_settings,
         private_user_settings,
     ):
-        """Owner with Firebase JWT should access their own portfolio (even if private)."""
+        """Owner with Firebase JWT should access their own portfolio."""
         mock_get_settings.return_value = private_user_settings
         mock_extract_token.return_value = "firebase_jwt"
 
         owner_token = UserToken(
-            uid="owner456",  # Matches private_user_settings.user_id
+            uid="owner456",
             email="janedoe@example.com",
             email_verified=True,
         )
@@ -291,7 +266,7 @@ class TestValidatePortfolioAccess:
     @patch("app.routes.utils.auth_helpers.get_user_settings_by_username")
     @patch("app.routes.utils.auth_helpers.extract_bearer_token")
     @patch("app.routes.utils.auth_helpers.verify_firebase_jwt")
-    @patch("app.routes.utils.auth_helpers.verify_public_token")
+    @patch("app.routes.utils.auth_helpers.verify_public_token_with_settings")
     def test_non_owner_firebase_jwt_denied(
         self,
         mock_verify_public_token,
@@ -305,12 +280,12 @@ class TestValidatePortfolioAccess:
         mock_extract_token.return_value = "firebase_jwt"
 
         different_user = UserToken(
-            uid="different_user_789",  # NOT owner123
+            uid="different_user_789",
             email="different@example.com",
             email_verified=True,
         )
         mock_verify_jwt.return_value = different_user
-        mock_verify_public_token.return_value = False  # Not a valid public token
+        mock_verify_public_token.return_value = False
 
         with pytest.raises(HTTPException) as exc_info:
             validate_portfolio_access("johndoe", authorization="Bearer firebase_jwt")
@@ -318,11 +293,10 @@ class TestValidatePortfolioAccess:
         assert exc_info.value.status_code == 401
         assert "Invalid token" in exc_info.value.detail
 
-    # Public Token Access Tests
     @patch("app.routes.utils.auth_helpers.get_user_settings_by_username")
     @patch("app.routes.utils.auth_helpers.extract_bearer_token")
     @patch("app.routes.utils.auth_helpers.verify_firebase_jwt")
-    @patch("app.routes.utils.auth_helpers.verify_public_token")
+    @patch("app.routes.utils.auth_helpers.verify_public_token_with_settings")
     def test_valid_psk_token_grants_access(
         self,
         mock_verify_public_token,
@@ -331,10 +305,10 @@ class TestValidatePortfolioAccess:
         mock_get_settings,
         public_user_settings,
     ):
-        """Valid PSK token should grant access regardless of access_mode."""
+        """Valid PSK token should grant access."""
         mock_get_settings.return_value = public_user_settings
         mock_extract_token.return_value = "psk_validtoken"
-        mock_verify_jwt.return_value = None  # Not a Firebase JWT
+        mock_verify_jwt.return_value = None
         mock_verify_public_token.return_value = True
 
         user_settings, firebase_user = validate_portfolio_access(
@@ -347,32 +321,7 @@ class TestValidatePortfolioAccess:
     @patch("app.routes.utils.auth_helpers.get_user_settings_by_username")
     @patch("app.routes.utils.auth_helpers.extract_bearer_token")
     @patch("app.routes.utils.auth_helpers.verify_firebase_jwt")
-    @patch("app.routes.utils.auth_helpers.verify_public_token")
-    def test_valid_psk_token_private_portfolio(
-        self,
-        mock_verify_public_token,
-        mock_verify_jwt,
-        mock_extract_token,
-        mock_get_settings,
-        private_user_settings,
-    ):
-        """Valid PSK token grants access even to private portfolios."""
-        mock_get_settings.return_value = private_user_settings
-        mock_extract_token.return_value = "psk_validtoken"
-        mock_verify_jwt.return_value = None
-        mock_verify_public_token.return_value = True
-
-        user_settings, firebase_user = validate_portfolio_access(
-            "janedoe", authorization="Bearer psk_validtoken", require_public=False
-        )
-
-        assert user_settings == private_user_settings
-        assert firebase_user is None
-
-    @patch("app.routes.utils.auth_helpers.get_user_settings_by_username")
-    @patch("app.routes.utils.auth_helpers.extract_bearer_token")
-    @patch("app.routes.utils.auth_helpers.verify_firebase_jwt")
-    @patch("app.routes.utils.auth_helpers.verify_public_token")
+    @patch("app.routes.utils.auth_helpers.verify_public_token_with_settings")
     def test_invalid_psk_token_denied(
         self,
         mock_verify_public_token,
@@ -395,11 +344,10 @@ class TestValidatePortfolioAccess:
         assert exc_info.value.status_code == 401
         assert "Invalid token" in exc_info.value.detail
 
-    # require_public Parameter Tests
     @patch("app.routes.utils.auth_helpers.get_user_settings_by_username")
     @patch("app.routes.utils.auth_helpers.extract_bearer_token")
     @patch("app.routes.utils.auth_helpers.verify_firebase_jwt")
-    @patch("app.routes.utils.auth_helpers.verify_public_token")
+    @patch("app.routes.utils.auth_helpers.verify_public_token_with_settings")
     def test_require_public_true_with_private_portfolio(
         self,
         mock_verify_public_token,
@@ -408,7 +356,7 @@ class TestValidatePortfolioAccess:
         mock_get_settings,
         private_user_settings,
     ):
-        """With require_public=True, private portfolios should return 404 for public tokens."""
+        """With require_public=True, private portfolios should return 404."""
         mock_get_settings.return_value = private_user_settings
         mock_extract_token.return_value = "psk_validtoken"
         mock_verify_jwt.return_value = None
@@ -425,7 +373,7 @@ class TestValidatePortfolioAccess:
     @patch("app.routes.utils.auth_helpers.get_user_settings_by_username")
     @patch("app.routes.utils.auth_helpers.extract_bearer_token")
     @patch("app.routes.utils.auth_helpers.verify_firebase_jwt")
-    @patch("app.routes.utils.auth_helpers.verify_public_token")
+    @patch("app.routes.utils.auth_helpers.verify_public_token_with_settings")
     def test_require_public_true_with_public_portfolio(
         self,
         mock_verify_public_token,

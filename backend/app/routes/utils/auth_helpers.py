@@ -55,38 +55,23 @@ def verify_firebase_jwt(token: str) -> Optional[UserToken]:
         return None
 
 
-def verify_public_token(username: str, token: str) -> bool:
+def verify_public_token_with_settings(
+    username: str, token: str, user_settings: dict
+) -> bool:
     """
-    Verify public portfolio token.
+    Verify public portfolio token using pre-fetched user settings.
 
     Args:
         username: Portfolio username
         token: Public token to verify
+        user_settings: Pre-fetched user settings dict
 
     Returns:
         True if token is valid, False otherwise
     """
     try:
-        from ...services.username_service import get_username_service
-
-        username_service = get_username_service()
-        user_settings_service = get_user_settings_service()
-
-        # O(1) lookup to get user_id
-        user_id = username_service.get_user_id_by_username(username)
-
-        if not user_id:
-            return False
-
-        # Get user settings by user_id
-        user_settings = user_settings_service.get_user_settings(user_id)
-
-        if not user_settings:
-            return False
-
         token_version = user_settings.get("public_token_ver", 1)
         token_service = get_public_token_service()
-
         return token_service.verify_public_token(username, token, token_version)
     except Exception as e:
         logger.error(f"Error verifying public token for {username}: {e}")
@@ -135,6 +120,8 @@ def validate_portfolio_access(
     This function handles both Firebase JWT and public token authentication.
     Authentication is ALWAYS required - anonymous access is not permitted.
 
+    Optimized to minimize Firestore reads by reusing fetched user_settings.
+
     Args:
         username: Portfolio username
         authorization: Optional Authorization header
@@ -148,7 +135,7 @@ def validate_portfolio_access(
     Raises:
         HTTPException: 401 for missing/invalid tokens, 404 for missing/private portfolios
     """
-    # Get user settings
+    # Get user settings (single Firestore read)
     user_settings = get_user_settings_by_username(username)
 
     if not user_settings:
@@ -186,7 +173,10 @@ def validate_portfolio_access(
             firebase_user = None
 
     # Not owner with Firebase JWT, try public token
-    is_valid_public_token = verify_public_token(username, token)
+    # Use pre-fetched user_settings to avoid redundant Firestore read
+    is_valid_public_token = verify_public_token_with_settings(
+        username, token, user_settings
+    )
 
     if not is_valid_public_token:
         logger.warning(f"Invalid token provided for username '{username}'")

@@ -388,6 +388,11 @@ class TestEnsureToken:
 class TestEnsureUsername:
     """Test POST /public/ensure-username endpoint."""
 
+    @pytest.fixture(autouse=True)
+    def setup_rate_limit(self, mock_public_username_rate_limit):
+        """Bypass rate limiting for all tests in this class."""
+        pass
+
     @pytest.fixture
     def client(self):
         return TestClient(app)
@@ -515,6 +520,11 @@ class TestEnsureUsername:
 
 class TestUsernameAvailability:
     """Test GET /public/username/{username}/available endpoint."""
+
+    @pytest.fixture(autouse=True)
+    def setup_rate_limit(self, mock_public_username_rate_limit):
+        """Bypass rate limiting for all tests in this class."""
+        pass
 
     @pytest.fixture
     def client(self):

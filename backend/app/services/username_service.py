@@ -5,9 +5,12 @@ This service provides O(1) username lookups and guaranteed uniqueness
 using Firebase document IDs as the unique constraint.
 """
 
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime
+from functools import lru_cache
 import logging
+import time
+import threading
 
 import firebase_admin
 from firebase_admin import firestore
@@ -16,6 +19,33 @@ from google.api_core.exceptions import AlreadyExists
 from ..core.firebase import initialize_firebase
 
 logger = logging.getLogger(__name__)
+
+# TTL cache for username -> user_id mappings
+_USERNAME_CACHE_TTL = 300  # 5 minutes
+_USERNAME_CACHE_MAX_SIZE = 1000  # Max entries to prevent memory bloat
+_username_cache: Dict[str, tuple] = {}  # {username: (user_id, timestamp)}
+_cache_lock = threading.Lock()
+
+
+def _evict_expired_entries() -> None:
+    """Remove expired entries from cache. Must be called with lock held."""
+    now = time.time()
+    expired = [
+        k for k, (_, ts) in _username_cache.items() if now - ts >= _USERNAME_CACHE_TTL
+    ]
+    for k in expired:
+        del _username_cache[k]
+
+
+def _ensure_cache_size() -> None:
+    """Ensure cache doesn't exceed max size. Must be called with lock held."""
+    if len(_username_cache) <= _USERNAME_CACHE_MAX_SIZE:
+        return
+    # Evict oldest entries first
+    sorted_entries = sorted(_username_cache.items(), key=lambda x: x[1][1])
+    to_remove = len(_username_cache) - _USERNAME_CACHE_MAX_SIZE
+    for k, _ in sorted_entries[:to_remove]:
+        del _username_cache[k]
 
 
 class UsernameServiceError(Exception):
@@ -87,6 +117,12 @@ class UsernameService:
                 logger.info(f"Username '{username}' is already taken")
                 return False
 
+            # Update cache with new mapping (with size enforcement)
+            with _cache_lock:
+                _evict_expired_entries()
+                _username_cache[username_lower] = (user_id, time.time())
+                _ensure_cache_size()
+
             logger.info(
                 f"Successfully claimed username '{username}' for user {user_id}"
             )
@@ -135,6 +171,10 @@ class UsernameService:
             # Delete the username document
             username_ref.delete()
 
+            # Invalidate cache
+            with _cache_lock:
+                _username_cache.pop(username_lower, None)
+
             logger.info(
                 f"Successfully released username '{username}' for user {user_id}"
             )
@@ -147,7 +187,7 @@ class UsernameService:
 
     def get_user_id_by_username(self, username: str) -> Optional[str]:
         """
-        Get user ID by username with O(1) lookup.
+        Get user ID by username with O(1) lookup and TTL caching.
 
         Args:
             username: Username to lookup (will be converted to lowercase)
@@ -159,8 +199,18 @@ class UsernameService:
             UsernameServiceError: On database errors
         """
         try:
-            # Normalize to lowercase
             username_lower = username.lower()
+            now = time.time()
+
+            # Check cache first
+            with _cache_lock:
+                if username_lower in _username_cache:
+                    user_id, cached_at = _username_cache[username_lower]
+                    if now - cached_at < _USERNAME_CACHE_TTL:
+                        logger.debug(f"Cache hit for username '{username}'")
+                        return user_id
+                    # Cache expired, remove it
+                    del _username_cache[username_lower]
 
             # Direct document get - O(1) operation
             username_ref = self.db.collection("usernames").document(username_lower)
@@ -172,6 +222,12 @@ class UsernameService:
 
             doc_data = doc.to_dict()
             user_id = doc_data.get("user_id")
+
+            # Cache the result with size enforcement
+            with _cache_lock:
+                _evict_expired_entries()
+                _username_cache[username_lower] = (user_id, now)
+                _ensure_cache_size()
 
             logger.debug(f"Found user_id '{user_id}' for username '{username}'")
             return user_id

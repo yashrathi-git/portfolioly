@@ -138,7 +138,38 @@ def mock_github_api_rate_limit():
 
 
 @pytest.fixture
-def mock_all_rate_limits(mock_pdf_upload_rate_limit, mock_github_api_rate_limit):
+def mock_public_portfolio_rate_limit():
+    """Override public portfolio rate limiting dependency."""
+    from app.dependencies.rate_limiting import limit_public_portfolio_requests
+
+    async def _mock_rate_limit():
+        return None
+
+    app.dependency_overrides[limit_public_portfolio_requests] = _mock_rate_limit
+    yield
+    app.dependency_overrides.pop(limit_public_portfolio_requests, None)
+
+
+@pytest.fixture
+def mock_public_username_rate_limit():
+    """Override public username rate limiting dependency."""
+    from app.dependencies.rate_limiting import limit_public_username_requests
+
+    async def _mock_rate_limit():
+        return None
+
+    app.dependency_overrides[limit_public_username_requests] = _mock_rate_limit
+    yield
+    app.dependency_overrides.pop(limit_public_username_requests, None)
+
+
+@pytest.fixture
+def mock_all_rate_limits(
+    mock_pdf_upload_rate_limit,
+    mock_github_api_rate_limit,
+    mock_public_portfolio_rate_limit,
+    mock_public_username_rate_limit,
+):
     """
     Override all rate limiting dependencies at once.
 
@@ -146,7 +177,6 @@ def mock_all_rate_limits(mock_pdf_upload_rate_limit, mock_github_api_rate_limit)
         def test_something(self, mock_all_rate_limits):
             # All rate limiting is automatically bypassed
     """
-    # This fixture combines both rate limit fixtures
     yield
 
 

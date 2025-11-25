@@ -16,9 +16,10 @@ export interface UseAuthenticatedPortfolioResult {
 }
 
 export function useAuthenticatedPortfolio(): UseAuthenticatedPortfolioResult {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [data, setData] = useState<PortfolioData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Start with true to prevent flash of "no data" before fetch begins
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -71,13 +72,20 @@ export function useAuthenticatedPortfolio(): UseAuthenticatedPortfolioResult {
   }, [user]);
 
   useEffect(() => {
+    if (authLoading) {
+      // Still checking auth, keep loading true
+      return;
+    }
+
     if (user) {
       fetchData();
     } else {
+      // No user, stop loading and clear data
       setData(null);
       setError(null);
+      setIsLoading(false);
     }
-  }, [user, fetchData]);
+  }, [user, authLoading, fetchData]);
 
   return {
     data,
