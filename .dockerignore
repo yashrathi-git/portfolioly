@@ -2,6 +2,12 @@
 node_modules
 **/node_modules
 
+# Python virtual environments (will be created fresh in Docker)
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+
 # Build outputs
 **/.next
 **/dist
