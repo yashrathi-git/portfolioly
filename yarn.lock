@@ -4804,6 +4804,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cobe@npm:^0.6.5":
+  version: 0.6.5
+  resolution: "cobe@npm:0.6.5"
+  dependencies:
+    phenomenon: "npm:^1.6.0"
+  checksum: 10c0/a5f28f3c0eac6222769278eda6d1a367978276135c8ed9dbe10f6c4ff56d7fcd762a93f474ac1b0fbfd2b0aa40c783f3790ee832d14649609f63c2e7a0f707b1
+  languageName: node
+  linkType: hard
+
 "color-convert@npm:^2.0.1":
   version: 2.0.1
   resolution: "color-convert@npm:2.0.1"
@@ -7148,6 +7157,7 @@ __metadata:
     canvas-confetti: "npm:^1.9.4"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
+    cobe: "npm:^0.6.5"
     compressorjs: "npm:^1.2.1"
     embla-carousel-react: "npm:^8.6.0"
     emblor: "npm:^1.4.8"
@@ -7808,6 +7818,13 @@ __metadata:
   version: 2.0.3
   resolution: "pathe@npm:2.0.3"
   checksum: 10c0/c118dc5a8b5c4166011b2b70608762e260085180bb9e33e80a50dcdb1e78c010b1624f4280c492c92b05fc276715a4c357d1f9edc570f8f1b3d90b6839ebaca1
+  languageName: node
+  linkType: hard
+
+"phenomenon@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "phenomenon@npm:1.6.0"
+  checksum: 10c0/32216a8861e69ab1d96c8fa96217769073f446173f3135fbe369ea61f0959c453347004b5aefb22ba18f725273e7c57ce2d2a29c4db6ac431a2839b7bacf9778
   languageName: node
   linkType: hard
 
