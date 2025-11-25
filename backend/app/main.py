@@ -32,12 +32,20 @@ def create_app() -> FastAPI:
     # Initialize Firebase
     initialize_firebase()
 
+    # Disable docs in production
+    docs_url = "/docs" if settings.debug else None
+    redoc_url = "/redoc" if settings.debug else None
+    openapi_url = "/openapi.json" if settings.debug else None
+
     # Create FastAPI app
     app = FastAPI(
         title=settings.app_name,
         version=settings.version,
         debug=settings.debug,
         description="Portfolioly Backend API with Firebase Authentication",
+        docs_url=docs_url,
+        redoc_url=redoc_url,
+        openapi_url=openapi_url,
     )
 
     # Add CORS middleware
