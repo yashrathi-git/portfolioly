@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { getDiscordLink, GITHUB_REPO_URL } from "@/lib/utils/links";
 
 interface FAQItemProps {
   question: string;
-  answer: string;
+  answer: React.ReactNode;
   isOpen: boolean;
   onClick: () => void;
 }
@@ -47,21 +47,81 @@ const FAQItem = ({ question, answer, isOpen, onClick }: FAQItemProps) => {
   );
 };
 
-const faqs = [
+const linkClass = "text-primary hover:underline";
+
+const faqs: { question: string; answer: React.ReactNode }[] = [
   {
-    question: "Is it really completely free to use?",
-    answer:
-      "Yes! Portfolioly is open-source and free to use. You can deploy your portfolio directly to GitHub Pages or Vercel without any cost. We believe in empowering developers to showcase their work without barriers.",
+    question: "Is it free?",
+    answer: "Yes, it is completely free to use. No watermarks! No paywall.",
   },
   {
-    question: "What happens to my data?",
-    answer:
-      "Your data is yours. Portfolioly runs entirely on your local machine or within your own cloud environment if you choose to self-host. We don't store any of your personal information or portfolio content on our servers.",
+    question: "Is it open-source?",
+    answer: (
+      <>
+        Yes! Check out our{" "}
+        <a
+          href={GITHUB_REPO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClass}
+        >
+          GitHub repository
+        </a>
+        .
+      </>
+    ),
   },
   {
-    question: "How can I customize the portfolio?",
+    question: "How to customize the portfolio after generation?",
     answer:
-      "You have complete control! Since the code is open-source, you can fork the repository and modify any part of the codebase. We also provide a set of built-in themes and layout options to get you started quickly without touching code if you prefer.",
+      "You can fork the template code and customize it yourself once you have generated your portfolio. We are also looking to add more templates quickly.",
+  },
+  {
+    question: "How to get help?",
+    answer: (
+      <>
+        Join our{" "}
+        <a
+          href={getDiscordLink()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClass}
+        >
+          Discord
+        </a>{" "}
+        and you can ask your questions there.
+      </>
+    ),
+  },
+  {
+    question: "I want to report an issue",
+    answer: (
+      <>
+        You can report issues on{" "}
+        <a
+          href={getDiscordLink()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClass}
+        >
+          Discord
+        </a>{" "}
+        or open an issue on{" "}
+        <a
+          href={`${GITHUB_REPO_URL}/issues`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClass}
+        >
+          GitHub Issues
+        </a>
+        .
+      </>
+    ),
+  },
+  {
+    question: "Which AI models does it use?",
+    answer: "We mainly use GPT-5-mini and GPT-5.1 models.",
   },
 ];
 
