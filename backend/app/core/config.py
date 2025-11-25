@@ -2,11 +2,18 @@
 
 import os
 from typing import List, Optional
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import dotenv
 
 dotenv.load_dotenv()
+
+# Default CORS origins (always included)
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "https://portfolioly.app",
+    "https://www.portfolioly.app",
+]
 
 
 class StorageContainerNames(BaseModel):
@@ -84,9 +91,27 @@ class Settings(BaseSettings):
     debug: bool = False
     version: str = "1.0.0"
 
-    # CORS settings
-    allowed_origins: List[str] = ["http://localhost:3000"]
+    # CORS settings (comma-separated string from env, parsed to list)
+    allowed_origins_str: str = ""
     frontend_origin: Optional[str] = None
+
+    @computed_field
+    @property
+    def allowed_origins(self) -> List[str]:
+        """Parse allowed origins from string and merge with defaults."""
+        origins = set(DEFAULT_CORS_ORIGINS)
+
+        if self.allowed_origins_str:
+            if self.allowed_origins_str.strip() == "*":
+                return ["*"]
+            for origin in self.allowed_origins_str.split(","):
+                if origin.strip():
+                    origins.add(origin.strip())
+
+        if self.frontend_origin:
+            origins.add(self.frontend_origin)
+
+        return list(origins)
 
     # Firebase settings
     google_application_credentials: Optional[str] = None
@@ -137,30 +162,6 @@ class Settings(BaseSettings):
                 f"Current length: {len(v)}"
             )
         return v
-
-    @field_validator("allowed_origins", mode="before")
-    @classmethod
-    def parse_allowed_origins(cls, v) -> List[str]:
-        """Parse comma-separated origins or return wildcard."""
-        if isinstance(v, list):
-            return v
-        if isinstance(v, str):
-            if v.strip() == "*":
-                return ["*"]
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        if v is None:
-            return ["http://localhost:3000"]
-        # Fallback: cast everything else to string then parse
-        value = str(v)
-        if value.strip() == "*":
-            return ["*"]
-        return [origin.strip() for origin in value.split(",") if origin.strip()]
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Add frontend origin to allowed origins if specified
-        if self.frontend_origin and self.frontend_origin not in self.allowed_origins:
-            self.allowed_origins.append(self.frontend_origin)
 
 
 # Global settings instance
