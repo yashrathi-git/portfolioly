@@ -35,10 +35,12 @@ export default function HeaderBar() {
         {/* Logo - text hidden on mobile */}
         <Link
           href={homeRoute}
-          className="flex items-center gap-2 font-semibold tracking-tight hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <WandIcon className="h-6 w-6" />
-          <span className="hidden sm:inline">Portfolioly</span>
+          <span className="hidden sm:inline text-lg font-semibold">
+            Portfolioly
+          </span>
         </Link>
 
         {/* Desktop Navigation */}

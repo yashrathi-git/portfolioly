@@ -79,7 +79,7 @@ export function Hero() {
 Our AI extracts your experience and builds a stunning portfolio.
 Share it with the world in seconds.`}
             </TextEffect>
-            <div className="mt-8 flex items-center justify-center gap-x-4">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <motion.div
                 variants={ENTRY_VARIANTS}
                 initial="hidden"
@@ -94,7 +94,7 @@ Share it with the world in seconds.`}
                   href="/auth/sign-up"
                   className="rounded-md bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-opacity"
                 >
-                  Start building
+                  Generate Portfolio
                 </Link>
               </motion.div>
               <motion.div
@@ -108,13 +108,33 @@ Share it with the world in seconds.`}
                 }}
               >
                 <Link
-                  href="https://github.com/yourusername/portfolioly"
+                  href="https://github.com/yashrathi-git/portfolioly"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-md border border-border px-3.5 py-2.5 text-sm font-semibold text-foreground hover:bg-secondary transition-colors"
                 >
                   <Github className="h-4 w-4" />
                   Star on GitHub
+                </Link>
+              </motion.div>
+              <motion.div
+                variants={ENTRY_VARIANTS}
+                initial="hidden"
+                animate="visible"
+                transition={{
+                  duration: 0.5,
+                  delay: 0.7,
+                  ease: "easeOut",
+                }}
+              >
+                <Link
+                  href="/demo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-border px-3.5 py-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                >
+                  Live Demo
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </motion.div>
             </div>

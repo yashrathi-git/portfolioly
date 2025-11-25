@@ -1,66 +1,71 @@
 "use client";
 
-import { ArrowRight, Sun, Moon } from "lucide-react";
+import { Sun, Moon, Github } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import Link from "next/link";
 import { WandIcon } from "@/components/icons/PortfoliolyWandIcon";
+import { useScroll } from "motion/react";
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 export function LandingHeader() {
   const { isDark, toggleTheme } = useTheme();
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Portfolioly";
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const { scrollY } = useScroll();
+
+  useEffect(() => {
+    return scrollY.on("change", (latest) => {
+      setHasScrolled(latest > 50);
+    });
+  }, [scrollY]);
 
   return (
-    <header className="absolute inset-x-0 top-0 z-50">
-      <nav className="flex items-center justify-between p-6 lg:px-8">
-        <div className="flex lg:flex-1">
-          <Link
-            href="/"
-            className="flex items-center gap-2 font-semibold tracking-tight text-lg text-foreground hover:opacity-80 transition-opacity"
-          >
-            <WandIcon className="h-6 w-6" />
-            <span>Portfolioly</span>
-          </Link>
+    <header className="fixed inset-x-0 top-0 z-50 px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl pt-4">
+        <div
+          className={cn(
+            "flex w-full items-center justify-between rounded-full border transition-all duration-200 ease-out",
+            hasScrolled
+              ? "border-zinc-200 bg-white/80 px-2 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80"
+              : "border-transparent bg-transparent px-0 backdrop-blur-0"
+          )}
+        >
+          <div className="flex w-full items-center justify-between p-2">
+            <Link href="/" className="flex items-center gap-2 p-1">
+              <WandIcon className="h-8 w-auto text-zinc-950 dark:text-white" />
+            </Link>
+
+            <div className="flex items-center gap-x-3 sm:gap-x-4">
+              <a
+                href="https://github.com/yashrathi-git/portfolioly"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                aria-label="View on GitHub"
+              >
+                <Github className="h-5 w-5 text-zinc-900 dark:text-zinc-100" />
+              </a>
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {isDark ? (
+                  <Sun className="h-4 w-4 text-zinc-900 dark:text-zinc-100" />
+                ) : (
+                  <Moon className="h-4 w-4 text-zinc-900 dark:text-zinc-100" />
+                )}
+              </button>
+              <Link
+                href="/auth/sign-in"
+                className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                <span>Build My Portfolio</span>
+              </Link>
+            </div>
+          </div>
         </div>
-        <div className="hidden lg:flex lg:gap-x-12">
-          <Link
-            href="#features"
-            className="text-sm/6 font-medium text-foreground hover:opacity-80 transition-opacity"
-          >
-            Features
-          </Link>
-          <Link
-            href="#examples"
-            className="text-sm/6 font-medium text-foreground hover:opacity-80 transition-opacity"
-          >
-            Examples
-          </Link>
-          <Link
-            href="#pricing"
-            className="text-sm/6 font-medium text-foreground hover:opacity-80 transition-opacity"
-          >
-            Pricing
-          </Link>
-        </div>
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-4">
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-md hover:bg-secondary transition-colors"
-            aria-label="Toggle theme"
-          >
-            {isDark ? (
-              <Sun className="h-4 w-4 text-foreground" />
-            ) : (
-              <Moon className="h-4 w-4 text-foreground" />
-            )}
-          </button>
-          <Link
-            href="/auth/sign-in"
-            className="inline-flex items-center gap-1 text-sm/6 font-medium text-foreground hover:opacity-80 transition-opacity"
-          >
-            Log in <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </nav>
+      </div>
     </header>
   );
 }
