@@ -8,7 +8,7 @@ class ChatConfig:
 
     # Rate limiting
     IP_REQUESTS_PER_HOUR = 50  # Per-IP limit across all portfolios (can be generous)
-    PORTFOLIO_MESSAGES_PER_MONTH = 100  # Per portfolio owner for pricing
+    PORTFOLIO_MESSAGES_PER_MONTH = 60  # Per portfolio owner for pricing
     RATE_LIMIT_WINDOW_SECONDS = 3600  # 1 hour
 
     # Input validation
