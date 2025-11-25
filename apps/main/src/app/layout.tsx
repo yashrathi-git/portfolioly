@@ -26,6 +26,13 @@ export default function RootLayout({
             __html: getThemeScript(),
           }}
         />
+        {/* Preconnect to media CDN for faster video loading on landing page */}
+        <link
+          rel="preconnect"
+          href="https://media.portfolioly.app"
+          crossOrigin="anonymous"
+        />
+        <link rel="dns-prefetch" href="https://media.portfolioly.app" />
       </head>
       <body className="min-h-dvh antialiased bg-background text-foreground">
         <RootProviders>{children}</RootProviders>
