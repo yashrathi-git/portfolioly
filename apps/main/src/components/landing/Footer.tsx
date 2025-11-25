@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Github } from "lucide-react";
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { DiscordIcon } from "@/components/icons/DiscordIcon";
+import { getDiscordLink, GITHUB_REPO_URL } from "@/lib/utils/links";
 
 export function Footer() {
   return (
@@ -18,15 +19,15 @@ export function Footer() {
 
           <div className="flex items-center gap-6">
             <Link
-              href="https://github.com/yashrathi-git/portfolioly"
+              href={GITHUB_REPO_URL}
               target="_blank"
               className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 text-sm"
             >
-              <Github className="h-4 w-4" />
+              <GitHubLogoIcon className="h-4 w-4" />
               <span>GitHub</span>
             </Link>
             <Link
-              href="https://discord.gg/tSj7dr6V"
+              href={getDiscordLink()}
               target="_blank"
               className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 text-sm"
             >

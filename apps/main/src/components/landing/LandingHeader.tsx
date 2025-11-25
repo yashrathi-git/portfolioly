@@ -8,6 +8,7 @@ import { DiscordIcon } from "@/components/icons/DiscordIcon";
 import { useScroll } from "motion/react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { getDiscordLink, GITHUB_REPO_URL } from "@/lib/utils/links";
 
 export function LandingHeader() {
   const { isDark, toggleTheme } = useTheme();
@@ -38,7 +39,7 @@ export function LandingHeader() {
 
             <div className="flex items-center gap-x-2 sm:gap-x-3">
               <a
-                href="https://github.com/yashrathi-git/portfolioly"
+                href={GITHUB_REPO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -47,7 +48,7 @@ export function LandingHeader() {
                 <Github className="h-5 w-5 text-zinc-900 dark:text-zinc-100" />
               </a>
               <a
-                href="https://discord.gg/tSj7dr6V"
+                href={getDiscordLink()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -55,12 +56,6 @@ export function LandingHeader() {
               >
                 <DiscordIcon className="h-5 w-5 text-zinc-900 dark:text-zinc-100" />
               </a>
-              <Link
-                href="/auth/sign-in"
-                className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                <span>Build My Portfolio</span>
-              </Link>
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -72,6 +67,12 @@ export function LandingHeader() {
                   <Moon className="h-4 w-4 text-zinc-900 dark:text-zinc-100" />
                 )}
               </button>
+              <Link
+                href="/auth/sign-in"
+                className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                <span>Build My Portfolio</span>
+              </Link>
             </div>
           </div>
         </div>
