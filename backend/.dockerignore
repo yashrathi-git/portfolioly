@@ -1,3 +1,6 @@
+# NOTE: This file is only used if building with backend/ as the build context.
+# Currently, backend builds from monorepo root, so root .dockerignore is used.
+
 # Environment files - NEVER include in Docker builds
 .env
 .env.*
@@ -31,5 +34,5 @@ tests
 *.log
 .DS_Store
 
-# Firebase credentials should be mounted at runtime, not baked in
+# Firebase credentials - mount at runtime, never bake in
 firebaseServiceKeyJson
