@@ -11,13 +11,13 @@ import "portfolioly-template-components/style.css";
 // Hardcoded demo portfolio data (backend format)
 const DEMO_PORTFOLIO_DATA: PortfolioData = {
   personal_info: {
-    full_name: "Alice",
+    full_name: "John Doe",
     headline:
       "Building scalable cloud infrastructure and next-gen AI experiences.",
     chatfolio_headline:
       "Building scalable cloud infrastructure and next-gen AI experiences.",
     summary:
-      "Senior Software Engineer with 6.5 years of experience architecting high-scale distributed systems and integrating AI solutions. Currently optimizing search infrastructure at Google. Previously built real-time communication features at Roblox and enterprise cloud solutions at Microsoft. Passionate about system design, large-scale data processing, and generative AI applications.",
+      "Senior Software Engineer with 6.5 years of experience architecting high-scale distributed systems and integrating AI solutions. Currently optimizing search infrastructure. Previously built real-time communication features at SomePlace. Passionate about system design, large-scale data processing, and generative AI applications.",
     email: "alex.mercer.dev@gmail.com",
     phone: "+1-415-555-0123",
     location: "San Francisco, California, USA",
@@ -66,7 +66,7 @@ const DEMO_PORTFOLIO_DATA: PortfolioData = {
   },
   work_experiences: [
     {
-      organization: "Google",
+      organization: "SearchGiant",
       title: "Senior Software Engineer (L5)",
       location: "Mountain View, CA",
       logo_url: "https://cdn.brandfetch.io/google.com?c=1idhX7o8o4Zu9f-g8PS",
@@ -77,7 +77,7 @@ const DEMO_PORTFOLIO_DATA: PortfolioData = {
       technologies: ["Go", "Kubernetes", "gRPC", "Gemini AI"],
     },
     {
-      organization: "Roblox",
+      organization: "GameCompany",
       title: "Software Engineer II",
       location: "San Mateo, CA",
       logo_url: "https://cdn.brandfetch.io/roblox.com?c=1idhX7o8o4Zu9f-g8PS",
@@ -89,11 +89,10 @@ const DEMO_PORTFOLIO_DATA: PortfolioData = {
       technologies: ["C++", "Lua", "Kafka", "Computer Vision"],
     },
     {
-      organization: "Microsoft",
+      organization: "Windows",
       title: "Software Engineer",
       location: "Redmond, WA",
-      logo_url:
-        "https://cdn.brandfetch.io/microsoft.com?c=1idhX7o8o4Zu9f-g8PS",
+      logo_url: "https://cdn.brandfetch.io/microsoft.com?c=1idhX7o8o4Zu9f-g8PS",
       start_date: { month: 6, year: 2019 },
       end_date: { month: 5, year: 2021 },
       is_current: false,
@@ -102,7 +101,7 @@ const DEMO_PORTFOLIO_DATA: PortfolioData = {
       technologies: ["C#", ".NET Core", "Azure", "OAuth"],
     },
     {
-      organization: "McKinsey & Company",
+      organization: "ConsultancyCompany",
       title: "Software Engineer Intern",
       location: "New York, NY",
       logo_url: "https://cdn.brandfetch.io/mckinsey.com?c=1idhX7o8o4Zu9f-g8PS",
@@ -137,7 +136,7 @@ const DEMO_PORTFOLIO_DATA: PortfolioData = {
       images: [],
     },
     {
-      name: "TIDAL",
+      name: "Music App",
       card_image_url:
         "https://portfolioly.blob.core.windows.net/images/9bowdJ27KsWjxI8A4GKV4BE8MVs2/projects/1763982856835_ezgif-54030ab3bcd4991d.gif",
       highlights: "- Free music streaming app, with a beautiful UI",
@@ -222,7 +221,6 @@ const DEMO_PORTFOLIO_DATA: PortfolioData = {
 // Demo credentials
 const DEMO_USERNAME = "nikhilajmera2005";
 const DEMO_PUBLIC_TOKEN = "psk_FHDZdx8PQ0mQed2irXuvNstqFxZ1KbQw";
-
 
 export default function DemoPage() {
   // Transform backend data to display format
