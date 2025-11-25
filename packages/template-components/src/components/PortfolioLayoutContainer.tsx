@@ -197,6 +197,7 @@ export const PortfolioLayoutContainer = ({
                 data={portfolioData}
                 isLoading={isLoading}
                 error={error}
+                isPreview={isPreview}
               />
             )}
           </motion.div>

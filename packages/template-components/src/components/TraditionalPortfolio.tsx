@@ -32,6 +32,7 @@ export type TraditionalPortfolioProps = {
   data?: DisplayPortfolioData | null;
   isLoading?: boolean;
   error?: string;
+  isPreview?: boolean;
 };
 
 const getCertificateProvider = (issuer?: string) => {
@@ -59,6 +60,7 @@ const TraditionalPortfolioComponent = ({
   data,
   isLoading = false,
   error,
+  isPreview = false,
 }: TraditionalPortfolioProps) => {
   // Track component data usage in development
   useComponentDataTracking("TraditionalPortfolio", data, {
@@ -79,7 +81,7 @@ const TraditionalPortfolioComponent = ({
       <div
         className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] relative`}
       >
-        <div className="fixed top-4 right-4 z-50">
+        <div className={`${isPreview ? 'absolute' : 'fixed'} top-4 right-4 z-50`}>
           <ThemeToggle />
         </div>
         <div className="text-center">
@@ -96,7 +98,7 @@ const TraditionalPortfolioComponent = ({
       <div
         className={`${styles.portfolioTheme} min-h-[100svh] w-full flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] relative`}
       >
-        <div className="fixed top-4 right-4 z-50">
+        <div className={`${isPreview ? 'absolute' : 'fixed'} top-4 right-4 z-50`}>
           <ThemeToggle />
         </div>
         <div className="text-center max-w-md">
@@ -140,7 +142,7 @@ const TraditionalPortfolioComponent = ({
         className={`${styles.portfolioTheme} min-h-[100svh] w-full bg-[var(--background)] text-[var(--foreground)] relative`}
       >
         {/* Theme toggle - top right */}
-        <div className="fixed top-4 right-4 z-50">
+        <div className={`${isPreview ? 'absolute' : 'fixed'} top-4 right-4 z-50`}>
           <ThemeToggle />
         </div>
 
