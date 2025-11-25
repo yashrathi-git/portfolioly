@@ -7,6 +7,7 @@
 import { env } from "@/lib/env";
 import { getFirebaseAuth, getIdToken } from "../firebase";
 import { ensureUsername } from "./publicToken";
+import { trackPortfolioPublished } from "@/lib/analytics";
 
 export interface UserSettings {
   username?: string;
@@ -254,6 +255,11 @@ export async function updateAccessMode(
     });
 
     await handleResponse<UserSettings>(response);
+
+    // Track when portfolio is made public
+    if (accessMode === "public") {
+      trackPortfolioPublished();
+    }
   } catch (error) {
     if (error instanceof UserSettingsError) {
       throw error;

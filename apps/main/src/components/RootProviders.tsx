@@ -2,6 +2,7 @@
 import { AuthProvider } from "@/lib/auth/AuthContext";
 import ThemeProvider from "./ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import AnalyticsProvider from "./AnalyticsProvider";
 
 export default function RootProviders({
   children,
@@ -11,8 +12,10 @@ export default function RootProviders({
   return (
     <ThemeProvider>
       <AuthProvider>
-        {children}
-        <Toaster />
+        <AnalyticsProvider>
+          {children}
+          <Toaster />
+        </AnalyticsProvider>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { MessageSquare, FileText, Eye } from "lucide-react";
 import { FormSection } from "./FormSection";
 import type { LayoutSettings } from "portfolioly-schema";
+import { trackLayoutChanged } from "@/lib/analytics";
 
 export interface LayoutSettingsFormProps {
   value: LayoutSettings;
@@ -34,6 +35,7 @@ export function LayoutSettingsForm({
 
     setLocalValue(newValue);
     onChange(newValue);
+    trackLayoutChanged(layoutMode);
   };
 
   const handleDefaultLayoutChange = (defaultLayout: string) => {

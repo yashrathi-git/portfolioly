@@ -5,6 +5,7 @@
 import type { PortfolioData } from "portfolioly-schema";
 import { getIdToken } from "../firebase";
 import { env } from "@/lib/env";
+import { trackPortfolioSaved } from "@/lib/analytics";
 
 const API_BASE_URL = env.API_BASE_URL;
 
@@ -109,6 +110,7 @@ export async function saveUserPortfolio(
     });
 
     await handleResponse<{ message: string }>(response);
+    trackPortfolioSaved();
   } catch (error) {
     if (error instanceof PortfolioAPIError) {
       throw error;
