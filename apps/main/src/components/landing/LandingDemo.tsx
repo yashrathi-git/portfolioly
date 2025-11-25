@@ -3,9 +3,9 @@
 import { YouTubePlayer } from "@/components/landing/VideoPlayer";
 
 const DEMO_VIDEO = {
-  id: "dQw4w9WgXcQ", // Placeholder ID
+  id: "bL3o6-LaU7w", // Placeholder ID
   title: "Creating and deploying a portfolio in 1 minute",
-  thumbnail: "/placeholder-video-thumb.jpg", // Placeholder
+  thumbnail: "https://media.portfolioly.app/hero/YT_Thumb.jpg", // Placeholder
 };
 
 export function LandingDemo() {
@@ -17,7 +17,8 @@ export function LandingDemo() {
             {DEMO_VIDEO.title}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            See how easy it is to get your portfolio up and running with Portfolioly.
+            See Portfolioly in action - Creating and deploying a portfolio on
+            Vercel in 60 seconds!
           </p>
         </div>
 
@@ -25,7 +26,7 @@ export function LandingDemo() {
           <YouTubePlayer
             videoId={DEMO_VIDEO.id}
             // Title removed from player for cleaner look
-            // customThumbnail={DEMO_VIDEO.thumbnail} // Uncomment when real thumbnail is available
+            customThumbnail={DEMO_VIDEO.thumbnail} // Uncomment when real thumbnail is available
             defaultExpanded={false}
             // Container styling
             className="mb-8"
