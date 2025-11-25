@@ -1,12 +1,11 @@
 "use client";
 
-import { ArrowRight, Github } from "lucide-react";
+import { ArrowRight, GithubIcon } from "lucide-react";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { motion } from "framer-motion";
 import { LandingHeader } from "./LandingHeader";
 import { DemoCarousel } from "./DemoCarousel";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 
 const ENTRY_VARIANTS = {
   hidden: {
@@ -67,7 +66,7 @@ export function Hero() {
               Create a beautiful portfolio in two clicks
             </TextEffect>
             <TextEffect
-              className="mt-6 text-pretty text-lg text-muted-foreground sm:text-lg/8"
+              className="mt-6 text-pretty text-base text-muted-foreground sm:text-lg/8"
               preset="blur"
               as="p"
               per="line"
@@ -75,9 +74,9 @@ export function Hero() {
               speedReveal={0.8}
               segmentTransition={{ duration: 0.5, ease: "easeOut" }}
             >
-              {`Upload your resume or connect your GitHub repository.
+              {`Use your LinkedIn, GitHub, or upload a resume.
 Our AI extracts your experience and builds a stunning portfolio.
-Share it with the world in seconds.`}
+One click deploy. Share with the world.`}
             </TextEffect>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <motion.div
@@ -113,7 +112,7 @@ Share it with the world in seconds.`}
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-md border border-border px-3.5 py-2.5 text-sm font-semibold text-foreground hover:bg-secondary transition-colors"
                 >
-                  <Github className="h-4 w-4" />
+                  <GithubIcon className="h-4 w-4" />
                   Star on GitHub
                 </Link>
               </motion.div>

@@ -12,10 +12,10 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <BentoFeaturesSection />
       <ProfileToPortfolioSteps />
       <LandingDemo />
       {/* <FeaturesSection /> */}
-      <BentoFeaturesSection />
       <FAQSection />
       <FinalCTA />
       <Footer />

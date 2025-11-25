@@ -6,10 +6,9 @@ import { OpenSourceGraphic } from "./OpenSourceGraphic";
 import { SEOGraphic } from "./SEOGraphic";
 
 const BENTO_CONTENT = {
-  eyebrow: "Ship portfolios faster",
-  heading: "Everything you need to publish a polished story.",
+  heading: "Everything you need to stand out and get noticed",
   description:
-    "Automated content ingestion, AI formatting, and built-in hosting come together in a flexible workspace designed for product engineers.",
+    "Automated content ingestion, AI formatting, and one-click deploy come together in a flexible workspace designed for product engineers.",
   cards: {
     performance: {
       label: "Chat Mode",
@@ -51,7 +50,7 @@ const BENTO_CONTENT = {
 } as const;
 
 export function BentoFeaturesSection() {
-  const { eyebrow, heading, description, cards } = BENTO_CONTENT;
+  const { heading, description, cards } = BENTO_CONTENT;
   const {
     performance,
     importData,
@@ -63,17 +62,14 @@ export function BentoFeaturesSection() {
   return (
     <section className="bg-background py-32 sm:py-40">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left">
-          <p className="text-sm font-semibold tracking-tight text-primary">
-            {eyebrow}
-          </p>
-          <p className="mt-2 text-pretty text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
+        <div className="mx-auto max-w-2xl text-center mb-16">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             {heading}
-          </p>
+          </h2>
           <p className="mt-4 text-lg text-muted-foreground">{description}</p>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-6 lg:grid-rows-2">
           <div className="relative lg:col-span-3">
             <div className="absolute inset-px rounded-lg bg-card/50 backdrop-blur-xl border border-border/50 max-lg:rounded-t-[2rem] lg:rounded-tl-[2rem]" />
             <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)] max-lg:rounded-t-[calc(2rem+1px)] lg:rounded-tl-[calc(2rem+1px)]">
