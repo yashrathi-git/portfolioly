@@ -21,12 +21,6 @@ import {
   sendEmailVerification,
   AuthError,
 } from "firebase/auth";
-import {
-  trackSignUp,
-  trackLogin,
-  trackLogout,
-  trackVerificationEmailSent,
-} from "@/lib/analytics";
 
 export type AuthContextValue = {
   user: User | null;
@@ -95,7 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const auth = getFirebaseAuth();
       await signInWithEmailAndPassword(auth, email, password);
-      trackLogin("email");
     } catch (error) {
       const authError = error as AuthError;
       throw new Error(getAuthErrorMessage(authError));
@@ -120,7 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await sendEmailVerification(cred.user);
           setLastVerificationSent(new Date());
           setVerificationStatus("pending");
-          trackVerificationEmailSent();
         } catch (verificationError) {
           console.error("Failed to send verification email", verificationError);
           setVerificationStatus("failed");
@@ -128,9 +120,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             "Failed to send verification email. Please try again."
           );
         }
-
-        // Track successful signup
-        trackSignUp("email");
 
         // Keep user signed in but unverified
         // They will be redirected to verification screen by the app logic
@@ -146,7 +135,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const auth = getFirebaseAuth();
       await fbSignOut(auth);
-      trackLogout();
     } catch (error) {
       console.error("Sign out error:", error);
       throw new Error("Failed to sign out");
@@ -158,16 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const auth = getFirebaseAuth();
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
-      const result = await signInWithPopup(auth, provider);
-      // Check if this is a new user (sign up) or existing user (login)
-      const isNewUser =
-        result.user.metadata.creationTime ===
-        result.user.metadata.lastSignInTime;
-      if (isNewUser) {
-        trackSignUp("google");
-      } else {
-        trackLogin("google");
-      }
+      await signInWithPopup(auth, provider);
     } catch (error) {
       const authError = error as AuthError;
       throw new Error(getAuthErrorMessage(authError));
@@ -201,7 +180,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await sendEmailVerification(currentUser);
       setLastVerificationSent(new Date());
       setVerificationStatus("pending");
-      trackVerificationEmailSent();
     } catch (error) {
       const authError = error as AuthError;
       setVerificationStatus("failed");

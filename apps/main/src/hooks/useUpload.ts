@@ -24,7 +24,6 @@ import {
   handleError,
   handleValidationError,
 } from "@/lib/utils/simpleErrorHandler";
-import { trackUploadStarted, trackUploadCompleted } from "@/lib/analytics";
 
 /**
  * PDF upload state
@@ -164,8 +163,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
         result: null,
       }));
 
-      trackUploadStarted("pdf");
-
       try {
         const result = await withRetry(() =>
           uploadPDF(file, "linkedin", (progress) => {
@@ -179,8 +176,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
           progress: 100,
           result,
         }));
-
-        trackUploadCompleted("pdf");
       } catch (error) {
         setLinkedIn((prev) => ({
           ...prev,
@@ -212,8 +207,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
         result: null,
       }));
 
-      trackUploadStarted("pdf");
-
       try {
         const result = await withRetry(() =>
           uploadPDF(file, "resume", (progress) => {
@@ -227,8 +220,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
           progress: 100,
           result,
         }));
-
-        trackUploadCompleted("pdf");
       } catch (error) {
         setResume((prev) => ({
           ...prev,
@@ -372,11 +363,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
         github_repos: selectedRepos,
       };
 
-      // Track GitHub upload if repos selected
-      if (selectedRepos.length > 0) {
-        trackUploadStarted("github");
-      }
-
       // Add LinkedIn PDF data if available
       if (linkedin.result) {
         request.linkedin_pdf = {
@@ -404,11 +390,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
       }
 
       const result = await withRetry(() => submitUploadData(request));
-
-      // Track GitHub upload completion
-      if (selectedRepos.length > 0) {
-        trackUploadCompleted("github");
-      }
 
       return result;
     }, [linkedin.result, resume.result, github.repos, github.selectedRepoIds]);
