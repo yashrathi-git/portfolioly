@@ -11,6 +11,7 @@ node_modules/
 !.yarn/versions
 # random_testing
 random_testing/*.json
+scripts/*.txt
 # package manager lockfiles (keep only root yarn.lock)
 package-lock.json
 pnpm-lock.yaml
@@ -19,7 +20,7 @@ bun.lockb
 */package-lock.json
 */pnpm-lock.yaml
 */bun.lockb
-
+scripts/*.json
 # testing
 /coverage
 coverage/
