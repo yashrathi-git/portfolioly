@@ -31,8 +31,7 @@ export default function VerificationRequiredScreen() {
         }
       } catch {}
       if (refreshed) {
-        // New users who just verified go to upload for onboarding
-        router.push("/upload");
+        router.push(getPostAuthRedirectPath(refreshed));
       } else {
         router.push("/auth/sign-in");
       }
@@ -79,8 +78,7 @@ export default function VerificationRequiredScreen() {
   }
 
   if (user.emailVerified) {
-    // New users who just verified go to upload for onboarding
-    router.push("/upload");
+    router.push(getPostAuthRedirectPath(user));
     return null;
   }
 

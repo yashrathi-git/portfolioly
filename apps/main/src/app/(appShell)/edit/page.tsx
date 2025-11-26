@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import withAuth from "@/lib/auth/withAuth";
+import { setHasPortfolioCookie } from "@/lib/auth/routeGuards";
 import { toast } from "sonner";
 import { PortfolioEditor } from "@/components/edit/PortfolioEditor";
 import { SupportDialog } from "@/components/edit/SupportDialog";
@@ -110,6 +111,11 @@ function EditPage() {
   useEffect(() => {
     hasUnsavedChangesRef.current = hasUnsavedChanges;
   }, [hasUnsavedChanges]);
+
+  // Set cookie to indicate user has a portfolio (for future auth redirects)
+  useEffect(() => {
+    setHasPortfolioCookie();
+  }, []);
 
   // Load portfolio data on mount
   useEffect(() => {
