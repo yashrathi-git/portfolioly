@@ -192,6 +192,22 @@ export async function trackLayoutChanged(layout: string) {
 }
 
 /**
+ * Track footer toggle - also sets user property for segmentation
+ */
+export async function trackFooterToggled(enabled: boolean) {
+  const analytics = await getAnalytics();
+  if (!analytics) return;
+
+  const { logEvent, setUserProperties } = await import("firebase/analytics");
+  logEvent(analytics, "footer_toggled" as string, { enabled });
+  setUserProperties(analytics, { footer_enabled: enabled ? "true" : "false" });
+
+  if (env.IS_DEVELOPMENT) {
+    console.log("[Analytics] footer_toggled", { enabled });
+  }
+}
+
+/**
  * Set user ID for analytics
  */
 export async function setAnalyticsUserId(userId: string | null) {
