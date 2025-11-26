@@ -414,7 +414,7 @@ export function PublishSettingsPanel({
         }
 
         try {
-          await updateUsername("", targetUsername);
+          await updateUsername(targetUsername);
           setOriginalUsername(targetUsername);
           setUsername(targetUsername);
           pendingUsername = targetUsername;

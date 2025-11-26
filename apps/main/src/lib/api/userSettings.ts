@@ -189,13 +189,11 @@ function extractUserIdFromToken(token: string): string | undefined {
 /**
  * Update username for the authenticated user
  *
- * @param userId - Firebase user ID
  * @param username - New username (3-30 chars, alphanumeric with hyphens/underscores)
  * @param authToken - Firebase auth token (optional, will fetch if not provided)
  * @throws UserSettingsError if the request fails or username is invalid
  */
 export async function updateUsername(
-  userId: string,
   username: string,
   authToken?: string
 ): Promise<void> {

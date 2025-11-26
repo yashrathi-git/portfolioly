@@ -143,8 +143,9 @@ function EditPage() {
     }
   }, [user]);
 
+  // Subscribe to real-time updates AFTER initial load to avoid duplicate fetch
   useEffect(() => {
-    if (!user?.uid) {
+    if (!user?.uid || loading) {
       return undefined;
     }
 
@@ -204,7 +205,7 @@ function EditPage() {
         unsubscribe();
       }
     };
-  }, [user?.uid]);
+  }, [user?.uid, loading]);
 
   // Handle portfolio data changes
   const handlePortfolioChange = (newData: PortfolioData) => {

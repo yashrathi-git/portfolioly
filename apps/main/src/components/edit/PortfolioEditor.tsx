@@ -10,6 +10,7 @@ import { NavigationSidebar } from "./NavigationSidebar";
 import { sections } from "./sectionConfig";
 import { PortfolioPreview } from "./PortfolioPreview";
 import { usePublishStatus } from "@/hooks/usePublishStatus";
+import { ensurePublicToken } from "@/lib/api/publicToken";
 
 export interface PortfolioEditorProps {
   initial?: PortfolioData;
@@ -80,7 +81,6 @@ export function PortfolioEditor({
 
       setIsLoadingToken(true);
       try {
-        const { ensurePublicToken } = await import("@/lib/api/publicToken");
         const token = await ensurePublicToken(publishStatus.username);
         setPublicToken(token);
       } catch (error) {
@@ -124,9 +124,7 @@ export function PortfolioEditor({
 
   // Determine if we should show publish prompts (only show username prompt, not private status)
   const shouldShowPublishPrompt =
-    !isLoadingPublishStatus &&
-    publishStatus &&
-    !publishStatus.hasUsername;
+    !isLoadingPublishStatus && publishStatus && !publishStatus.hasUsername;
 
   const renderPublishBanner = () => {
     if (!publishStatus) {
@@ -241,7 +239,11 @@ export function PortfolioEditor({
       {/* Preview Mode */}
       <div className={activeMode === "preview" ? "block" : "hidden"}>
         <div className="mx-auto max-w-[1400px] px-4 py-8">
-          <PortfolioPreview data={data} />
+          <PortfolioPreview
+            data={data}
+            username={publishStatus?.username}
+            publicToken={publicToken}
+          />
         </div>
       </div>
     </div>

@@ -60,13 +60,13 @@ export function getFirestoreDb(): Firestore {
   return firestoreInstance;
 }
 
-export async function getIdToken(forceRefresh = false) {
+export async function getIdToken(forceRefresh = false): Promise<string | null> {
   try {
     const user = getFirebaseAuth().currentUser;
     if (!user) return null;
-    return user.getIdToken(forceRefresh);
+    // Firebase SDK handles caching and refresh automatically
+    return await user.getIdToken(forceRefresh);
   } catch {
-    // If auth isn't initialized due to missing config, return null
     return null;
   }
 }

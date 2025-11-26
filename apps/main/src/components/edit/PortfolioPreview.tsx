@@ -14,21 +14,52 @@ import "portfolioly-template-components/style.css";
 
 export interface PortfolioPreviewProps {
   data: MainPortfolioData;
+  /** Pre-fetched username (avoids duplicate API call) */
+  username?: string;
+  /** Pre-fetched public token (avoids duplicate API call) */
+  publicToken?: string;
+  /** Pre-fetched auth token (avoids duplicate API call) */
+  authToken?: string;
 }
 
-const PortfolioPreviewComponent = ({ data }: PortfolioPreviewProps) => {
+const PortfolioPreviewComponent = ({
+  data,
+  username: propUsername,
+  publicToken: propPublicToken,
+  authToken: propAuthToken,
+}: PortfolioPreviewProps) => {
   const { user } = useAuth();
-  const [username, setUsername] = useState<string | undefined>(undefined);
-  const [publicToken, setPublicToken] = useState<string | undefined>(undefined);
-  const [authToken, setAuthToken] = useState<string | undefined>(undefined);
+  const [username, setUsername] = useState<string | undefined>(propUsername);
+  const [publicToken, setPublicToken] = useState<string | undefined>(
+    propPublicToken
+  );
+  const [authToken, setAuthToken] = useState<string | undefined>(propAuthToken);
 
   // Transform main app's portfolio data to template component format
   const templateData: TemplatePortfolioData = useMemo(() => {
     return mapPortfolioDataToTemplate(data);
   }, [data]);
 
-  // Fetch username and public token for the authenticated user
+  // Sync with props when they change (from parent)
   useEffect(() => {
+    if (propUsername !== undefined) setUsername(propUsername);
+  }, [propUsername]);
+
+  useEffect(() => {
+    if (propPublicToken !== undefined) setPublicToken(propPublicToken);
+  }, [propPublicToken]);
+
+  useEffect(() => {
+    if (propAuthToken !== undefined) setAuthToken(propAuthToken);
+  }, [propAuthToken]);
+
+  // Only fetch if props not provided (backward compatibility)
+  useEffect(() => {
+    // Skip fetching if props are provided
+    if (propUsername !== undefined && propPublicToken !== undefined) {
+      return;
+    }
+
     if (!user) {
       setUsername(undefined);
       setPublicToken(undefined);
@@ -39,26 +70,26 @@ const PortfolioPreviewComponent = ({ data }: PortfolioPreviewProps) => {
 
     async function loadUsernameAndToken() {
       try {
-        // Get Firebase auth token
         const firebaseToken = await currentUser.getIdToken();
-        setAuthToken(firebaseToken);
+        if (propAuthToken === undefined) {
+          setAuthToken(firebaseToken);
+        }
 
-        // Fetch username and public token using API helper
         const result = await fetchUsernameAndToken(
           currentUser.uid,
           firebaseToken
         );
-        setUsername(result.username);
-        setPublicToken(result.publicToken);
+        if (propUsername === undefined) setUsername(result.username);
+        if (propPublicToken === undefined) setPublicToken(result.publicToken);
       } catch (err) {
         console.error("Error fetching username and token:", err);
-        setUsername(undefined);
-        setPublicToken(undefined);
+        if (propUsername === undefined) setUsername(undefined);
+        if (propPublicToken === undefined) setPublicToken(undefined);
       }
     }
 
     loadUsernameAndToken();
-  }, [user]);
+  }, [user, propUsername, propPublicToken, propAuthToken]);
 
   // Generate dynamic profile for chat header based on actual data
   // console.log(data.education);
