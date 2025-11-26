@@ -7,15 +7,7 @@
 
 import { getFirebaseAuth } from "@/lib/firebase";
 import { env } from "@/lib/env";
-// Simple in-memory cache and in-flight dedupe for config and other GETs
-const memoryCache = new Map<string, unknown>();
-// const inflightRequests = new Map<string, Promise<unknown>>();
-
-function cacheKey(url: string, method: string = "GET"): string {
-  return `${method}:${url}`;
-}
-
-// Reserved for future use; currently getUploadConfig uses manual caching
+import { UPLOAD_CONFIG } from "@/config/uploadConfig";
 
 // API Base URL
 const API_BASE_URL = env.API_BASE_URL;
@@ -118,11 +110,6 @@ export interface UploadConfig {
   max_file_size_mb: number;
   allowed_file_types: string[];
   max_github_repos: number;
-  github_repos_per_page: number;
-  rate_limits: {
-    pdf_uploads_per_hour: number;
-    github_requests_per_hour: number;
-  };
 }
 
 /**
@@ -447,46 +434,14 @@ export async function submitUploadData(
 }
 
 /**
- * Get upload configuration
+ * Get upload configuration from frontend constants.
  */
-export async function getUploadConfig(): Promise<UploadConfig> {
-  // In-flight dedupe + memoize successful response
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const globalAny = globalThis as any;
-  if (!globalAny.__uploadConfigPromise) {
-    globalAny.__uploadConfigPromise = null as Promise<UploadConfig> | null;
-  }
-
-  const url = `${API_BASE_URL}/api/upload/config`;
-  const key = cacheKey(url);
-
-  const cached = memoryCache.get(key) as UploadConfig | undefined;
-  if (cached) return cached;
-
-  if (globalAny.__uploadConfigPromise) {
-    return globalAny.__uploadConfigPromise;
-  }
-
-  const promise = (async () => {
-    const doFetch = async () => {
-      const headers = await getAuthHeaders();
-      return fetch(url, {
-        method: "GET",
-        headers,
-      });
-    };
-    const response = await fetchWithEmailVerifiedRetry(doFetch);
-    const data = await handleResponse<UploadConfig>(response);
-    memoryCache.set(key, data);
-    return data;
-  })();
-
-  globalAny.__uploadConfigPromise = promise;
-  try {
-    return await promise;
-  } finally {
-    globalAny.__uploadConfigPromise = null;
-  }
+export function getUploadConfig(): UploadConfig {
+  return {
+    max_file_size_mb: UPLOAD_CONFIG.MAX_PDF_SIZE_MB,
+    allowed_file_types: [...UPLOAD_CONFIG.ALLOWED_PDF_TYPES],
+    max_github_repos: UPLOAD_CONFIG.MAX_GITHUB_REPOS,
+  };
 }
 
 /**

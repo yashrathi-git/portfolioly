@@ -5,7 +5,7 @@
  * GitHub repository fetching, and related state management.
  */
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   uploadPDF,
   fetchGitHubRepos,
@@ -122,12 +122,10 @@ const initialGitHubState: GitHubReposState = {
  */
 export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
   const { disableClientValidation = false } = options;
-  // Configuration state
-  const [config, setConfig] = useState<UploadConfig | null>(null);
-  const [configLoading, setConfigLoading] = useState(true);
 
-  // Prevent double fetch/toast in React Strict Mode (dev) by ensuring one-time execution
-  const didLoadConfigRef = useRef(false);
+  // Config is now synchronous from frontend constants - always available
+  const config = useMemo(() => getUploadConfig(), []);
+  const configLoading = false;
 
   // PDF upload states
   const [linkedin, setLinkedIn] = useState<PDFUploadState>(initialPDFState);
@@ -136,32 +134,9 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
   // GitHub repos state
   const [github, setGitHub] = useState<GitHubReposState>(initialGitHubState);
 
-  // Load configuration on mount
-  useEffect(() => {
-    if (didLoadConfigRef.current) return;
-    didLoadConfigRef.current = true;
-
-    const loadConfig = async () => {
-      try {
-        setConfigLoading(true);
-        const configData = await getUploadConfig();
-        setConfig(configData);
-      } catch (error) {
-        handleError(error, "loading upload configuration");
-      } finally {
-        setConfigLoading(false);
-      }
-    };
-
-    loadConfig();
-  }, []);
-
   // Validate PDF file
   const validatePDFFile = useCallback(
     (file: File): string | null => {
-      if (!config) {
-        return "Configuration not loaded";
-      }
       if (disableClientValidation) {
         return null;
       }
@@ -173,14 +148,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
   // Upload LinkedIn PDF
   const uploadLinkedInPDF = useCallback(
     async (file: File) => {
-      if (!config) {
-        handleError(
-          new Error("Configuration not loaded"),
-          "LinkedIn PDF upload"
-        );
-        return;
-      }
-
       if (!disableClientValidation) {
         const validationError = validateFile(file, config);
         if (validationError) {
@@ -229,11 +196,6 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
   // Upload Resume PDF
   const uploadResumePDF = useCallback(
     async (file: File) => {
-      if (!config) {
-        handleError(new Error("Configuration not loaded"), "Resume PDF upload");
-        return;
-      }
-
       if (!disableClientValidation) {
         const validationError = validateFile(file, config);
         if (validationError) {
