@@ -174,6 +174,19 @@ async function getAuthHeadersForUpload(): Promise<Record<string, string>> {
 }
 
 /**
+ * Extended error type with API error details
+ */
+interface ExtendedError extends Error {
+  code?: string;
+  status?: number;
+  details?: {
+    message?: string;
+    error_code?: string;
+    [key: string]: unknown;
+  };
+}
+
+/**
  * Handle API response and throw errors for non-2xx status codes
  */
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -182,21 +195,19 @@ async function handleResponse<T>(response: Response): Promise<T> {
     try {
       errorData = await response.json();
     } catch {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const error = new Error(
+        `HTTP ${response.status}: ${response.statusText}`
+      ) as ExtendedError;
+      error.status = response.status;
+      throw error;
     }
 
-    const error = new Error(
-      errorData.detail?.message || `HTTP ${response.status}`
-    );
-    (
-      error as Error & { code?: string; status?: number; details?: unknown }
-    ).code = errorData.detail?.error_code;
-    (
-      error as Error & { code?: string; status?: number; details?: unknown }
-    ).status = response.status;
-    (
-      error as Error & { code?: string; status?: number; details?: unknown }
-    ).details = errorData.detail;
+    // Use the backend message directly for user-facing errors
+    const message = errorData.detail?.message || `HTTP ${response.status}`;
+    const error = new Error(message) as ExtendedError;
+    error.code = errorData.detail?.error_code;
+    error.status = response.status;
+    error.details = errorData.detail;
     throw error;
   }
 
@@ -279,23 +290,72 @@ export async function uploadPDF(
 
     xhr.addEventListener("load", async () => {
       try {
-        const response = new Response(xhr.responseText, {
-          status: xhr.status,
-          statusText: xhr.statusText,
-        });
-        const result = await handleResponse<PDFUploadResponse>(response);
-        resolve(result);
+        // Handle non-2xx responses with proper error parsing
+        if (xhr.status >= 400) {
+          let errorData: APIError;
+          try {
+            errorData = JSON.parse(xhr.responseText);
+          } catch {
+            const error = new Error(`HTTP ${xhr.status}: ${xhr.statusText}`);
+            (error as Error & { status?: number }).status = xhr.status;
+            reject(error);
+            return;
+          }
+
+          const error = new Error(
+            errorData.detail?.message || `HTTP ${xhr.status}`
+          );
+          (
+            error as Error & {
+              code?: string;
+              status?: number;
+              details?: unknown;
+            }
+          ).code = errorData.detail?.error_code;
+          (
+            error as Error & {
+              code?: string;
+              status?: number;
+              details?: unknown;
+            }
+          ).status = xhr.status;
+          (
+            error as Error & {
+              code?: string;
+              status?: number;
+              details?: unknown;
+            }
+          ).details = errorData.detail;
+          reject(error);
+          return;
+        }
+
+        // Parse successful response
+        try {
+          const result = JSON.parse(xhr.responseText) as PDFUploadResponse;
+          resolve(result);
+        } catch {
+          reject(new Error("Invalid response format from server"));
+        }
       } catch (error) {
         reject(error);
       }
     });
 
     xhr.addEventListener("error", () => {
-      reject(new Error("Network error during file upload"));
+      const error = new Error(
+        "Network error during file upload. Please check your connection."
+      );
+      (error as Error & { code?: string }).code = "NETWORK_ERROR";
+      reject(error);
     });
 
     xhr.addEventListener("timeout", () => {
-      reject(new Error("Upload timeout"));
+      const error = new Error(
+        "Upload timed out. Please try again with a smaller file or better connection."
+      );
+      (error as Error & { code?: string }).code = "TIMEOUT_ERROR";
+      reject(error);
     });
 
     xhr.open("POST", url);

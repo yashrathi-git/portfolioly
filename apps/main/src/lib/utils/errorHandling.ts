@@ -14,6 +14,7 @@ export enum ErrorCode {
   MISSING_TOKEN = "MISSING_TOKEN",
   INVALID_TOKEN = "INVALID_TOKEN",
   EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED",
+  EMAIL_VERIFICATION_REQUIRED = "EMAIL_VERIFICATION_REQUIRED",
 
   // File validation errors
   FILE_TOO_LARGE = "FILE_TOO_LARGE",
@@ -22,6 +23,7 @@ export enum ErrorCode {
   EMPTY_FILE = "EMPTY_FILE",
   CORRUPTED_PDF = "CORRUPTED_PDF",
   EMPTY_PDF = "EMPTY_PDF",
+  INVALID_SOURCE = "INVALID_SOURCE",
 
   // Image upload errors
   IMAGE_TOO_LARGE = "IMAGE_TOO_LARGE",
@@ -32,7 +34,12 @@ export enum ErrorCode {
 
   // PDF processing errors
   PDF_PROCESSING_FAILED = "PDF_PROCESSING_FAILED",
+  PDF_CONVERSION_FAILED = "PDF_CONVERSION_FAILED",
   NO_TEXT_EXTRACTED = "NO_TEXT_EXTRACTED",
+  EXTRACTION_FAILED = "EXTRACTION_FAILED",
+
+  // Storage errors
+  STORAGE_FAILED = "STORAGE_FAILED",
 
   // GitHub API errors
   INVALID_USERNAME = "INVALID_USERNAME",
@@ -113,6 +120,13 @@ const ERROR_MESSAGES: Record<ErrorCode, Partial<StructuredError>> = {
     actionable: true,
     suggestedAction: "Verify email",
   },
+  [ErrorCode.EMAIL_VERIFICATION_REQUIRED]: {
+    severity: ErrorSeverity.MEDIUM,
+    retryable: false,
+    userMessage: "Please verify your email address to continue.",
+    actionable: true,
+    suggestedAction: "Verify email",
+  },
 
   // File validation errors
   [ErrorCode.FILE_TOO_LARGE]: {
@@ -156,6 +170,12 @@ const ERROR_MESSAGES: Record<ErrorCode, Partial<StructuredError>> = {
     userMessage: "The PDF file contains no pages.",
     actionable: true,
     suggestedAction: "Choose a different PDF file",
+  },
+  [ErrorCode.INVALID_SOURCE]: {
+    severity: ErrorSeverity.LOW,
+    retryable: false,
+    userMessage: "Invalid upload source type.",
+    actionable: false,
   },
 
   // Image upload errors
@@ -204,6 +224,14 @@ const ERROR_MESSAGES: Record<ErrorCode, Partial<StructuredError>> = {
     actionable: true,
     suggestedAction: "Try again or use a different file",
   },
+  [ErrorCode.PDF_CONVERSION_FAILED]: {
+    severity: ErrorSeverity.MEDIUM,
+    retryable: true,
+    userMessage:
+      "Failed to convert the PDF. The file may be corrupted or in an unsupported format.",
+    actionable: true,
+    suggestedAction: "Try a different PDF file",
+  },
   [ErrorCode.NO_TEXT_EXTRACTED]: {
     severity: ErrorSeverity.LOW,
     retryable: false,
@@ -211,6 +239,23 @@ const ERROR_MESSAGES: Record<ErrorCode, Partial<StructuredError>> = {
       "No text could be extracted from this PDF. It might be an image-only file.",
     actionable: true,
     suggestedAction: "Try a different PDF with text content",
+  },
+  [ErrorCode.EXTRACTION_FAILED]: {
+    severity: ErrorSeverity.MEDIUM,
+    retryable: true,
+    userMessage:
+      "Failed to extract data from the uploaded file. Please try again or use a different file.",
+    actionable: true,
+    suggestedAction: "Try again or use a different file",
+  },
+
+  // Storage errors
+  [ErrorCode.STORAGE_FAILED]: {
+    severity: ErrorSeverity.HIGH,
+    retryable: true,
+    userMessage: "Failed to save your data. Please try again.",
+    actionable: true,
+    suggestedAction: "Try again",
   },
 
   // GitHub API errors
@@ -325,11 +370,15 @@ export function parseError(error: unknown): StructuredError {
 
   // Handle API errors with structured format
   const errorCode = e?.details?.error_code as ErrorCode | undefined;
-  if (errorCode) {
-    const template = ERROR_MESSAGES[errorCode];
+  if (errorCode || e?.details?.message) {
+    const template = errorCode ? ERROR_MESSAGES[errorCode] : undefined;
 
+    // Prefer backend message for specific errors, fall back to template
+    const backendMessage = e.details?.message;
     let userMessage =
-      template?.userMessage || e.details?.message || "An error occurred";
+      backendMessage || template?.userMessage || "An error occurred";
+
+    // Special handling for AI rate limit with dynamic info
     if (errorCode === ErrorCode.AI_RATE_LIMIT_EXCEEDED) {
       const monthlyLimit = e?.details?.monthly_limit;
       const resetInfo = e?.details?.reset_info;
@@ -346,15 +395,34 @@ export function parseError(error: unknown): StructuredError {
       }
     }
 
+    // For file size errors, include the limit if available
+    if (errorCode === ErrorCode.FILE_TOO_LARGE && e?.details?.max_size_mb) {
+      userMessage = `File too large. Maximum size is ${e.details.max_size_mb}MB.`;
+    }
+
     return {
-      code: errorCode,
-      message: e.message || e.details?.message || "Unknown error",
+      code: errorCode || ErrorCode.INTERNAL_ERROR,
+      message: e.message || backendMessage || "Unknown error",
       severity: template?.severity || ErrorSeverity.MEDIUM,
-      retryable: template?.retryable || false,
+      retryable: template?.retryable ?? true,
       userMessage,
-      actionable: template?.actionable || false,
+      actionable: template?.actionable ?? true,
       suggestedAction: template?.suggestedAction,
       details: e.details,
+    };
+  }
+
+  // Check if error has a message property that looks like a backend error
+  if (e?.message && !e?.name?.includes("Error")) {
+    return {
+      code: ErrorCode.INTERNAL_ERROR,
+      message: e.message,
+      severity: ErrorSeverity.MEDIUM,
+      retryable: true,
+      userMessage: e.message,
+      actionable: true,
+      suggestedAction: "Try again",
+      details: error,
     };
   }
 
