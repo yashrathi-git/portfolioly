@@ -1,5 +1,11 @@
 # portfolioly-schema
 
+## 1.0.0
+
+### Major Changes
+
+- b194f0b: v1
+
 ## 0.3.1
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # portfolioly-template-components
 
+## 1.0.0
+
+### Major Changes
+
+- b194f0b: v1
+
+### Patch Changes
+
+- Updated dependencies [b194f0b]
+  - portfolioly-schema@1.0.0
+
 ## 0.4.1
 
 ### Patch Changes
