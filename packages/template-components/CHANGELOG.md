@@ -1,5 +1,11 @@
 # portfolioly-template-components
 
+## 1.0.1
+
+### Patch Changes
+
+- 2340044: Add logo
+
 ## 1.0.0
 
 ### Major Changes
