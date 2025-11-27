@@ -4,8 +4,13 @@ import "./globals.css";
 import { getThemeScript } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_APP_NAME || "Portfolioly",
-  description: "Your portfolio management platform",
+  metadataBase: new URL("https://portfolioly.app"),
+  title: {
+    default: "Portfolioly - Free AI Portfolio Builder",
+    template: "%s | Portfolioly",
+  },
+  description:
+    "Create a stunning portfolio website in seconds with AI. Import from LinkedIn or GitHub. 100% free, open source.",
   icons: {
     icon: "/favicon.svg",
   },
@@ -19,13 +24,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Theme initialization script to prevent FOUC */}
         <script
           dangerouslySetInnerHTML={{
             __html: getThemeScript(),
           }}
         />
-        {/* Preconnect to media CDN for faster video loading on landing page */}
         <link
           rel="preconnect"
           href="https://media.portfolioly.app"
