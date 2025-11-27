@@ -1,24 +1,38 @@
-# Product Overview
+---
+inclusion: always
+---
 
-Portfolioly is a portfolio creation and management platform that allows users to build professional portfolios through multiple input methods.
+# Portfolioly - Product Context
 
-## Core Features
+## What is Portfolioly?
 
-- **Multi-input Portfolio Creation**: Users can create portfolios by uploading PDFs (resumes) or connecting GitHub repositories
-- **AI-Powered Data Extraction**: Backend processes uploaded content using AI to extract structured portfolio data
-- **Dynamic Portfolio Templates**: Multiple layout options (traditional, chat-based) with customizable themes
-- **User Authentication**: Firebase-based auth with email verification
-- **Real-time Editing**: Live portfolio editor with preview functionality
-- **Public Portfolio Sharing**: Generated portfolios are publicly accessible via usernames
+Portfolioly is an AI-powered portfolio builder that transforms resumes, GitHub profiles, and LinkedIn data into beautiful, deployable portfolio websites. Users can create a stunning portfolio in ~2 minutes with one-click Vercel deployment.
 
-## User Flow
+## Core Value Proposition
 
-1. **Sign Up/Sign In**: Firebase authentication with email verification
-2. **Upload Content**: PDF resume upload or GitHub repo connection
-3. **AI Processing**: Backend extracts and structures portfolio data
-4. **Edit & Customize**: Use the portfolio editor to refine content and layout
-5. **Publish**: Share public portfolio via custom username
+- **Two-click portfolio creation** - Upload resume/connect GitHub/import LinkedIn → AI extracts data → Deploy
+- **Free & Open Source** - MIT licensed, self-hostable
+- **AI Chat Mode** - Portfolio becomes a ChatGPT-like assistant answering questions about the user
+
+## Key Features
+
+- PDF resume parsing with AI extraction
+- GitHub repository import
+- LinkedIn PDF import
+- Two layout modes: Traditional & Chat
+- One-click Vercel deployment
+- Customizable themes and colors
+- Profile photo and project image uploads
 
 ## Target Users
 
-Developers, designers, and professionals looking to create modern, interactive portfolios from existing content (resumes, GitHub profiles).
+- Developers and engineers
+- Job seekers
+- Freelancers
+- Anyone needing a professional portfolio quickly
+
+## URLs
+
+- Production: https://portfolioly.app
+- Demo: https://portfolioly.app/demo
+- Template repo: https://github.com/yashrathi-git/portfolioly-template
