@@ -79,22 +79,12 @@ Portfolioly transforms your existing professional content into a polished, inter
 
 ## 🎨 See What Generated Portfolios Look Like
 
-### Traditional Layout
-
-https://github.com/user-attachments/assets/1fb8009f-89f7-44c7-adb0-d36adab90030
-
-### Chat Layout
-
-https://github.com/user-attachments/assets/a9d3ccd4-04ba-428c-a6cf-38d117cc0739
-
-<br />
-
 <p align="center">
   <a href="https://portfolioly.app/demo">
     <img src="https://img.shields.io/badge/✨_Try_Interactive_Demo-See_Generated_Portfolio-6366f1?style=for-the-badge" alt="Try Interactive Demo">
   </a>
 </p>
-
+<br />
 ### Traditional Layout
 
 https://github.com/user-attachments/assets/1fb8009f-89f7-44c7-adb0-d36adab90030
@@ -233,14 +223,6 @@ Contributions are what make the open source community amazing! Any contributions
 - [Tailwind CSS](https://tailwindcss.com/) — Styling
 - [Framer Motion](https://www.framer.com/motion/) — Animations
 - [Radix UI](https://www.radix-ui.com/) — Accessible primitives
-
-<br />
-
-<!-- LICENSE -->
-
-## 📄 License
-
-Distributed under the Unlicense License. See `LICENSE` for more information.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 

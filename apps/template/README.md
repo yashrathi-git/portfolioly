@@ -1,5 +1,3 @@
-<a id="readme-top"></a>
-
 <div align="center">
   <a href="https://portfolioly.app">
     <picture>
@@ -12,65 +10,59 @@
   <h3 align="center">Portfolioly Template</h3>
 
   <p align="center">
-    Self-host your Portfolioly portfolio with one click
+    A portfolio template for Portfolioly
     <br />
     <br />
-    <a href="https://portfolioly.app"><strong>Create Your Portfolio →</strong></a>
-    &middot;
     <a href="https://github.com/yashrathi-git/portfolioly">Main Repo</a>
   </p>
 </div>
 
 <br />
 
-<!-- DEPLOY BUTTON -->
 <p align="center">
   <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyashrathi-git%2Fportfolioly-template&env=NEXT_PUBLIC_USERNAME,NEXT_PUBLIC_API_BASE_URL&envDescription=Configure%20your%20portfolio&envLink=https%3A%2F%2Fgithub.com%2Fyashrathi-git%2Fportfolioly-template%23environment-variables">
-    <img src="https://vercel.com/button" alt="Deploy with Vercel" height="40" />
+    <img src="https://vercel.com/button" alt="Deploy with Vercel" height="32" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://portfolioly.app/demo">
+    <img src="https://img.shields.io/badge/Interactive_Demo-6366f1?style=for-the-badge" alt="Interactive Demo" height="32" />
   </a>
 </p>
 
 <br />
 
-## ✨ What is this?
+## This is how it looks
 
-This is the standalone template for [**Portfolioly**](https://portfolioly.app) — a platform that transforms your Resume, GitHub, or LinkedIn into a stunning portfolio website.
+### Traditional Layout
 
-**Want the full experience?** Head to [portfolioly.app](https://portfolioly.app) to:
+https://github.com/user-attachments/assets/1fb8009f-89f7-44c7-adb0-d36adab90030
 
-- 📄 Upload your resume PDF
-- 🐙 Connect your GitHub
-- 💼 Import from LinkedIn
-- 🎨 Customize themes & layouts
-- 🚀 One-click deploy
+### Chat Layout
 
-**Want to self-host?** Clone this repo and deploy your portfolio anywhere.
+https://github.com/user-attachments/assets/a9d3ccd4-04ba-428c-a6cf-38d117cc0739
 
 <br />
 
-## 🚀 Quick Start
+## What is this?
 
-### Option 1: Deploy with Vercel (Recommended)
+This is the portfolio template used by [Portfolioly](https://portfolioly.app). You can clone and deploy it manually, or use [portfolioly.app](https://portfolioly.app) to generate your portfolio data for free and deploy with one click.
+
+<br />
+
+## Quick Start
+
+### Option 1: Deploy with Vercel
 
 Click the **Deploy with Vercel** button above and configure your environment variables.
 
 ### Option 2: Manual Setup
 
 ```bash
-# Clone the repo
 git clone https://github.com/yashrathi-git/portfolioly-template.git
 cd portfolioly-template
-
-# Install dependencies
 yarn install
-
-# Copy environment file
 cp .env.example .env
-
 # Edit .env with your username
-# NEXT_PUBLIC_USERNAME=your_username
-
-# Start development server
 yarn dev
 ```
 
@@ -78,7 +70,7 @@ Open [http://localhost:3000](http://localhost:3000) to view your portfolio.
 
 <br />
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 | Variable                   | Required | Description                                              |
 | -------------------------- | :------: | -------------------------------------------------------- |
@@ -88,39 +80,35 @@ Open [http://localhost:3000](http://localhost:3000) to view your portfolio.
 
 <br />
 
-## 🎨 Features
+## Features
 
-- 🖼️ **Multiple Layouts** — Traditional & Chat-based designs
-- 🌙 **Dark/Light Mode** — Automatic theme switching
-- 💬 **AI Chat** — Interactive portfolio experience (with public token)
-- 📱 **Responsive** — Looks great on all devices
-- ⚡ **Fast** — Built with Next.js 15 & React 19
-
-<br />
-
-## 🛠 Tech Stack
-
-- **Next.js 15** with Turbopack
-- **React 19**
-- **Tailwind CSS 4**
-- **Framer Motion**
-- **portfolioly-template-components**
+- Multiple layouts (Traditional & Chat)
+- Dark/Light mode
+- AI Chat (with public token)
+- Responsive design
+- Next.js 15 & React 19
 
 <br />
 
-## 🙏 Acknowledgments
+## Tech Stack
 
-Built with ❤️ by [@yashrathi-git](https://github.com/yashrathi-git)
-
-Special thanks to:
-
-- [**Magic UI**](https://magicui.design/) — Beautiful animated components ✨
-- [**Portfolioly**](https://github.com/yashrathi-git/portfolioly) — The main platform
+- Next.js 15 with Turbopack
+- React 19
+- Tailwind CSS 4
+- Framer Motion
+- portfolioly-template-components
 
 <br />
 
-## 📄 License
+## Acknowledgments
 
-Unlicense — See [LICENSE](./LICENSE) for details.
+Built by [@yashrathi-git](https://github.com/yashrathi-git)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- [Magic UI](https://magicui.design/) — Animated components
+- [Portfolioly](https://github.com/yashrathi-git/portfolioly) — Main platform
+
+<br />
+
+## License
+
+MIT License — See [LICENSE](./LICENSE) for details.
