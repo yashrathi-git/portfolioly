@@ -59,7 +59,7 @@ export function PortfolioEditor({
     lastSavedDataRef.current = initial || null;
   }, [initial, hasUnsavedChanges]);
   const [activeSection, setActiveSection] = useState<string>(sections[0].id);
-  const [activeMode, setActiveMode] = useState<"edit" | "preview">("edit");
+  const [activeMode, setActiveMode] = useState<"edit" | "preview">("preview");
   const [publicToken, setPublicToken] = useState<string | undefined>(undefined);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
   const {
