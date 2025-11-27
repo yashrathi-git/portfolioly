@@ -33,15 +33,6 @@
 
 <br />
 
-<!-- WATCH DEMO CTA -->
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=bL3o6-LaU7w">
-    <img src="https://img.shields.io/badge/🎬_Watch_Demo-Build_&_Deploy_in_1_Minute-FF0000?style=for-the-badge&logoColor=white" alt="Watch Demo Video">
-  </a>
-</p>
-
-<br />
-
 <!-- TABLE OF CONTENTS -->
 <details>
   <summary>📑 Table of Contents</summary>
@@ -95,6 +86,14 @@ https://github.com/user-attachments/assets/1fb8009f-89f7-44c7-adb0-d36adab90030
 ![final-chat](https://media.portfolioly.app/hero/traditional-demo/final-chat.gif)
 
 <br />
+
+<!-- WATCH DEMO CTA -->
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=bL3o6-LaU7w">
+    <img src="https://img.shields.io/badge/🎬_Watch_Full_Demo-Build_&_Deploy_in_1_Minute-FF0000?style=for-the-badge&logoColor=white" alt="Watch Demo Video">
+  </a>
+</p>
+
 <br />
 
 <!-- HOW IT WORKS -->
@@ -219,7 +218,7 @@ Contributions are what make the open source community amazing! Any contributions
 
 ## 🙏 Acknowledgments
 
-- [**Magic UI**](https://magicui.design/) — Beautiful animated components that make portfolios shine ✨
+- [**Magic UI**](https://magicui.design/) — Beautiful animated components that make portfolios shine ✨ The template components were adapted from the [Magic UI Portfolio Template](https://magicui.design/docs/templates/portfolio) and modified for Portfolioly's needs.
 - [Next.js](https://nextjs.org/) — React framework
 - [Tailwind CSS](https://tailwindcss.com/) — Styling
 - [Framer Motion](https://www.framer.com/motion/) — Animations
