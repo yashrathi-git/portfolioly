@@ -85,6 +85,7 @@ Portfolioly transforms your existing professional content into a polished, inter
   </a>
 </p>
 <br />
+
 ### Traditional Layout
 
 https://github.com/user-attachments/assets/1fb8009f-89f7-44c7-adb0-d36adab90030
