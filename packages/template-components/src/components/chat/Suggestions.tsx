@@ -11,6 +11,7 @@ import {
   Mail,
   Circle,
   Link as LinkIcon,
+  GraduationCap,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -22,6 +23,7 @@ const ICONS: Record<string, LucideIcon> = {
   briefcase: Briefcase,
   mail: Mail,
   link: LinkIcon,
+  graduationCap: GraduationCap,
 };
 
 // Prompt expansion mapping: single word -> full prompt
@@ -145,7 +147,8 @@ export const Suggestions = ({
               }
               className={cn(
                 "group flex flex-col items-center gap-2 rounded-2xl px-4 py-3 min-w-[90px] bg-white/40 dark:bg-white/5 backdrop-blur-[12px] border border-black/[0.05] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)] hover:bg-white/60 dark:hover:bg-white/[0.08] hover:border-black/10 dark:hover:border-white/15 hover:shadow-[0_4px_8px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                disabled && "opacity-50 cursor-not-allowed hover:bg-white/40 dark:hover:bg-white/5 hover:border-black/[0.05] dark:hover:border-white/10 hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)]"
+                disabled &&
+                  "opacity-50 cursor-not-allowed hover:bg-white/40 dark:hover:bg-white/5 hover:border-black/[0.05] dark:hover:border-white/10 hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)]"
               )}
               aria-label={getFullPrompt(s.label)}
             >
@@ -192,7 +195,8 @@ export const Suggestions = ({
             }
             className={cn(
               "group inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-white/40 dark:bg-white/5 backdrop-blur-[12px] border border-black/[0.05] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)] hover:bg-white/60 dark:hover:bg-white/[0.08] hover:border-black/10 dark:hover:border-white/15 hover:shadow-[0_4px_8px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              disabled && "opacity-50 cursor-not-allowed hover:bg-white/40 dark:hover:bg-white/5 hover:border-black/[0.05] dark:hover:border-white/10 hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)]"
+              disabled &&
+                "opacity-50 cursor-not-allowed hover:bg-white/40 dark:hover:bg-white/5 hover:border-black/[0.05] dark:hover:border-white/10 hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02)]"
             )}
             aria-label={getFullPrompt(s.label)}
           >
