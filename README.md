@@ -52,6 +52,7 @@
     <li><a href="#-tech-stack">Tech Stack</a></li>
     <li><a href="#-getting-started">Getting Started</a></li>
     <li><a href="#-self-host-your-portfolio">Self-Host</a></li>
+    <li><a href="#-architecture">Architecture</a></li>
     <li><a href="#-contributing">Contributing</a></li>
     <li><a href="#-acknowledgments">Acknowledgments</a></li>
     <li><a href="#-license">License</a></li>
@@ -77,6 +78,17 @@ Portfolioly transforms your existing professional content into a polished, inter
 <!-- GENERATED PORTFOLIO DEMOS -->
 
 ## 🎨 See What Generated Portfolios Look Like
+
+### Traditional Layout
+
+https://github.com/user-attachments/assets/1fb8009f-89f7-44c7-adb0-d36adab90030
+
+### Chat Layout
+
+https://github.com/user-attachments/assets/a9d3ccd4-04ba-428c-a6cf-38d117cc0739
+
+<br />
+
 <p align="center">
   <a href="https://portfolioly.app/demo">
     <img src="https://img.shields.io/badge/✨_Try_Interactive_Demo-See_Generated_Portfolio-6366f1?style=for-the-badge" alt="Try Interactive Demo">
@@ -85,19 +97,11 @@ Portfolioly transforms your existing professional content into a polished, inter
 
 ### Traditional Layout
 
-
-
-
 https://github.com/user-attachments/assets/1fb8009f-89f7-44c7-adb0-d36adab90030
-
 
 ### Chat Layout
 
-
-
 ![final-chat](https://media.portfolioly.app/hero/traditional-demo/final-chat.gif)
-
-
 
 <br />
 <br />
@@ -158,6 +162,51 @@ See individual README files in `/apps` and `/backend` for detailed setup.
     <img src="https://img.shields.io/badge/portfolioly--template-Deploy%20in%20One%20Click-black?style=for-the-badge&logo=vercel" alt="Template Repo">
   </a>
 </p>
+
+<br />
+
+<!-- ARCHITECTURE -->
+
+## 🏗 Architecture
+
+Yarn workspaces monorepo with shared packages:
+
+```
+portfolioly/
+├── apps/
+│   ├── main/          # Next.js 15 - Main portfolio builder app
+│   └── template/      # Next.js 15 - Standalone template (uses shared packages)
+├── packages/
+│   ├── schema/             # Zod schemas & TypeScript types
+│   ├── template-components/ # React portfolio components (npm published)
+│   └── pdf_parser/         # LinkedIn PDF extraction (Python)
+└── backend/           # FastAPI + Python 3.11 - AI processing & API
+```
+
+```mermaid
+flowchart LR
+    subgraph Frontend
+        A[apps/main] --> C[packages/schema]
+        B[apps/template] --> C
+        A --> D[packages/template-components]
+        B --> D
+    end
+
+    subgraph Backend
+        E[FastAPI Backend] --> H[packages/pdf_parser]
+    end
+
+    A <--> E
+    B <--> E
+    E --> F[(Firebase)]
+    E --> G[Azure AI]
+```
+
+**Shared packages** are consumed by both apps and the template app is deployed to Vercel when users click "Deploy":
+
+- `portfolioly-schema` — Zod validation & TypeScript types shared across frontend
+- `portfolioly-template-components` — Published to npm, powers the deployed portfolio sites
+- `pdf_parser` — Python package for LinkedIn PDF extraction, used by backend
 
 <br />
 
