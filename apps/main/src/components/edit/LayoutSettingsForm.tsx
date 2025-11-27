@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { MessageSquare, FileText, Eye } from "lucide-react";
 import { FormSection } from "./FormSection";
 import type { LayoutSettings } from "portfolioly-schema";
+import posthog from "posthog-js";
 
 export interface LayoutSettingsFormProps {
   value: LayoutSettings;
@@ -46,6 +47,9 @@ export function LayoutSettingsForm({
   };
 
   const handleFooterToggle = (checked: boolean) => {
+    if (!checked) {
+      posthog.capture("footer_disabled");
+    }
     const newValue = {
       ...localValue,
       chat_mode_footer: checked,

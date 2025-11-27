@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, startTransition } from "react";
+import { useEffect, useState, startTransition, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link, ShieldCheck, User } from "lucide-react";
@@ -11,6 +11,7 @@ import { sections } from "./sectionConfig";
 import { PortfolioPreview } from "./PortfolioPreview";
 import { usePublishStatus } from "@/hooks/usePublishStatus";
 import { ensurePublicToken } from "@/lib/api/publicToken";
+import posthog from "posthog-js";
 
 export interface PortfolioEditorProps {
   initial?: PortfolioData;
@@ -47,12 +48,15 @@ export function PortfolioEditor({
   const [data, setData] = useState<PortfolioData>(
     () => initial || emptyPortfolioData
   );
+  const lastSavedDataRef = useRef<PortfolioData | null>(initial || null);
+
   useEffect(() => {
     if (hasUnsavedChanges) {
       return;
     }
 
     setData(initial || emptyPortfolioData);
+    lastSavedDataRef.current = initial || null;
   }, [initial, hasUnsavedChanges]);
   const [activeSection, setActiveSection] = useState<string>(sections[0].id);
   const [activeMode, setActiveMode] = useState<"edit" | "preview">("edit");
@@ -98,6 +102,49 @@ export function PortfolioEditor({
     const merged = { ...data, ...next };
     setData(merged);
     onChange?.(merged);
+  };
+
+  const handleSaveWithTracking = () => {
+    // Track which sections changed (compare with last saved state)
+    const prev = lastSavedDataRef.current;
+    if (prev) {
+      const changed: string[] = [];
+      if (
+        JSON.stringify(prev.personal_info) !==
+        JSON.stringify(data.personal_info)
+      )
+        changed.push("personal_info");
+      if (
+        JSON.stringify(prev.work_experiences) !==
+        JSON.stringify(data.work_experiences)
+      )
+        changed.push("work_experiences");
+      if (JSON.stringify(prev.projects) !== JSON.stringify(data.projects))
+        changed.push("projects");
+      if (JSON.stringify(prev.education) !== JSON.stringify(data.education))
+        changed.push("education");
+      if (
+        JSON.stringify(prev.certifications) !==
+        JSON.stringify(data.certifications)
+      )
+        changed.push("certifications");
+      if (JSON.stringify(prev.text_blobs) !== JSON.stringify(data.text_blobs))
+        changed.push("text_blobs");
+      if (
+        JSON.stringify(prev.layout_settings) !==
+        JSON.stringify(data.layout_settings)
+      )
+        changed.push("layout_settings");
+
+      if (changed.length > 0) {
+        posthog.capture("portfolio_sections_edited", {
+          sections_changed: changed,
+          sections_count: changed.length,
+        });
+      }
+    }
+    lastSavedDataRef.current = data;
+    onSave?.();
   };
 
   const handleSectionChange = (sectionId: string) => {
@@ -169,7 +216,7 @@ export function PortfolioEditor({
         title="Edit Portfolio"
         activeMode={activeMode}
         onModeChange={handleModeChange}
-        onSave={onSave}
+        onSave={handleSaveWithTracking}
         saving={saving}
         hasUnsavedChanges={hasUnsavedChanges}
         hasContent={hasContent}

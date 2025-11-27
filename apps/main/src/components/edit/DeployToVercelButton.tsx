@@ -10,14 +10,13 @@ import { VercelIcon } from "@/components/icons/VercelIcon";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchUsernameAndToken } from "@/lib/api/publicToken";
 import { cn } from "@/lib/utils";
+import posthog from "posthog-js";
 
 interface DeployToVercelButtonProps {
   className?: string;
 }
 
-export function DeployToVercelButton({
-  className,
-}: DeployToVercelButtonProps) {
+export function DeployToVercelButton({ className }: DeployToVercelButtonProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [username, setUsername] = useState<string | undefined>(undefined);
   const [publicToken, setPublicToken] = useState<string | undefined>(undefined);
@@ -33,13 +32,13 @@ export function DeployToVercelButton({
   useEffect(() => {
     async function fetchCredentials() {
       if (!showDialog || !user) return;
-      
+
       setIsLoading(true);
       setError(null);
-      
+
       try {
         const authToken = await user.getIdToken();
-        const { username: fetchedUsername, publicToken: fetchedToken } = 
+        const { username: fetchedUsername, publicToken: fetchedToken } =
           await fetchUsernameAndToken(user.uid, authToken);
         setUsername(fetchedUsername);
         setPublicToken(fetchedToken);
@@ -86,6 +85,9 @@ export function DeployToVercelButton({
   deployUrl.searchParams.set("redirect-url", redirectUrl);
 
   const handleDeploy = () => {
+    posthog.capture("deploy_to_vercel_clicked", {
+      username,
+    });
     window.open(deployUrl.toString(), "_blank");
     setShowDialog(false);
   };
@@ -93,17 +95,13 @@ export function DeployToVercelButton({
   return (
     <DialogPrimitive.Root open={showDialog} onOpenChange={setShowDialog}>
       <DialogPrimitive.Trigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={className}
-        >
+        <Button variant="outline" size="sm" className={className}>
           <VercelIcon className="h-4 w-4" />
           <span className="hidden sm:inline">Deploy</span>
         </Button>
       </DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay 
+        <DialogPrimitive.Overlay
           className={cn(
             "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -138,7 +136,9 @@ export function DeployToVercelButton({
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-8 gap-3">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Preparing deployment...</p>
+                <p className="text-sm text-muted-foreground">
+                  Preparing deployment...
+                </p>
               </div>
             ) : error ? (
               <div className="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 p-4">
