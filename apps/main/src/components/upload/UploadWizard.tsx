@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import PDFUploadStep from "./PDFUploadStep";
 import GithubRepoStep from "./GithubRepoStep";
 import SourceSelectionStep, { type SourceType } from "./SourceSelectionStep";
+import LinkedInInstructionsDialog from "./LinkedInInstructionsDialog";
 import { LoadingScreen } from "./LoadingScreen";
 import { useUpload } from "@/hooks/useUpload";
 import { handleError, handleSuccess } from "@/lib/utils/simpleErrorHandler";
@@ -20,12 +21,26 @@ export function UploadWizard({
 }: UploadWizardProps) {
   const [selectedSource, setSelectedSource] = useState<SourceType>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
   const upload = useUpload({ disableClientValidation });
   const router = useRouter();
+
+  const linkedInDialogShown = useRef(false);
 
   const handleSelectSource = useCallback((source: SourceType) => {
     setSelectedSource(source);
   }, []);
+
+  // Show LinkedIn instructions dialog 1.5s after landing on LinkedIn upload step
+  useEffect(() => {
+    if (selectedSource === "linkedin" && !linkedInDialogShown.current) {
+      const timer = setTimeout(() => {
+        setShowLinkedInDialog(true);
+        linkedInDialogShown.current = true;
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedSource]);
 
   const handleAddAnother = useCallback(() => {
     setSelectedSource(null);
@@ -105,7 +120,7 @@ export function UploadWizard({
             description="Upload your LinkedIn PDF to automatically extract your experience, skills, and headline."
             helpTitle="Where to export LinkedIn PDF?"
             helpImageUrl="https://media.portfolioly.app/linkedin-pdf/linkedin_pdf.png"
-            helpDefaultOpen={true}
+            helpDefaultOpen={false}
             source="linkedin"
             uploadState={upload.linkedin}
             onUpload={upload.uploadLinkedInPDF}
@@ -168,7 +183,15 @@ export function UploadWizard({
     acceptOverride,
   ]);
 
-  return <div className="space-y-4 sm:space-y-6">{content}</div>;
+  return (
+    <>
+      <div className="space-y-4 sm:space-y-6">{content}</div>
+      <LinkedInInstructionsDialog
+        open={showLinkedInDialog}
+        onOpenChange={setShowLinkedInDialog}
+      />
+    </>
+  );
 }
 
 export default UploadWizard;

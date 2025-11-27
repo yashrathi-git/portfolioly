@@ -181,53 +181,41 @@ export function PDFUploadStep(props: PDFUploadStepProps) {
             </div>
           )}
 
-          {/* Help Section - Only show if helpTitle or helpImageUrl is provided */}
+          {/* Help Section */}
           {(helpTitle || helpImageUrl) && (
             <Collapsible defaultOpen={helpDefaultOpen}>
-              <CollapsibleTrigger className="text-sm inline-flex items-center gap-2 underline underline-offset-4 cursor-help">
+              <CollapsibleTrigger className="text-sm inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                 <HelpCircle className="h-4 w-4" />
                 {source === "linkedin"
-                  ? "Where to export LinkedIn PDF?"
+                  ? "Need help finding the LinkedIn PDF?"
                   : helpTitle}
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-3">
-                {source === "linkedin" ? (
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+                <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                  {source === "linkedin" ? (
                     <ol className="text-sm text-foreground list-decimal pl-5 space-y-1">
-                      <li>Go to your profile page</li>
-                      <li>From Resources, click on &quot;Save to PDF&quot;</li>
+                      <li>Go to linkedin.com and sign in</li>
+                      <li>Click your profile picture → View Profile</li>
+                      <li>In Resources, click &quot;Save to PDF&quot;</li>
                     </ol>
-                    {helpImageUrl && (
-                      <div className="rounded-md overflow-hidden border shadow-sm">
-                        <Image
-                          src={helpImageUrl}
-                          alt="LinkedIn export help"
-                          className="w-full"
-                          width={600}
-                          height={338}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    {helpImageUrl && (
-                      <div className="rounded-md overflow-hidden border">
-                        <Image
-                          src={helpImageUrl}
-                          alt="Help preview"
-                          className="w-full aspect-video object-cover"
-                          width={600}
-                          height={338}
-                        />
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
                       We extract headline, experience bullets, skills, and links
                       from your resume.
                     </p>
-                  </div>
-                )}
+                  )}
+                  {helpImageUrl && (
+                    <div className="rounded-md overflow-hidden border shadow-sm">
+                      <Image
+                        src={helpImageUrl}
+                        alt="Help preview"
+                        className="w-full"
+                        width={600}
+                        height={338}
+                      />
+                    </div>
+                  )}
+                </div>
               </CollapsibleContent>
             </Collapsible>
           )}
