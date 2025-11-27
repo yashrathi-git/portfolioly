@@ -77,29 +77,29 @@ Portfolioly transforms your existing professional content into a polished, inter
 <!-- GENERATED PORTFOLIO DEMOS -->
 
 ## 🎨 See What Generated Portfolios Look Like
-
-### Traditional Layout
-
-<video src="https://media.portfolioly.app/hero/traditional-demo/traditional_demo_webm.webm" width="100%" autoplay loop muted playsinline>
-  <source src="https://media.portfolioly.app/hero/traditional-demo/traditional_demo_webm.webm" type="video/webm">
-  <source src="https://media.portfolioly.app/hero/traditional-demo/traditional_demo_mp4.mp4" type="video/mp4">
-</video>
-
-### Chat Layout
-
-<video src="https://media.portfolioly.app/hero/chat_demo/chat_final.webm" width="100%" autoplay loop muted playsinline>
-  <source src="https://media.portfolioly.app/hero/chat_demo/chat_final.webm" type="video/webm">
-  <source src="https://media.portfolioly.app/hero/chat_demo/chat_final.mp4" type="video/mp4">
-</video>
-
-<br />
-
 <p align="center">
   <a href="https://portfolioly.app/demo">
     <img src="https://img.shields.io/badge/✨_Try_Interactive_Demo-See_Generated_Portfolio-6366f1?style=for-the-badge" alt="Try Interactive Demo">
   </a>
 </p>
 
+### Traditional Layout
+
+
+
+
+https://github.com/user-attachments/assets/1fb8009f-89f7-44c7-adb0-d36adab90030
+
+
+### Chat Layout
+
+
+
+![final-chat](https://media.portfolioly.app/hero/traditional-demo/final-chat.gif)
+
+
+
+<br />
 <br />
 
 <!-- HOW IT WORKS -->
