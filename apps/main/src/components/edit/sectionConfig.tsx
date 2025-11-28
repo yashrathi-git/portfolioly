@@ -14,6 +14,7 @@ import {
   Award,
   FileText,
   Layout,
+  Sparkles,
 } from "lucide-react";
 import type { PortfolioData } from "portfolioly-schema";
 import { PersonalInfoForm } from "./PersonalInfoForm";
@@ -25,6 +26,7 @@ import { EducationForm } from "./EducationForm";
 import { CertificationsForm } from "./CertificationsForm";
 import { TextBlobsForm } from "./TextBlobsForm";
 import { LayoutSettingsForm } from "./LayoutSettingsForm";
+import { BrandingSettingsForm } from "./BrandingSettingsForm";
 
 /**
  * Represents a navigation section in the portfolio editor.
@@ -117,5 +119,12 @@ export const sections: NavigationSection[] = [
     icon: Layout,
     component: LayoutSettingsForm,
     hasData: (data) => Boolean(data.layout_settings),
+  },
+  {
+    id: "branding",
+    label: "Branding",
+    icon: Sparkles,
+    component: BrandingSettingsForm,
+    hasData: (data) => data.layout_settings?.chat_mode_footer === false,
   },
 ];

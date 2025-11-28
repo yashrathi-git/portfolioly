@@ -398,6 +398,14 @@ function renderSectionContent(
         />
       );
 
+    case "branding":
+      return (
+        <SectionComponent
+          value={data.layout_settings}
+          onChange={(v) => update({ layout_settings: v })}
+        />
+      );
+
     default:
       return null;
   }
