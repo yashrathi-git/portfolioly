@@ -1,5 +1,11 @@
 # portfolioly-template-components
 
+## 1.0.2
+
+### Patch Changes
+
+- fd6df4e: Update ico
+
 ## 1.0.1
 
 ### Patch Changes
