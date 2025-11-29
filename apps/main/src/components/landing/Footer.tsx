@@ -18,6 +18,18 @@ export function Footer() {
 
           <div className="flex items-center gap-6">
             <Link
+              href="/privacy"
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm"
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/terms"
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm"
+            >
+              Terms
+            </Link>
+            <Link
               href={GITHUB_REPO_URL}
               target="_blank"
               className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 text-sm"
