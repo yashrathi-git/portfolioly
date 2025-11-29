@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
+import { ProductHuntBannerProvider } from "@/components/landing/ProductHuntBanner";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://portfolioly.app"),
@@ -130,9 +131,11 @@ export default function LandingLayout({ children }: { children: ReactNode }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="min-h-dvh flex flex-col">
-        <main className="flex-1">{children}</main>
-      </div>
+      <ProductHuntBannerProvider>
+        <div className="min-h-dvh flex flex-col">
+          <main className="flex-1">{children}</main>
+        </div>
+      </ProductHuntBannerProvider>
     </>
   );
 }
