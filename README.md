@@ -27,7 +27,7 @@
 <!-- HERO BANNER -->
 <p align="center">
   <a href="https://portfolioly.app">
-    <img src="https://media.portfolioly.app/hero/portfolioly-banner.jpg" alt="Portfolioly Banner" width="100%">
+    <img src="https://media.portfolioly.app/hero/banner-github.jpg" alt="Portfolioly Banner" width="100%">
   </a>
 </p>
 
