@@ -88,7 +88,8 @@ export function UploadWizard({
 
   const content = useMemo(() => {
     if (isProcessing) {
-      return <LoadingScreen />;
+      const hasResume = !!upload.resume.result || !!upload.linkedin.result;
+      return <LoadingScreen hasResume={hasResume} />;
     }
 
     // Determine which sources have been imported
