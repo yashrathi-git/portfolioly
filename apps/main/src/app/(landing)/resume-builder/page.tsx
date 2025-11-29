@@ -7,6 +7,7 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Footer } from "@/components/landing/Footer";
 import { Input } from "@/components/ui/input";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { signupForWaitlist } from "@/lib/api/waitlist";
 
 const ENTRY_VARIANTS = {
   hidden: { opacity: 0, y: 10, filter: "blur(10px)" },
@@ -24,15 +25,23 @@ export default function ResumeBuilderPage() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitted(true);
-    setIsSubmitting(false);
+    setError(null);
+
+    try {
+      await signupForWaitlist(email, "resume_builder");
+      setIsSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -121,23 +130,30 @@ export default function ResumeBuilderPage() {
                     </span>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="flex gap-3">
-                    <Input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="flex-1 rounded-full px-5"
-                    />
-                    <ShimmerButton
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="h-11 px-6"
-                    >
-                      {isSubmitting ? "Joining..." : "Join Waitlist"}
-                    </ShimmerButton>
-                  </form>
+                  <div className="space-y-3">
+                    <form onSubmit={handleSubmit} className="flex gap-3">
+                      <Input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="flex-1 rounded-full px-5"
+                      />
+                      <ShimmerButton
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="h-11 px-6"
+                      >
+                        {isSubmitting ? "Joining..." : "Join Waitlist"}
+                      </ShimmerButton>
+                    </form>
+                    {error && (
+                      <p className="text-sm text-red-500 text-center">
+                        {error}
+                      </p>
+                    )}
+                  </div>
                 )}
               </motion.div>
             </div>

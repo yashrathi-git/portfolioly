@@ -19,6 +19,7 @@ class RateLimitGroup:
     PUBLIC_PORTFOLIO: str = "public_portfolio"
     PUBLIC_USERNAME: str = "public_username"
     HEALTHCHECK: str = "healthcheck"
+    WAITLIST: str = "waitlist"
 
 
 class RateLimitRule(BaseModel):
@@ -39,6 +40,9 @@ class RateLimitRules:
     PUBLIC_PORTFOLIO: RateLimitRule = RateLimitRule(requests=10, window_seconds=60)
     PUBLIC_USERNAME: RateLimitRule = RateLimitRule(requests=10, window_seconds=60)
     HEALTHCHECK: RateLimitRule = RateLimitRule(requests=100, window_seconds=60)
+    WAITLIST: RateLimitRule = RateLimitRule(
+        requests=10, window_seconds=1800
+    )  # 10 per 30 min
 
     @classmethod
     def get_rule(cls, group: str) -> RateLimitRule:

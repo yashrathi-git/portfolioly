@@ -143,6 +143,14 @@ limit_healthcheck_requests = _build_ip_rate_limit_dependency(
     key_suffix="health",
 )
 
+limit_waitlist_requests = _build_ip_rate_limit_dependency(
+    group=RateLimitGroup.WAITLIST,
+    rule=RateLimitRules.WAITLIST,
+    error_code="WAITLIST_RATE_LIMIT",
+    message="Too many waitlist signups from this IP. Please try again later.",
+    key_suffix="waitlist",
+)
+
 
 # Endpoint-specific dependencies -------------------------------------------
 
