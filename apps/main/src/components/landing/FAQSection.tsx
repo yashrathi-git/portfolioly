@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
-import { getDiscordLink, GITHUB_REPO_URL } from "@/lib/utils/links";
+import { GITHUB_REPO_URL } from "@/lib/utils/links";
 
 interface FAQItemProps {
   question: string;
@@ -78,35 +78,14 @@ const faqs: { question: string; answer: React.ReactNode }[] = [
   },
   {
     question: "How to get help?",
-    answer: (
-      <>
-        Join our{" "}
-        <a
-          href={getDiscordLink()}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={linkClass}
-        >
-          Discord
-        </a>{" "}
-        and you can ask your questions there.
-      </>
-    ),
+    answer:
+      "You can open an issue on GitHub or reach out through the repository discussions. We're always happy to help!",
   },
   {
     question: "I want to report an issue",
     answer: (
       <>
-        You can report issues on{" "}
-        <a
-          href={getDiscordLink()}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={linkClass}
-        >
-          Discord
-        </a>{" "}
-        or open an issue on{" "}
+        You can open an issue on{" "}
         <a
           href={`${GITHUB_REPO_URL}/issues`}
           target="_blank"

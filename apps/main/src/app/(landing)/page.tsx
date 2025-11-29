@@ -14,8 +14,8 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <BentoFeaturesSection />
       <ProfileToPortfolioSteps />
+      <BentoFeaturesSection />
       <LandingDemo />
       <FAQSection />
       <FinalCTA />

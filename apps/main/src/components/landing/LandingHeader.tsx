@@ -4,11 +4,10 @@ import { Sun, Moon, Github } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import Link from "next/link";
 import { WandIcon } from "@/components/icons/PortfoliolyWandIcon";
-import { DiscordIcon } from "@/components/icons/DiscordIcon";
 import { useScroll } from "motion/react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { getDiscordLink, GITHUB_REPO_URL } from "@/lib/utils/links";
+import { GITHUB_REPO_URL } from "@/lib/utils/links";
 
 export function LandingHeader() {
   const { isDark, toggleTheme } = useTheme();
@@ -22,7 +21,7 @@ export function LandingHeader() {
   }, [scrollY]);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-6 lg:px-8">
+    <header className="fixed inset-x-0 top-0 z-50 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl pt-4">
         <div
           className={cn(
@@ -47,15 +46,6 @@ export function LandingHeader() {
               >
                 <Github className="h-5 w-5 text-zinc-900 dark:text-zinc-100" />
               </a>
-              <a
-                href={getDiscordLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                aria-label="Join Discord"
-              >
-                <DiscordIcon className="h-5 w-5 text-zinc-900 dark:text-zinc-100" />
-              </a>
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -71,7 +61,8 @@ export function LandingHeader() {
                 href="/auth/sign-in"
                 className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
-                <span>Build My Portfolio</span>
+                <span className="hidden sm:inline">Build My Portfolio</span>
+                <span className="sm:hidden">Build</span>
               </Link>
             </div>
           </div>

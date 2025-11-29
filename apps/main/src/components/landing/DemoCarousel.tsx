@@ -140,8 +140,8 @@ export function DemoCarousel() {
 
   return (
     <div className="relative">
-      {/* Carousel Container */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-border shadow-2xl bg-card">
+      {/* Carousel Container - Better mobile sizing */}
+      <div className="relative aspect-[16/10] sm:aspect-[16/10] w-full overflow-hidden rounded-xl sm:rounded-2xl border border-border shadow-2xl bg-card">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
@@ -176,16 +176,10 @@ export function DemoCarousel() {
             >
               {/* WEBM source first (preferred - better compression, browser auto-selects) */}
               {currentSlide.sources.webm && (
-                <source
-                  src={currentSlide.sources.webm}
-                  type="video/webm"
-                />
+                <source src={currentSlide.sources.webm} type="video/webm" />
               )}
               {/* MP4 fallback */}
-              <source
-                src={currentSlide.sources.mp4}
-                type="video/mp4"
-              />
+              <source src={currentSlide.sources.mp4} type="video/mp4" />
             </video>
           </motion.div>
         </AnimatePresence>
@@ -222,12 +216,12 @@ export function DemoCarousel() {
       </div>
 
       {/* Animated Progress Indicators */}
-      <div className="flex justify-center gap-2 mt-6">
+      <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
         {DEMO_SLIDES.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className="relative h-1.5 w-12 rounded-full bg-muted overflow-hidden cursor-pointer transition-all hover:bg-muted/80"
+            className="relative h-1.5 sm:h-2 w-10 sm:w-14 rounded-full bg-muted overflow-hidden cursor-pointer transition-all hover:bg-muted/80"
             aria-label={`Go to slide ${index + 1}`}
           >
             {/* Filled background for completed slides */}
