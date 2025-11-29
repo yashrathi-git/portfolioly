@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     title: "Free AI Portfolio Builder | Portfolioly",
     description:
       "Create your portfolio website in seconds. Import from LinkedIn or GitHub. 100% free & open source.",
-    creator: "@portfolioly",
+    creator: "@YashRathi876371",
   },
   robots: {
     index: true,
@@ -109,9 +109,9 @@ const jsonLd = {
   ],
   screenshot: "https://media.portfolioly.app/hero/portfolioly-banner.jpg",
   author: {
-    "@type": "Organization",
-    name: "Portfolioly",
-    url: "https://portfolioly.app",
+    "@type": "Person",
+    name: "Yash Rathi",
+    url: "https://github.com/yashrathi-git",
   },
   aggregateRating: {
     "@type": "AggregateRating",
