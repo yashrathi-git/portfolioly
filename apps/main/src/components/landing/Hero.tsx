@@ -168,7 +168,7 @@ export function Hero() {
 
         {/* Large Demo Section - Auto-rotating Carousel */}
         <motion.div
-          className="mx-auto max-w-screen-xl px-3 sm:px-6 pb-16"
+          className="mx-auto max-w-screen-xl px-0 sm:px-6 pb-16"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{

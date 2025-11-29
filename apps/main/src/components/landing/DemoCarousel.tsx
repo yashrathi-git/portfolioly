@@ -141,7 +141,7 @@ export function DemoCarousel() {
   return (
     <div className="relative">
       {/* Carousel Container - Better mobile sizing */}
-      <div className="relative aspect-[16/10] sm:aspect-[16/10] w-full overflow-hidden rounded-xl sm:rounded-2xl border border-border shadow-2xl bg-card">
+      <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full overflow-hidden rounded-none sm:rounded-2xl border-0 sm:border border-border shadow-2xl bg-card">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}

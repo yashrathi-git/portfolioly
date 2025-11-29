@@ -4,6 +4,8 @@ import { Portfolio } from "portfolioly-template-components";
 import type { PortfolioData } from "portfolioly-schema";
 import { mapPortfolioDataToTemplate } from "@/utils/portfolioDataMapper";
 import { env } from "@/lib/env";
+import Link from "next/link";
+import { Sparkles } from "lucide-react";
 
 // Import the compiled CSS styles to ensure they're loaded
 import "portfolioly-template-components/style.css";
@@ -227,7 +229,7 @@ export default function DemoPage() {
   const displayData = mapPortfolioDataToTemplate(DEMO_PORTFOLIO_DATA);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
       <Portfolio
         portfolioData={displayData}
         isLoading={false}
@@ -237,6 +239,15 @@ export default function DemoPage() {
         apiBaseUrl={env.API_BASE_URL}
         publicToken={DEMO_PUBLIC_TOKEN}
       />
+
+      {/* Floating Deploy Button */}
+      <Link
+        href="https://portfolioly.app"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 font-medium text-sm sm:text-base"
+      >
+        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
+        <span>Deploy on Portfolioly</span>
+      </Link>
     </div>
   );
 }
