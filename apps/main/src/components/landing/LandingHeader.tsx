@@ -54,7 +54,7 @@ export function LandingHeader() {
                 href="#demo"
                 className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
               >
-                Demo
+                Video
               </a>
             </nav>
 
