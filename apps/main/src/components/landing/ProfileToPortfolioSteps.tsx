@@ -430,8 +430,9 @@ export function ProfileToPortfolioSteps() {
 
   return (
     <section
+      id="steps"
       ref={sectionRef}
-      className="py-20 sm:py-28 bg-background overflow-hidden"
+      className="py-20 sm:py-28 bg-background overflow-hidden scroll-mt-20"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12 sm:mb-16 text-center">

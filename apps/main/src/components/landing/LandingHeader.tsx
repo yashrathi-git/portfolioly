@@ -31,10 +31,32 @@ export function LandingHeader() {
               : "border-transparent bg-transparent px-0 backdrop-blur-0"
           )}
         >
-          <div className="flex w-full items-center justify-between p-2">
+          <div className="relative flex w-full items-center justify-between p-2">
             <Link href="/" className="flex items-center gap-2 p-1">
               <WandIcon className="h-8 w-auto text-zinc-950 dark:text-white" />
             </Link>
+
+            {/* Center Navigation - absolutely positioned for true centering */}
+            <nav className="hidden md:flex items-center gap-x-6 absolute left-1/2 -translate-x-1/2">
+              <a
+                href="#steps"
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+              >
+                Steps
+              </a>
+              <a
+                href="#features"
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+              >
+                Features
+              </a>
+              <a
+                href="#demo"
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+              >
+                Demo
+              </a>
+            </nav>
 
             <div className="flex items-center gap-x-2 sm:gap-x-3">
               <a

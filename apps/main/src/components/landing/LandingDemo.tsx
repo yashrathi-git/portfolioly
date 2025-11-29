@@ -10,7 +10,10 @@ const DEMO_VIDEO = {
 
 export function LandingDemo() {
   return (
-    <section className="py-16 sm:py-20 lg:py-24 px-6 lg:px-8">
+    <section
+      id="demo"
+      className="py-16 sm:py-20 lg:py-24 px-6 lg:px-8 scroll-mt-20"
+    >
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
