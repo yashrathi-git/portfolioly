@@ -53,10 +53,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-
+*.csv
 # vercel
 .vercel
-
+scripts/emails
 # typescript
 *.tsbuildinfo
 next-env.d.ts
