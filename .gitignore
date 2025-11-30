@@ -63,7 +63,7 @@ next-env.d.ts
 template/next-env.d.ts
 
 # IDE and editor files
-.vscode/
+# .vscode/
 .idea/
 *.swp
 *.swo
