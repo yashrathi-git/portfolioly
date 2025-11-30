@@ -89,5 +89,4 @@ firebaseServiceKeyJson
 firebaseServiceKeyJson/*
 firebaseServiceKey.json
 *.pyc
-.kiro/specs
 context/
