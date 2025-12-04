@@ -104,7 +104,7 @@ export async function createResume(data: CreateResumeRequest): Promise<string> {
   try {
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/resumes/`, {
+    const response = await fetch(`${API_BASE_URL}/api/resumes/`, {
       method: "POST",
       headers,
       body: JSON.stringify(data),
@@ -135,7 +135,7 @@ export async function getResume(resumeId: string): Promise<ResumeData> {
   try {
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/resumes/${resumeId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/resumes/${resumeId}`, {
       method: "GET",
       headers,
     });
@@ -163,7 +163,7 @@ export async function listResumes(): Promise<ResumeListResponse> {
   try {
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/resumes/`, {
+    const response = await fetch(`${API_BASE_URL}/api/resumes/`, {
       method: "GET",
       headers,
     });
@@ -191,7 +191,7 @@ export async function updateResume(
   try {
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/resumes/${resumeId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/resumes/${resumeId}`, {
       method: "PUT",
       headers,
       body: JSON.stringify(data),
@@ -220,7 +220,7 @@ export async function deleteResume(resumeId: string): Promise<void> {
   try {
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/resumes/${resumeId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/resumes/${resumeId}`, {
       method: "DELETE",
       headers,
     });
@@ -256,7 +256,7 @@ export async function duplicateResume(
     const body = newName ? { new_name: newName } : {};
 
     const response = await fetch(
-      `${API_BASE_URL}/resumes/${resumeId}/duplicate`,
+      `${API_BASE_URL}/api/resumes/${resumeId}/duplicate`,
       {
         method: "POST",
         headers,
