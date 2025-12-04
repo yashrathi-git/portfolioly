@@ -2,7 +2,7 @@
  * PDF Export Utility
  *
  * Handles PDF generation for resumes using browser print functionality.
- * Uses window.print() with print-specific CSS for reliable PDF generation.
+ * Clones the resume content to a dedicated print container for reliable rendering.
  *
  * _Requirements: 5.1, 5.2, 5.3, 5.4_
  */
@@ -51,13 +51,18 @@ export function generateFilename(
 
 /**
  * Print-specific CSS to inject for PDF export
- * Ensures proper page breaks and hides non-resume elements
+ * Hides everything except the print container and ensures proper rendering
  */
 const printStyles = `
   @media print {
-    /* Hide everything except the resume preview */
-    body > *:not(.resume-print-container) {
+    /* Hide everything in body */
+    body > * {
       display: none !important;
+    }
+
+    /* Show only the print container */
+    body > #resume-print-container {
+      display: block !important;
     }
 
     /* Reset body styles for print */
@@ -65,17 +70,27 @@ const printStyles = `
       margin: 0 !important;
       padding: 0 !important;
       background: white !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
-    /* Resume container styles */
-    .resume-print-container {
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
+    /* Print container styles */
+    #resume-print-container {
+      position: static !important;
       width: 100% !important;
       margin: 0 !important;
       padding: 0 !important;
       background: white !important;
+      transform: none !important;
+    }
+
+    #resume-print-container > * {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      transform: none !important;
     }
 
     /* Page setup */
@@ -109,16 +124,60 @@ const printStyles = `
       display: none !important;
     }
   }
+
+  /* Hide print container on screen */
+  @media screen {
+    #resume-print-container {
+      display: none !important;
+    }
+  }
 `;
 
 /**
- * Create a style element with print CSS
+ * Create or get the style element with print CSS
  */
-function createPrintStyleElement(): HTMLStyleElement {
-  const style = document.createElement("style");
-  style.id = "resume-print-styles";
-  style.textContent = printStyles;
-  return style;
+function ensurePrintStyles(): HTMLStyleElement {
+  let styleElement = document.getElementById(
+    "resume-print-styles"
+  ) as HTMLStyleElement | null;
+
+  if (!styleElement) {
+    styleElement = document.createElement("style");
+    styleElement.id = "resume-print-styles";
+    styleElement.textContent = printStyles;
+    document.head.appendChild(styleElement);
+  }
+
+  return styleElement;
+}
+
+/**
+ * Create a print container with cloned resume content
+ */
+function createPrintContainer(sourceElement: Element): HTMLDivElement {
+  // Remove existing print container if any
+  const existing = document.getElementById("resume-print-container");
+  if (existing) {
+    existing.remove();
+  }
+
+  // Create new container
+  const container = document.createElement("div");
+  container.id = "resume-print-container";
+
+  // Clone the resume content (deep clone)
+  const clone = sourceElement.cloneNode(true) as HTMLElement;
+
+  // Remove any transforms or scaling from the clone
+  clone.style.transform = "none";
+  clone.style.width = "100%";
+  clone.style.maxWidth = "100%";
+  clone.style.boxShadow = "none";
+
+  container.appendChild(clone);
+  document.body.appendChild(container);
+
+  return container;
 }
 
 /**
@@ -136,15 +195,22 @@ function setDocumentTitle(filename: string): string {
  * Export the resume as a PDF using browser print
  *
  * This function:
- * 1. Injects print-specific CSS
- * 2. Sets the document title for the PDF filename
- * 3. Triggers the browser print dialog
- * 4. Cleans up after printing
+ * 1. Clones the resume preview to a dedicated print container
+ * 2. Injects print-specific CSS
+ * 3. Sets the document title for the PDF filename
+ * 4. Triggers the browser print dialog
+ * 5. Cleans up after printing
  *
  * @param options - Export options including resume data and optional filename
  */
 export async function exportToPDF(options: PDFExportOptions): Promise<void> {
   const { data, filename: customFilename } = options;
+
+  // Find the resume preview element
+  const previewElement = document.querySelector('[data-resume-preview="true"]');
+  if (!previewElement) {
+    throw new Error("Resume preview element not found");
+  }
 
   // Generate filename
   const filename = generateFilename(data, customFilename);
@@ -152,43 +218,34 @@ export async function exportToPDF(options: PDFExportOptions): Promise<void> {
   // Store original title
   const originalTitle = setDocumentTitle(filename);
 
-  // Inject print styles
-  let styleElement = document.getElementById(
-    "resume-print-styles"
-  ) as HTMLStyleElement | null;
-  if (!styleElement) {
-    styleElement = createPrintStyleElement();
-    document.head.appendChild(styleElement);
-  }
+  // Ensure print styles are injected
+  ensurePrintStyles();
 
-  // Add print container class to the preview element
-  const previewElement = document.querySelector('[data-resume-preview="true"]');
-  if (previewElement) {
-    previewElement.classList.add("resume-print-container");
-  }
+  // Create print container with cloned content
+  const printContainer = createPrintContainer(previewElement);
 
-  // Use a small delay to ensure styles are applied
+  // Use a small delay to ensure DOM is updated
   await new Promise((resolve) => setTimeout(resolve, 100));
 
   // Trigger print
   window.print();
 
-  // Cleanup after print dialog closes
-  // Note: There's no reliable way to detect when print dialog closes,
-  // so we use a timeout and also listen for focus
+  // Cleanup function
   const cleanup = () => {
     document.title = originalTitle;
-    if (previewElement) {
-      previewElement.classList.remove("resume-print-container");
-    }
+    printContainer.remove();
     window.removeEventListener("focus", cleanup);
+    window.removeEventListener("afterprint", cleanup);
   };
 
-  // Cleanup on window focus (when print dialog closes)
+  // Listen for afterprint event (most reliable)
+  window.addEventListener("afterprint", cleanup, { once: true });
+
+  // Cleanup on window focus (fallback for browsers without afterprint)
   window.addEventListener("focus", cleanup, { once: true });
 
   // Fallback cleanup after a delay
-  setTimeout(cleanup, 2000);
+  setTimeout(cleanup, 5000);
 }
 
 /**
