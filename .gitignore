@@ -63,7 +63,7 @@ next-env.d.ts
 template/next-env.d.ts
 
 # IDE and editor files
-# .vscode/
+# .vscode/zz
 .idea/
 *.swp
 *.swo
@@ -88,5 +88,15 @@ Desktop.ini
 firebaseServiceKeyJson
 firebaseServiceKeyJson/*
 firebaseServiceKey.json
+
+# Python
 *.pyc
+__pycache__/
+.venv/
+.pytest_cache/
+.hypothesis/
+*.egg-info/
+.python-version
+
+# Context folder
 context/

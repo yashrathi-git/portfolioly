@@ -29,6 +29,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.148.3",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",
 ]

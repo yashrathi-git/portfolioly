@@ -14,6 +14,7 @@ from .routes import (
     auth_router,
     upload_router,
     portfolio_router,
+    resume_router,
 )
 from .routes.public_portfolio import router as public_portfolio_router
 from .routes.user_settings import router as user_settings_router
@@ -112,6 +113,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(upload_router)
     app.include_router(portfolio_router)
+    app.include_router(resume_router, prefix="/api")
     app.include_router(public_portfolio_router)
     app.include_router(user_settings_router, prefix="/users/me/settings")
     app.include_router(notifications_router)

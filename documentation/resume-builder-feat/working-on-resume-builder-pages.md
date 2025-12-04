@@ -90,9 +90,9 @@ import type {
 
 ---
 
-## TODO (Task 15)
+## API Integration (Completed)
 
-API integration pending:
+All API functions are wired up:
 
 - `createResume()` - Create new resume
 - `getResume(id)` - Load existing resume
@@ -100,6 +100,8 @@ API integration pending:
 - `updateResume(id, data)` - Save resume changes
 - `deleteResume(id)` - Delete resume
 - `duplicateResume(id)` - Copy resume
+
+See `apps/main/src/lib/api/resume.ts` for implementation.
 
 ---
 
