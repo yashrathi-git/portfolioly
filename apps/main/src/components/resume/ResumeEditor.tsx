@@ -247,18 +247,6 @@ function WorkExperienceEditor({ value, onChange }: WorkExperienceEditorProps) {
   const update = (idx: number, next: Partial<ResumeWorkExperience>) =>
     onChange(items.map((it, i) => (i === idx ? { ...it, ...next } : it)));
 
-  const updateHighlights = (idx: number, text: string) => {
-    // Split by newlines and filter empty lines
-    const highlights = text
-      .split("\n")
-      .map((line) => line.replace(/^[-•]\s*/, "").trim())
-      .filter((line) => line.length > 0);
-    update(idx, { highlights });
-  };
-
-  const highlightsToText = (highlights: string[]) =>
-    highlights.map((h) => `• ${h}`).join("\n");
-
   return (
     <FormSection
       title="Work Experience"
@@ -346,15 +334,18 @@ function WorkExperienceEditor({ value, onChange }: WorkExperienceEditorProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label>Highlights (bullet points)</Label>
+              <Label>Highlights</Label>
               <Textarea
                 rows={4}
-                value={highlightsToText(exp.highlights)}
-                onChange={(e) => updateHighlights(idx, e.target.value)}
-                placeholder="• Led development of key features&#10;• Improved performance by 40%&#10;• Mentored junior developers"
+                value={exp.highlights.join("\n")}
+                onChange={(e) => {
+                  const highlights = e.target.value.split("\n");
+                  update(idx, { highlights });
+                }}
+                placeholder="- Led development of key features&#10;- Improved performance by 40%&#10;* Mentored junior developers"
               />
               <p className="text-xs text-muted-foreground">
-                Each line becomes a bullet point. Start with • or - for clarity.
+                Start each line with -, *, or / to create bullet points.
               </p>
             </div>
 
@@ -400,17 +391,6 @@ function EducationEditor({ value, onChange }: EducationEditorProps) {
   const remove = (idx: number) => onChange(items.filter((_, i) => i !== idx));
   const update = (idx: number, next: Partial<ResumeEducation>) =>
     onChange(items.map((it, i) => (i === idx ? { ...it, ...next } : it)));
-
-  const updateHighlights = (idx: number, text: string) => {
-    const highlights = text
-      .split("\n")
-      .map((line) => line.replace(/^[-•]\s*/, "").trim())
-      .filter((line) => line.length > 0);
-    update(idx, { highlights });
-  };
-
-  const highlightsToText = (highlights: string[]) =>
-    highlights.map((h) => `• ${h}`).join("\n");
 
   return (
     <FormSection
@@ -505,10 +485,16 @@ function EducationEditor({ value, onChange }: EducationEditorProps) {
               <Label>Highlights</Label>
               <Textarea
                 rows={3}
-                value={highlightsToText(edu.highlights)}
-                onChange={(e) => updateHighlights(idx, e.target.value)}
-                placeholder="• Dean's List&#10;• Relevant coursework: Data Structures, Algorithms"
+                value={edu.highlights.join("\n")}
+                onChange={(e) => {
+                  const highlights = e.target.value.split("\n");
+                  update(idx, { highlights });
+                }}
+                placeholder="- Dean's List&#10;- Relevant coursework: Data Structures, Algorithms"
               />
+              <p className="text-xs text-muted-foreground">
+                Start each line with -, *, or / to create bullet points.
+              </p>
             </div>
 
             <div className="flex justify-end">
@@ -549,28 +535,6 @@ function ProjectsEditor({ value, onChange }: ProjectsEditorProps) {
   const remove = (idx: number) => onChange(items.filter((_, i) => i !== idx));
   const update = (idx: number, next: Partial<ResumeProject>) =>
     onChange(items.map((it, i) => (i === idx ? { ...it, ...next } : it)));
-
-  const updateHighlights = (idx: number, text: string) => {
-    const highlights = text
-      .split("\n")
-      .map((line) => line.replace(/^[-•]\s*/, "").trim())
-      .filter((line) => line.length > 0);
-    update(idx, { highlights });
-  };
-
-  const highlightsToText = (highlights: string[]) =>
-    highlights.map((h) => `• ${h}`).join("\n");
-
-  const updateTechnologies = (idx: number, text: string) => {
-    const technologies = text
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-    update(idx, { technologies });
-  };
-
-  const technologiesToText = (technologies: string[]) =>
-    technologies.join(", ");
 
   return (
     <FormSection
@@ -619,8 +583,13 @@ function ProjectsEditor({ value, onChange }: ProjectsEditorProps) {
             <div className="grid gap-2">
               <Label>Technologies</Label>
               <Input
-                value={technologiesToText(proj.technologies)}
-                onChange={(e) => updateTechnologies(idx, e.target.value)}
+                value={proj.technologies.join(", ")}
+                onChange={(e) => {
+                  const technologies = e.target.value
+                    .split(",")
+                    .map((t) => t.trimStart());
+                  update(idx, { technologies });
+                }}
                 placeholder="React, TypeScript, Node.js"
               />
               <p className="text-xs text-muted-foreground">
@@ -632,10 +601,16 @@ function ProjectsEditor({ value, onChange }: ProjectsEditorProps) {
               <Label>Highlights</Label>
               <Textarea
                 rows={3}
-                value={highlightsToText(proj.highlights)}
-                onChange={(e) => updateHighlights(idx, e.target.value)}
-                placeholder="• Built responsive UI with React&#10;• Implemented real-time features"
+                value={proj.highlights.join("\n")}
+                onChange={(e) => {
+                  const highlights = e.target.value.split("\n");
+                  update(idx, { highlights });
+                }}
+                placeholder="- Built responsive UI with React&#10;- Implemented real-time features"
               />
+              <p className="text-xs text-muted-foreground">
+                Start each line with -, *, or / to create bullet points.
+              </p>
             </div>
 
             <div className="flex justify-end">
@@ -677,16 +652,6 @@ function SkillsEditor({ value, onChange }: SkillsEditorProps) {
     });
   };
 
-  const updateItems = (idx: number, text: string) => {
-    const items = text
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-    update(idx, { items });
-  };
-
-  const itemsToText = (items: string[]) => items.join(", ");
-
   return (
     <FormSection
       title="Skills"
@@ -714,8 +679,13 @@ function SkillsEditor({ value, onChange }: SkillsEditorProps) {
               <Label>Skills</Label>
               <Textarea
                 rows={2}
-                value={itemsToText(cat.items)}
-                onChange={(e) => updateItems(idx, e.target.value)}
+                value={cat.items.join(", ")}
+                onChange={(e) => {
+                  const items = e.target.value
+                    .split(",")
+                    .map((t) => t.trimStart());
+                  update(idx, { items });
+                }}
                 placeholder="JavaScript, TypeScript, Python, Go"
               />
               <p className="text-xs text-muted-foreground">

@@ -15,6 +15,14 @@ import type { ResumeData, SectionType } from "@/types/resume";
 import { registerTemplate } from "./registry";
 
 /**
+ * Strip bullet prefix from highlight text
+ * Removes leading -, *, / and whitespace
+ */
+function stripBulletPrefix(text: string): string {
+  return text.replace(/^[-*/]\s*/, "").trim();
+}
+
+/**
  * Format a date for display (e.g., "Jan 2020" or "2020")
  */
 function formatDate(
@@ -138,10 +146,10 @@ function ExperienceSection({ data }: { data: ResumeData }) {
               <span className="classic-location">{exp.location}</span>
             )}
           </div>
-          {exp.highlights && exp.highlights.length > 0 && (
+          {exp.highlights && exp.highlights.filter(h => h.trim()).length > 0 && (
             <ul className="classic-highlights">
-              {exp.highlights.map((highlight, i) => (
-                <li key={i}>{highlight}</li>
+              {exp.highlights.filter(h => h.trim()).map((highlight, i) => (
+                <li key={i}>{stripBulletPrefix(highlight)}</li>
               ))}
             </ul>
           )}
@@ -177,10 +185,10 @@ function EducationSection({ data }: { data: ResumeData }) {
             )}
             {edu.gpa && <span className="classic-gpa">GPA: {edu.gpa}</span>}
           </div>
-          {edu.highlights && edu.highlights.length > 0 && (
+          {edu.highlights && edu.highlights.filter(h => h.trim()).length > 0 && (
             <ul className="classic-highlights">
-              {edu.highlights.map((highlight, i) => (
-                <li key={i}>{highlight}</li>
+              {edu.highlights.filter(h => h.trim()).map((highlight, i) => (
+                <li key={i}>{stripBulletPrefix(highlight)}</li>
               ))}
             </ul>
           )}
@@ -219,10 +227,10 @@ function ProjectsSection({ data }: { data: ResumeData }) {
               <strong>Technologies:</strong> {project.technologies.join(", ")}
             </p>
           )}
-          {project.highlights && project.highlights.length > 0 && (
+          {project.highlights && project.highlights.filter(h => h.trim()).length > 0 && (
             <ul className="classic-highlights">
-              {project.highlights.map((highlight, i) => (
-                <li key={i}>{highlight}</li>
+              {project.highlights.filter(h => h.trim()).map((highlight, i) => (
+                <li key={i}>{stripBulletPrefix(highlight)}</li>
               ))}
             </ul>
           )}

@@ -90,6 +90,14 @@ function extractDomain(url: string): string {
 }
 
 /**
+ * Strip bullet prefix from highlight text
+ * Removes leading -, *, / and whitespace
+ */
+function stripBulletPrefix(text: string): string {
+  return text.replace(/^[-*/]\s*/, "").trim();
+}
+
+/**
  * Get display text for a project link
  * If GitHub URL, return "GitHub", otherwise return titlecase domain
  */
@@ -190,7 +198,7 @@ const jakeStyles = `
   .jake-header h1 {
     font-size: 24pt;
     font-weight: bold;
-    letter-spacing: 0.05em;
+    letter-spacing: 0;
     text-transform: uppercase;
     margin: 0;
   }
@@ -219,7 +227,7 @@ const jakeStyles = `
     font-size: 11pt;
     font-weight: bold;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0;
     border-bottom: 1px solid black;
     padding-bottom: 2px;
     margin: 0 0 8px 0;
@@ -528,10 +536,10 @@ function buildEducationSection(data: ResumeData): React.ReactNode | null {
             </span>
             <span>{formatDateRange(edu.start_date, edu.end_date)}</span>
           </div>
-          {edu.highlights && edu.highlights.length > 0 && (
+          {edu.highlights && edu.highlights.filter(h => h.trim()).length > 0 && (
             <ul className="jake-entry-bullets">
-              {edu.highlights.map((highlight, i) => (
-                <li key={i}>{highlight}</li>
+              {edu.highlights.filter(h => h.trim()).map((highlight, i) => (
+                <li key={i}>{stripBulletPrefix(highlight)}</li>
               ))}
             </ul>
           )}
@@ -574,10 +582,10 @@ function buildExperienceEntries(
           <span>{exp.company}</span>
           <span>{exp.location || ""}</span>
         </div>
-        {exp.highlights && exp.highlights.length > 0 && (
+        {exp.highlights && exp.highlights.filter(h => h.trim()).length > 0 && (
           <ul className="jake-entry-bullets">
-            {exp.highlights.map((bullet, j) => (
-              <li key={j}>{bullet}</li>
+            {exp.highlights.filter(h => h.trim()).map((bullet, j) => (
+              <li key={j}>{stripBulletPrefix(bullet)}</li>
             ))}
           </ul>
         )}
@@ -636,10 +644,10 @@ function buildProjectEntries(
             {proj.description}
           </div>
         )}
-        {proj.highlights && proj.highlights.length > 0 && (
+        {proj.highlights && proj.highlights.filter(h => h.trim()).length > 0 && (
           <ul className="jake-entry-bullets">
-            {proj.highlights.map((bullet, j) => (
-              <li key={j}>{bullet}</li>
+            {proj.highlights.filter(h => h.trim()).map((bullet, j) => (
+              <li key={j}>{stripBulletPrefix(bullet)}</li>
             ))}
           </ul>
         )}

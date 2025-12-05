@@ -15,6 +15,14 @@ import type { ResumeData, SectionType } from "@/types/resume";
 import { registerTemplate } from "./registry";
 
 /**
+ * Strip bullet prefix from highlight text
+ * Removes leading -, *, / and whitespace
+ */
+function stripBulletPrefix(text: string): string {
+  return text.replace(/^[-*/]\s*/, "").trim();
+}
+
+/**
  * Format a date for display (e.g., "Jan 2020" or "2020")
  */
 function formatDate(
@@ -134,10 +142,10 @@ function ExperienceSection({ data }: { data: ResumeData }) {
               {formatDateRange(exp.start_date, exp.end_date, exp.is_current)}
             </span>
           </div>
-          {exp.highlights && exp.highlights.length > 0 && (
+          {exp.highlights && exp.highlights.filter(h => h.trim()).length > 0 && (
             <ul className="minimal-highlights">
-              {exp.highlights.map((highlight, i) => (
-                <li key={i}>{highlight}</li>
+              {exp.highlights.filter(h => h.trim()).map((highlight, i) => (
+                <li key={i}>{stripBulletPrefix(highlight)}</li>
               ))}
             </ul>
           )}
@@ -204,10 +212,10 @@ function ProjectsSection({ data }: { data: ResumeData }) {
           {project.description && (
             <p className="minimal-description">{project.description}</p>
           )}
-          {project.highlights && project.highlights.length > 0 && (
+          {project.highlights && project.highlights.filter(h => h.trim()).length > 0 && (
             <ul className="minimal-highlights">
-              {project.highlights.map((highlight, i) => (
-                <li key={i}>{highlight}</li>
+              {project.highlights.filter(h => h.trim()).map((highlight, i) => (
+                <li key={i}>{stripBulletPrefix(highlight)}</li>
               ))}
             </ul>
           )}
