@@ -82,6 +82,43 @@ class ResumeService:
         """Generate a unique resume ID."""
         return f"resume_{uuid.uuid4().hex[:12]}"
 
+    def _parse_timestamp(self, value, default=None):
+        """
+        Parse a timestamp value from Firestore.
+
+        Handles Firestore Timestamp objects, ISO strings, and datetime objects.
+        """
+        if value is None:
+            return default or datetime.utcnow()
+
+        # Handle Firestore Timestamp objects
+        if hasattr(value, "to_datetime") or hasattr(value, "_seconds"):
+            # google.cloud.firestore_v1.base_document.DatetimeWithNanoseconds
+            # or google.protobuf.timestamp_pb2.Timestamp
+            try:
+                return (
+                    value
+                    if isinstance(value, datetime)
+                    else datetime.utcfromtimestamp(value._seconds)
+                )
+            except (AttributeError, TypeError):
+                pass
+
+        # Handle datetime objects directly
+        if isinstance(value, datetime):
+            return value
+
+        # Handle ISO string format
+        if isinstance(value, str):
+            try:
+                # Remove trailing 'Z' and parse
+                clean_str = value.rstrip("Z")
+                return datetime.fromisoformat(clean_str)
+            except (ValueError, TypeError):
+                pass
+
+        return default or datetime.utcnow()
+
     def create_resume(self, user_id: str, request: CreateResumeRequest) -> str:
         """
         Create a new resume for a user.
@@ -152,6 +189,11 @@ class ResumeService:
                 raise ResumeNotFoundError(f"Resume not found: {resume_id}")
 
             data = doc.to_dict()
+
+            # Parse timestamps from Firestore
+            data["created_at"] = self._parse_timestamp(data.get("created_at"))
+            data["updated_at"] = self._parse_timestamp(data.get("updated_at"))
+
             resume = ResumeData(**data)
             logger.info(f"Resume retrieved: {resume_id} for user {user_id}")
             return resume
@@ -190,8 +232,8 @@ class ResumeService:
                     id=data.get("id", doc.id),
                     name=data.get("name", "Untitled"),
                     template_id=data.get("template_id", "classic"),
-                    created_at=data.get("created_at", datetime.utcnow()),
-                    updated_at=data.get("updated_at", datetime.utcnow()),
+                    created_at=self._parse_timestamp(data.get("created_at")),
+                    updated_at=self._parse_timestamp(data.get("updated_at")),
                 )
                 summaries.append(summary)
 

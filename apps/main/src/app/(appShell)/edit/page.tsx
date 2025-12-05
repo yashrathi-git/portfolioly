@@ -6,7 +6,6 @@ import withAuth from "@/lib/auth/withAuth";
 import { setHasPortfolioCookie } from "@/lib/auth/routeGuards";
 import { toast } from "sonner";
 import { PortfolioEditor } from "@/components/edit/PortfolioEditor";
-import { SupportDialog } from "@/components/edit/SupportDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -297,8 +296,6 @@ function EditPage() {
 
   return (
     <main className="w-full">
-      <SupportDialog />
-
       {/* Error Messages */}
       {error && (
         <div className="container px-6 py-4">

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { WandIcon } from "@/components/icons/PortfoliolyWandIcon";
-import { DiscordIcon } from "@/components/icons/DiscordIcon";
-import { getDiscordLink, GITHUB_REPO_URL } from "@/lib/utils/links";
+import { GITHUB_REPO_URL } from "@/lib/utils/links";
 
 export function AppShellFooter() {
   return (
@@ -26,15 +25,6 @@ export function AppShellFooter() {
               aria-label="GitHub"
             >
               <GitHubLogoIcon className="h-4 w-4" />
-            </Link>
-            <Link
-              href={getDiscordLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-foreground hover:opacity-70 transition-opacity"
-              aria-label="Discord"
-            >
-              <DiscordIcon className="h-4 w-4" />
             </Link>
           </div>
         </div>
