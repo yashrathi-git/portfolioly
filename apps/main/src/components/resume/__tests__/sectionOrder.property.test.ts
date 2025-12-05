@@ -34,9 +34,14 @@ const personalInfoArb = fc.record({
   location: fc.option(fc.string({ minLength: 1, maxLength: 50 }), {
     nil: null,
   }),
-  linkedin_url: fc.option(fc.webUrl(), { nil: null }),
-  github_url: fc.option(fc.webUrl(), { nil: null }),
-  website_url: fc.option(fc.webUrl(), { nil: null }),
+  profiles: fc.record({
+    linkedin: fc.option(fc.webUrl(), { nil: null }),
+    github: fc.option(fc.webUrl(), { nil: null }),
+    leetcode: fc.option(fc.webUrl(), { nil: null }),
+    codeforces: fc.option(fc.webUrl(), { nil: null }),
+    codechef: fc.option(fc.webUrl(), { nil: null }),
+    website: fc.option(fc.webUrl(), { nil: null }),
+  }),
 });
 
 const workExperienceArb = fc.record({
@@ -135,7 +140,7 @@ const sectionOrderArb: fc.Arbitrary<SectionType[]> = fc.shuffledSubarray(
 const resumeDataWithAllSectionsArb: fc.Arbitrary<ResumeData> = fc.record({
   id: fc.uuid().map((id) => `resume_${id}`),
   name: fc.string({ minLength: 1, maxLength: 50 }),
-  template_id: fc.constantFrom("classic", "modern", "minimal"),
+  template_id: fc.constantFrom("modern", "jake"),
   section_order: fc.constant(DEFAULT_SECTION_ORDER),
   personal_info: personalInfoArb,
   summary: fc.string({ minLength: 10, maxLength: 200 }), // Always have summary
@@ -144,6 +149,7 @@ const resumeDataWithAllSectionsArb: fc.Arbitrary<ResumeData> = fc.record({
   projects: fc.array(projectArb, { minLength: 1, maxLength: 2 }),
   skills: skillsArb,
   certifications: fc.array(certificationArb, { minLength: 1, maxLength: 2 }),
+  achievements: fc.array(fc.string({ minLength: 5, maxLength: 100 }), { minLength: 0, maxLength: 3 }),
   created_at: fc.constant("2024-01-01T00:00:00.000Z"),
   updated_at: fc.constant("2024-01-01T00:00:00.000Z"),
 });
@@ -158,6 +164,7 @@ const SECTION_HEADING_PATTERNS: Record<SectionType, RegExp> = {
   projects: /projects/i,
   skills: /skills/i,
   certifications: /certifications/i,
+  achievements: /achievements/i,
 };
 
 /**

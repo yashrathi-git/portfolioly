@@ -330,9 +330,14 @@ export const ResumeTransformer = {
       email: personalInfo?.email ?? null,
       phone: personalInfo?.phone ?? null,
       location: personalInfo?.location ?? null,
-      linkedin_url: getProfileUrl(personalInfo?.profiles, "linkedin"),
-      github_url: getProfileUrl(personalInfo?.profiles, "github"),
-      website_url: getProfileUrl(personalInfo?.profiles, "website"),
+      profiles: {
+        linkedin: getProfileUrl(personalInfo?.profiles, "linkedin"),
+        github: getProfileUrl(personalInfo?.profiles, "github"),
+        leetcode: getProfileUrl(personalInfo?.profiles, "leetcode"),
+        codeforces: getProfileUrl(personalInfo?.profiles, "codeforces"),
+        codechef: getProfileUrl(personalInfo?.profiles, "codechef"),
+        website: getProfileUrl(personalInfo?.profiles, "website"),
+      },
     };
 
     // Transform work experiences
@@ -400,7 +405,7 @@ export const ResumeTransformer = {
     return {
       id: generateId("resume"),
       name: options.resumeName ?? `${resumePersonalInfo.full_name}'s Resume`,
-      template_id: options.templateId ?? "classic",
+      template_id: options.templateId ?? "modern",
       section_order: [...DEFAULT_SECTION_ORDER],
       personal_info: resumePersonalInfo,
       summary,
@@ -409,6 +414,7 @@ export const ResumeTransformer = {
       projects,
       skills,
       certifications,
+      achievements: [],
       created_at: now,
       updated_at: now,
     };

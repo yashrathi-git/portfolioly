@@ -33,6 +33,7 @@ const SECTION_LABELS: Record<SectionType, string> = {
   projects: "Projects",
   skills: "Skills",
   certifications: "Certifications",
+  achievements: "Achievements",
 };
 
 /** Icons for each section type */
@@ -43,6 +44,7 @@ const SECTION_ICONS: Record<SectionType, string> = {
   projects: "🚀",
   skills: "⚡",
   certifications: "🏆",
+  achievements: "🏅",
 };
 
 interface DragState {

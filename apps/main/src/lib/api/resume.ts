@@ -48,8 +48,14 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
     try {
       const errorData = await response.json();
-      errorMessage = errorData.detail || errorMessage;
+      // Handle cases where detail is an object (validation errors)
+      if (typeof errorData.detail === "object") {
+        errorMessage = JSON.stringify(errorData.detail);
+      } else {
+        errorMessage = errorData.detail || errorMessage;
+      }
       errorCode = errorData.error_code || errorCode;
+      console.error("API Error Details:", errorData);
     } catch {
       errorMessage = response.statusText || errorMessage;
     }
@@ -93,6 +99,38 @@ interface DuplicateResumeResponse {
 interface DeleteResumeResponse {
   success: boolean;
   message: string;
+}
+
+/**
+ * Ensure resume data has all required fields with defaults
+ */
+function normalizeResumeData(data: Record<string, unknown>): ResumeData {
+  const result = { ...data } as ResumeData;
+
+  // Ensure achievements exists
+  result.achievements = (data.achievements as string[]) || [];
+
+  // Ensure profiles exists in personal_info
+  if (result.personal_info) {
+    result.personal_info = {
+      ...result.personal_info,
+      profiles: result.personal_info.profiles || {
+        linkedin: null,
+        github: null,
+        leetcode: null,
+        codeforces: null,
+        codechef: null,
+        website: null,
+      },
+    };
+  }
+
+  // Ensure section_order includes achievements
+  if (result.section_order && !result.section_order.includes("achievements")) {
+    result.section_order = [...result.section_order, "achievements"];
+  }
+
+  return result;
 }
 
 /**
@@ -140,7 +178,8 @@ export async function getResume(resumeId: string): Promise<ResumeData> {
       headers,
     });
 
-    return await handleResponse<ResumeData>(response);
+    const data = await handleResponse<Record<string, unknown>>(response);
+    return normalizeResumeData(data);
   } catch (error) {
     if (error instanceof ResumeAPIError) {
       throw error;

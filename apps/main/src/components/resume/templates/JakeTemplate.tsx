@@ -2,7 +2,7 @@
  * Jake's Resume Template
  *
  * A classic ATS-friendly resume template inspired by Jake Ryan's design.
- * Features EB Garamond font, clean layout, and proper multi-page support
+ * Features Computer Modern Serif font, clean layout, and proper multi-page support
  * with visual page separation in preview mode.
  *
  * _Requirements: 4.1, 7.1, 7.2, 7.3, 7.4_
@@ -14,6 +14,13 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import type { ResumeTemplateProps } from "./types";
 import type { ResumeData, SectionType } from "@/types/resume";
 import { registerTemplate } from "./registry";
+import {
+  renderHighlight,
+  renderMarkdown,
+  formatDateRange,
+  getProfileDisplayName,
+  getHostname,
+} from "./utils";
 
 // Page dimensions in pixels (96 DPI) - Letter size
 const PAGE_WIDTH_PX = 8.5 * 96;
@@ -27,77 +34,6 @@ interface PageContent {
 }
 
 /**
- * Format a date for display (e.g., "Jan 2020" or "2020")
- */
-function formatDate(
-  date: { month?: number | null; year?: number | null } | null | undefined
-): string {
-  if (!date) return "";
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  if (date.month && date.year) {
-    return `${months[date.month - 1]}. ${date.year}`;
-  }
-  if (date.year) {
-    return `${date.year}`;
-  }
-  return "";
-}
-
-/**
- * Format date range for display
- */
-function formatDateRange(
-  startDate: { month?: number | null; year?: number | null } | null | undefined,
-  endDate: { month?: number | null; year?: number | null } | null | undefined,
-  isCurrent?: boolean
-): string {
-  const start = formatDate(startDate);
-  if (isCurrent) {
-    return start ? `${start} – Present` : "Present";
-  }
-  const end = formatDate(endDate);
-  if (start && end) {
-    return `${start} – ${end}`;
-  }
-  return start || end || "";
-}
-
-/**
- * Extract domain from URL for display
- */
-function extractDomain(url: string): string {
-  try {
-    const domain = new URL(
-      url.startsWith("http") ? url : `https://${url}`
-    ).hostname;
-    return domain.replace("www.", "");
-  } catch {
-    return url;
-  }
-}
-
-/**
- * Strip bullet prefix from highlight text
- * Removes leading -, *, / and whitespace
- */
-function stripBulletPrefix(text: string): string {
-  return text.replace(/^[-*/]\s*/, "").trim();
-}
-
-/**
  * Get display text for a project link
  * If GitHub URL, return "GitHub", otherwise return titlecase domain
  */
@@ -105,11 +41,11 @@ function getProjectLinkText(url: string): string {
   try {
     const fullUrl = url.startsWith("http") ? url : `https://${url}`;
     const hostname = new URL(fullUrl).hostname.toLowerCase().replace("www.", "");
-    
+
     if (hostname.includes("github.com")) {
       return "GitHub";
     }
-    
+
     // Extract root domain and title case it
     const parts = hostname.split(".");
     const rootDomain = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
@@ -124,10 +60,10 @@ function getProjectLinkText(url: string): string {
  */
 function ensureFontLoaded(): void {
   if (typeof document === "undefined") return;
-  
+
   const fontId = "jake-template-cm-serif-font";
   if (document.getElementById(fontId)) return;
-  
+
   const style = document.createElement("style");
   style.id = fontId;
   style.textContent = `@import url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts.css');`;
@@ -135,8 +71,25 @@ function ensureFontLoaded(): void {
 }
 
 /**
+ * Get URL for a profile
+ */
+function getProfileUrl(key: string, url: string): string {
+  if (url.startsWith("http")) return url;
+
+  const prefixes: Record<string, string> = {
+    linkedin: "https://linkedin.com/in/",
+    github: "https://github.com/",
+    leetcode: "https://leetcode.com/",
+    codeforces: "https://codeforces.com/profile/",
+    codechef: "https://codechef.com/users/",
+    website: "https://",
+  };
+
+  return `${prefixes[key] || "https://"}${url}`;
+}
+
+/**
  * Jake's template styles - embedded for self-contained rendering
- * Font is loaded via style element in ensureFontLoaded()
  */
 const jakeStyles = `
   .jake-template {
@@ -342,22 +295,18 @@ const jakeStyles = `
       background: white !important;
     }
 
-    /* Hide page labels during print */
     .jake-page-label {
       display: none !important;
     }
 
-    /* Hide measurement container during print */
     .jake-measure-container {
       display: none !important;
     }
-    
-    /* Remove gap between pages during print */
+
     .jake-pages-container {
       gap: 0 !important;
     }
 
-    /* Page styling for print */
     .jake-page {
       width: 8.5in !important;
       height: 11in !important;
@@ -373,13 +322,11 @@ const jakeStyles = `
       break-after: auto;
     }
 
-    /* Remove link underlines in print */
     .jake-contact a,
     .jake-project-link {
       text-decoration: none !important;
     }
 
-    /* Prevent breaking inside entries */
     .jake-entry {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
@@ -395,7 +342,6 @@ const jakeStyles = `
       break-inside: avoid !important;
     }
 
-    /* Keep section titles with their content */
     .jake-section-title {
       page-break-after: avoid !important;
       break-after: avoid !important;
@@ -440,61 +386,29 @@ function buildHeaderSection(data: ResumeData): React.ReactNode {
     );
   }
 
-  if (personal_info.linkedin_url) {
-    const displayUrl = extractDomain(personal_info.linkedin_url);
-    contactParts.push(
-      <span key="linkedin">
-        <a
-          href={
-            personal_info.linkedin_url.startsWith("http")
-              ? personal_info.linkedin_url
-              : `https://${personal_info.linkedin_url}`
-          }
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {displayUrl}
-        </a>
-      </span>
-    );
+  if (personal_info.location) {
+    contactParts.push(<span key="location">{personal_info.location}</span>);
   }
 
-  if (personal_info.github_url) {
-    const displayUrl = extractDomain(personal_info.github_url);
-    contactParts.push(
-      <span key="github">
-        <a
-          href={
-            personal_info.github_url.startsWith("http")
-              ? personal_info.github_url
-              : `https://${personal_info.github_url}`
-          }
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {displayUrl}
-        </a>
-      </span>
-    );
-  }
-
-  if (personal_info.website_url) {
-    const displayUrl = extractDomain(personal_info.website_url);
-    contactParts.push(
-      <span key="website">
-        <a
-          href={
-            personal_info.website_url.startsWith("http")
-              ? personal_info.website_url
-              : `https://${personal_info.website_url}`
-          }
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {displayUrl}
-        </a>
-      </span>
-    );
+  // Profile links
+  if (personal_info.profiles) {
+    const profileKeys = ["linkedin", "github", "leetcode", "codeforces", "codechef", "website"] as const;
+    for (const key of profileKeys) {
+      const url = personal_info.profiles[key];
+      if (url) {
+        contactParts.push(
+          <span key={key}>
+            <a
+              href={getProfileUrl(key, url)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {getProfileDisplayName(key, url)}
+            </a>
+          </span>
+        );
+      }
+    }
   }
 
   return (
@@ -536,10 +450,10 @@ function buildEducationSection(data: ResumeData): React.ReactNode | null {
             </span>
             <span>{formatDateRange(edu.start_date, edu.end_date)}</span>
           </div>
-          {edu.highlights && edu.highlights.filter(h => h.trim()).length > 0 && (
+          {edu.highlights && edu.highlights.filter((h) => h.trim()).length > 0 && (
             <ul className="jake-entry-bullets">
-              {edu.highlights.filter(h => h.trim()).map((highlight, i) => (
-                <li key={i}>{stripBulletPrefix(highlight)}</li>
+              {edu.highlights.filter((h) => h.trim()).map((highlight, i) => (
+                <li key={i}>{renderHighlight(highlight)}</li>
               ))}
             </ul>
           )}
@@ -582,10 +496,10 @@ function buildExperienceEntries(
           <span>{exp.company}</span>
           <span>{exp.location || ""}</span>
         </div>
-        {exp.highlights && exp.highlights.filter(h => h.trim()).length > 0 && (
+        {exp.highlights && exp.highlights.filter((h) => h.trim()).length > 0 && (
           <ul className="jake-entry-bullets">
-            {exp.highlights.filter(h => h.trim()).map((bullet, j) => (
-              <li key={j}>{stripBulletPrefix(bullet)}</li>
+            {exp.highlights.filter((h) => h.trim()).map((bullet, j) => (
+              <li key={j}>{renderHighlight(bullet)}</li>
             ))}
           </ul>
         )}
@@ -620,14 +534,13 @@ function buildProjectEntries(
         <div className="jake-entry-header">
           <span className="jake-project-title">
             <span className="jake-entry-title">{proj.name}</span>
-            {proj.technologies && proj.technologies.length > 0 && (
+            {proj.technologies && proj.technologies.filter(t => t.trim()).length > 0 && (
               <span className="jake-project-tech">
                 {" "}
-                | {proj.technologies.join(", ")}
+                | {proj.technologies.filter(t => t.trim()).join(", ")}
               </span>
             )}
           </span>
-          {/* Project link on the right - GitHub or domain name */}
           {proj.url && (
             <a
               href={proj.url.startsWith("http") ? proj.url : `https://${proj.url}`}
@@ -641,13 +554,13 @@ function buildProjectEntries(
         </div>
         {proj.description && (
           <div style={{ fontSize: "10pt", marginTop: "2px" }}>
-            {proj.description}
+            {renderMarkdown(proj.description)}
           </div>
         )}
-        {proj.highlights && proj.highlights.filter(h => h.trim()).length > 0 && (
+        {proj.highlights && proj.highlights.filter((h) => h.trim()).length > 0 && (
           <ul className="jake-entry-bullets">
-            {proj.highlights.filter(h => h.trim()).map((bullet, j) => (
-              <li key={j}>{stripBulletPrefix(bullet)}</li>
+            {proj.highlights.filter((h) => h.trim()).map((bullet, j) => (
+              <li key={j}>{renderHighlight(bullet)}</li>
             ))}
           </ul>
         )}
@@ -673,7 +586,7 @@ function buildSkillsSection(data: ResumeData): React.ReactNode | null {
         {data.skills.categories.map((category, i) => (
           <p key={i} className="jake-skill-row">
             <span className="jake-skill-category">{category.name}:</span>{" "}
-            {category.items.join(", ")}
+            {category.items.filter(item => item.trim()).join(", ")}
           </p>
         ))}
       </div>
@@ -709,6 +622,23 @@ function buildCertificationsSection(data: ResumeData): React.ReactNode | null {
             {cert.issuer && <span> - {cert.issuer}</span>}
             {cert.date && <span> ({cert.date})</span>}
           </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
+/**
+ * Build achievements section
+ */
+function buildAchievementsSection(data: ResumeData): React.ReactNode | null {
+  if (!data.achievements || data.achievements.filter((a) => a.trim()).length === 0) return null;
+
+  return (
+    <Section key="achievements" title="Achievements">
+      <ul className="jake-entry-bullets">
+        {data.achievements.filter((a) => a.trim()).map((achievement, i) => (
+          <li key={i}>{renderHighlight(achievement)}</li>
         ))}
       </ul>
     </Section>
@@ -765,6 +695,11 @@ function buildSections(
         const certs = buildCertificationsSection(data);
         if (certs) sections.push(certs);
         break;
+
+      case "achievements":
+        const achievements = buildAchievementsSection(data);
+        if (achievements) sections.push(achievements);
+        break;
     }
   }
 
@@ -773,9 +708,6 @@ function buildSections(
 
 /**
  * Jake's Resume Template Component
- *
- * Features proper multi-page support with visual page separation.
- * Each page is rendered as a separate visual element.
  */
 export function JakeTemplate({
   data,
@@ -788,17 +720,15 @@ export function JakeTemplate({
   ]);
   const [fontLoaded, setFontLoaded] = useState(false);
 
-  // Load the EB Garamond font
+  // Load the font
   useEffect(() => {
     ensureFontLoaded();
-    
-    // Wait for font to load, then trigger recalculation
+
     if (typeof document !== "undefined" && "fonts" in document) {
       document.fonts.ready.then(() => {
         setFontLoaded(true);
       });
     } else {
-      // Fallback for browsers without font loading API
       setTimeout(() => setFontLoaded(true), 500);
     }
   }, []);
@@ -818,9 +748,7 @@ export function JakeTemplate({
     let currentPageStart = 0;
 
     sectionHeights.forEach((height, index) => {
-      // Check if adding this section would exceed the content height
       if (currentPageHeight + height > CONTENT_HEIGHT_PX && currentPageHeight > 0) {
-        // Save current page and start a new one
         newPages.push({ startIndex: currentPageStart, endIndex: index - 1 });
         currentPageStart = index;
         currentPageHeight = height;
@@ -829,7 +757,6 @@ export function JakeTemplate({
       }
     });
 
-    // Don't forget the last page
     newPages.push({
       startIndex: currentPageStart,
       endIndex: sectionHeights.length - 1,
@@ -838,11 +765,9 @@ export function JakeTemplate({
     setPages(newPages);
   }, []);
 
-  // Calculate pages when font is loaded
   useEffect(() => {
     if (!fontLoaded) return;
-    
-    // Multiple calculation passes to ensure accuracy after font renders
+
     const timeouts = [
       setTimeout(calculatePages, 50),
       setTimeout(calculatePages, 150),
@@ -852,16 +777,13 @@ export function JakeTemplate({
     return () => timeouts.forEach(clearTimeout);
   }, [fontLoaded, calculatePages]);
 
-  // Recalculate when data changes
   useEffect(() => {
     if (!fontLoaded) return;
-    
-    // Delay to allow DOM to update
+
     const timeoutId = setTimeout(calculatePages, 100);
     return () => clearTimeout(timeoutId);
   }, [data, sectionOrder, fontLoaded, calculatePages]);
 
-  // Recalculate on resize
   useEffect(() => {
     window.addEventListener("resize", calculatePages);
     return () => window.removeEventListener("resize", calculatePages);
@@ -906,10 +828,9 @@ registerTemplate({
   id: "jake",
   name: "Jake's Template",
   description:
-    "Classic ATS-friendly resume with EB Garamond font, clean layout, and proper page breaks",
+    "Classic ATS-friendly resume with Computer Modern font, clean layout, and proper page breaks",
   thumbnail: "/templates/jake-thumb.png",
   component: JakeTemplate,
 });
 
 export default JakeTemplate;
-

@@ -103,7 +103,7 @@ class ResumeService:
             resume_data = ResumeData(
                 id=resume_id,
                 name=request.name,
-                template_id=request.template_id or "classic",
+                template_id=request.template_id or "modern",
                 section_order=request.section_order or list(DEFAULT_SECTION_ORDER),
                 personal_info=request.personal_info,
                 summary=request.summary,
@@ -112,6 +112,7 @@ class ResumeService:
                 projects=request.projects or [],
                 skills=request.skills or ResumeSkills(),
                 certifications=request.certifications or [],
+                achievements=request.achievements or [],
                 created_at=now,
                 updated_at=now,
             )

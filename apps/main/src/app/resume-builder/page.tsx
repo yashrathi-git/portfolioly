@@ -61,6 +61,31 @@ import Link from "next/link";
 
 type ImportSource = "linkedin" | "github" | "portfolio" | null;
 
+/**
+ * Normalize resume data to ensure all fields exist
+ * Handles data from imports that may not have all fields
+ */
+function normalizeResumeData(data: ResumeData): ResumeData {
+  return {
+    ...data,
+    achievements: data.achievements || [],
+    section_order: data.section_order?.includes("achievements")
+      ? data.section_order
+      : [...(data.section_order || []), "achievements"],
+    personal_info: {
+      ...data.personal_info,
+      profiles: data.personal_info?.profiles || {
+        linkedin: null,
+        github: null,
+        leetcode: null,
+        codeforces: null,
+        codechef: null,
+        website: null,
+      },
+    },
+  };
+}
+
 function createEmptyResume(): ResumeData {
   const now = new Date().toISOString();
   return {
@@ -74,15 +99,21 @@ function createEmptyResume(): ResumeData {
       "projects",
       "skills",
       "certifications",
+      "achievements",
     ] as SectionType[],
     personal_info: {
       full_name: "",
       email: null,
       phone: null,
       location: null,
-      linkedin_url: null,
-      github_url: null,
-      website_url: null,
+      profiles: {
+        linkedin: null,
+        github: null,
+        leetcode: null,
+        codeforces: null,
+        codechef: null,
+        website: null,
+      },
     },
     summary: null,
     work_experiences: [],
@@ -90,6 +121,7 @@ function createEmptyResume(): ResumeData {
     projects: [],
     skills: { categories: [] },
     certifications: [],
+    achievements: [],
     created_at: now,
     updated_at: now,
   };
@@ -140,11 +172,14 @@ function ResumeBuilderPage() {
           projects: data.projects,
           skills: data.skills,
           certifications: data.certifications,
+          achievements: data.achievements,
           section_order: data.section_order,
         });
         setCurrentResumeId(newId);
         window.history.replaceState(null, "", `/resume-builder?id=${newId}`);
       }
+      // Update initialData to match saved data to prevent hook from resetting
+      setInitialData(data);
       toast.success("Resume saved!");
     },
     autoSaveEnabled: false,
@@ -163,6 +198,7 @@ function ResumeBuilderPage() {
         setLoading(true);
         setError(null);
         const resume = await getResume(idToLoad);
+        // API layer already transforms backend format to frontend format
         setInitialData(resume);
         setCurrentResumeId(idToLoad);
         setActiveTab("edit");
@@ -179,7 +215,7 @@ function ResumeBuilderPage() {
 
   const handleLinkedInImport = useCallback(
     (data: ResumeData) => {
-      setResumeData(data);
+      setResumeData(normalizeResumeData(data));
       setImportSource(null);
       setActiveTab("edit");
       toast.success("LinkedIn data imported successfully!");
@@ -201,7 +237,7 @@ function ResumeBuilderPage() {
 
   const handlePortfolioImport = useCallback(
     (data: ResumeData) => {
-      setResumeData(data);
+      setResumeData(normalizeResumeData(data));
       setImportSource(null);
       setActiveTab("edit");
       toast.success("Portfolio data imported successfully!");

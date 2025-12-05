@@ -14,6 +14,7 @@ from app.services.resume_service import ResumeService, ResumeNotFoundError
 from app.schemas.resume import (
     ResumeData,
     ResumePersonalInfo,
+    ResumeProfiles,
     ResumeWorkExperience,
     ResumeEducation,
     ResumeProject,
@@ -29,6 +30,19 @@ from app.schemas.resume import (
 
 # Hypothesis strategies for generating test data
 @st.composite
+def resume_profiles_strategy(draw):
+    """Generate valid ResumeProfiles."""
+    return ResumeProfiles(
+        linkedin=draw(st.none() | st.text(min_size=1, max_size=200)),
+        github=draw(st.none() | st.text(min_size=1, max_size=200)),
+        leetcode=draw(st.none() | st.text(min_size=1, max_size=200)),
+        codeforces=draw(st.none() | st.text(min_size=1, max_size=200)),
+        codechef=draw(st.none() | st.text(min_size=1, max_size=200)),
+        website=draw(st.none() | st.text(min_size=1, max_size=200)),
+    )
+
+
+@st.composite
 def resume_personal_info_strategy(draw):
     """Generate valid ResumePersonalInfo."""
     return ResumePersonalInfo(
@@ -36,9 +50,7 @@ def resume_personal_info_strategy(draw):
         email=draw(st.none() | st.emails()),
         phone=draw(st.none() | st.text(min_size=1, max_size=20)),
         location=draw(st.none() | st.text(min_size=1, max_size=100)),
-        linkedin_url=draw(st.none() | st.text(min_size=1, max_size=200)),
-        github_url=draw(st.none() | st.text(min_size=1, max_size=200)),
-        website_url=draw(st.none() | st.text(min_size=1, max_size=200)),
+        profiles=draw(resume_profiles_strategy()),
     )
 
 
@@ -48,7 +60,7 @@ def create_resume_request_strategy(draw):
     personal_info = draw(resume_personal_info_strategy())
     return CreateResumeRequest(
         name=draw(st.text(min_size=1, max_size=100).filter(lambda x: x.strip())),
-        template_id=draw(st.sampled_from(["classic", "modern", "minimal"])),
+        template_id=draw(st.sampled_from(["modern", "jake"])),
         personal_info=personal_info,
         summary=draw(st.none() | st.text(max_size=500)),
         work_experiences=[],
@@ -56,6 +68,7 @@ def create_resume_request_strategy(draw):
         projects=[],
         skills=ResumeSkills(categories=[]),
         certifications=[],
+        achievements=[],
         section_order=list(DEFAULT_SECTION_ORDER),
     )
 
@@ -199,6 +212,7 @@ class TestResumeServiceProperties:
                     "projects": [],
                     "skills": {"categories": []},
                     "certifications": [],
+                    "achievements": [],
                     "created_at": datetime.utcnow().isoformat() + "Z",
                     "updated_at": datetime.utcnow().isoformat() + "Z",
                 }
@@ -255,10 +269,11 @@ class TestResumeServiceProperties:
                 assert set_data["projects"] == original_data["projects"]
                 assert set_data["skills"] == original_data["skills"]
                 assert set_data["certifications"] == original_data["certifications"]
+                assert set_data["achievements"] == original_data["achievements"]
 
     @given(
         create_resume_request_strategy(),
-        st.sampled_from(["classic", "modern", "minimal"]),
+        st.sampled_from(["modern", "jake"]),
     )
     @settings(max_examples=100)
     def test_property_4_template_selection_persistence_round_trip(
@@ -367,15 +382,16 @@ class TestResumeServiceProperties:
                     mock_doc.to_dict.return_value = {
                         "id": resume_id,
                         "name": "Test Resume",
-                        "template_id": "classic",
-                        "section_order": ["summary", "experience"],
-                        "personal_info": {"full_name": "Test User"},
+                        "template_id": "modern",
+                        "section_order": ["summary", "experience", "achievements"],
+                        "personal_info": {"full_name": "Test User", "profiles": {}},
                         "summary": None,
                         "work_experiences": [],
                         "education": [],
                         "projects": [],
                         "skills": {"categories": []},
                         "certifications": [],
+                        "achievements": [],
                         "created_at": datetime.utcnow().isoformat() + "Z",
                         "updated_at": datetime.utcnow().isoformat() + "Z",
                     }

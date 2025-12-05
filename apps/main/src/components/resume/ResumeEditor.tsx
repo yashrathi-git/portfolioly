@@ -11,6 +11,7 @@
  * - Projects editing
  * - Skills category management
  * - Certifications editing
+ * - Achievements editing
  *
  * _Requirements: 6.1, 6.2_
  */
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 import type {
   ResumeData,
   ResumePersonalInfo,
+  ResumeProfiles,
   ResumeWorkExperience,
   ResumeEducation,
   ResumeProject,
@@ -118,6 +120,17 @@ interface PersonalInfoEditorProps {
 
 function PersonalInfoEditor({ value, onChange }: PersonalInfoEditorProps) {
   const v = value || { full_name: "" };
+  const profiles = v.profiles || {};
+
+  const updateProfile = (key: keyof ResumeProfiles, val: string) => {
+    onChange({
+      ...v,
+      profiles: {
+        ...profiles,
+        [key]: val || null,
+      },
+    });
+  };
 
   return (
     <FormSection title="Personal Information">
@@ -160,34 +173,67 @@ function PersonalInfoEditor({ value, onChange }: PersonalInfoEditorProps) {
           placeholder="San Francisco, CA"
         />
       </div>
+
+      {/* Profile Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="resume-linkedin">LinkedIn URL</Label>
+          <Label htmlFor="resume-linkedin">LinkedIn</Label>
           <Input
             id="resume-linkedin"
-            value={v.linkedin_url ?? ""}
-            onChange={(e) => onChange({ ...v, linkedin_url: e.target.value })}
-            placeholder="https://linkedin.com/in/johndoe"
+            value={profiles.linkedin ?? ""}
+            onChange={(e) => updateProfile("linkedin", e.target.value)}
+            placeholder="johndoe or full URL"
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="resume-github">GitHub URL</Label>
+          <Label htmlFor="resume-github">GitHub</Label>
           <Input
             id="resume-github"
-            value={v.github_url ?? ""}
-            onChange={(e) => onChange({ ...v, github_url: e.target.value })}
-            placeholder="https://github.com/johndoe"
+            value={profiles.github ?? ""}
+            onChange={(e) => updateProfile("github", e.target.value)}
+            placeholder="johndoe or full URL"
           />
         </div>
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="resume-website">Website URL</Label>
-        <Input
-          id="resume-website"
-          value={v.website_url ?? ""}
-          onChange={(e) => onChange({ ...v, website_url: e.target.value })}
-          placeholder="https://johndoe.com"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="resume-leetcode">LeetCode</Label>
+          <Input
+            id="resume-leetcode"
+            value={profiles.leetcode ?? ""}
+            onChange={(e) => updateProfile("leetcode", e.target.value)}
+            placeholder="johndoe or full URL"
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="resume-codeforces">Codeforces</Label>
+          <Input
+            id="resume-codeforces"
+            value={profiles.codeforces ?? ""}
+            onChange={(e) => updateProfile("codeforces", e.target.value)}
+            placeholder="johndoe or full URL"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="resume-codechef">CodeChef</Label>
+          <Input
+            id="resume-codechef"
+            value={profiles.codechef ?? ""}
+            onChange={(e) => updateProfile("codechef", e.target.value)}
+            placeholder="johndoe or full URL"
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="resume-website">Personal Website</Label>
+          <Input
+            id="resume-website"
+            value={profiles.website ?? ""}
+            onChange={(e) => updateProfile("website", e.target.value)}
+            placeholder="https://johndoe.com"
+          />
+        </div>
       </div>
     </FormSection>
   );
@@ -342,10 +388,10 @@ function WorkExperienceEditor({ value, onChange }: WorkExperienceEditorProps) {
                   const highlights = e.target.value.split("\n");
                   update(idx, { highlights });
                 }}
-                placeholder="- Led development of key features&#10;- Improved performance by 40%&#10;* Mentored junior developers"
+                placeholder="- Led development of key features&#10;- Improved **performance** by 40%&#10;* Mentored *junior* developers"
               />
               <p className="text-xs text-muted-foreground">
-                Start each line with -, *, or / to create bullet points.
+                Start lines with -, *, or /. Use **bold** and *italic* for emphasis.
               </p>
             </div>
 
@@ -490,10 +536,10 @@ function EducationEditor({ value, onChange }: EducationEditorProps) {
                   const highlights = e.target.value.split("\n");
                   update(idx, { highlights });
                 }}
-                placeholder="- Dean's List&#10;- Relevant coursework: Data Structures, Algorithms"
+                placeholder="- Dean's List&#10;- Relevant coursework: **Data Structures**, Algorithms"
               />
               <p className="text-xs text-muted-foreground">
-                Start each line with -, *, or / to create bullet points.
+                Start lines with -, *, or /. Use **bold** and *italic* for emphasis.
               </p>
             </div>
 
@@ -576,7 +622,7 @@ function ProjectsEditor({ value, onChange }: ProjectsEditorProps) {
                 onChange={(e) =>
                   update(idx, { description: e.target.value || null })
                 }
-                placeholder="A brief description of the project..."
+                placeholder="A brief description of the project... Use **bold** for emphasis."
               />
             </div>
 
@@ -606,10 +652,10 @@ function ProjectsEditor({ value, onChange }: ProjectsEditorProps) {
                   const highlights = e.target.value.split("\n");
                   update(idx, { highlights });
                 }}
-                placeholder="- Built responsive UI with React&#10;- Implemented real-time features"
+                placeholder="- Built **responsive** UI with React&#10;- Implemented *real-time* features"
               />
               <p className="text-xs text-muted-foreground">
-                Start each line with -, *, or / to create bullet points.
+                Start lines with -, *, or /. Use **bold** and *italic* for emphasis.
               </p>
             </div>
 
@@ -791,6 +837,35 @@ function CertificationsEditor({ value, onChange }: CertificationsEditorProps) {
   );
 }
 
+interface AchievementsEditorProps {
+  value: string[];
+  onChange: (next: string[]) => void;
+}
+
+function AchievementsEditor({ value, onChange }: AchievementsEditorProps) {
+  const items = value || [];
+
+  return (
+    <FormSection title="Achievements">
+      <div className="grid gap-2">
+        <Label>Achievements</Label>
+        <Textarea
+          rows={5}
+          value={items.join("\n")}
+          onChange={(e) => {
+            const achievements = e.target.value.split("\n");
+            onChange(achievements);
+          }}
+          placeholder="- Won **1st place** in hackathon&#10;- Published research paper in *IEEE*&#10;- Achieved 2000+ rating on Codeforces"
+        />
+        <p className="text-xs text-muted-foreground">
+          Start lines with -, *, or /. Use **bold** and *italic* for emphasis.
+        </p>
+      </div>
+    </FormSection>
+  );
+}
+
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -806,6 +881,7 @@ function CertificationsEditor({ value, onChange }: CertificationsEditorProps) {
  * - Projects
  * - Skills categories
  * - Certifications
+ * - Achievements
  */
 export function ResumeEditor({ data, onChange, className }: ResumeEditorProps) {
   const updateField = <K extends keyof ResumeData>(
@@ -850,6 +926,11 @@ export function ResumeEditor({ data, onChange, className }: ResumeEditorProps) {
       <CertificationsEditor
         value={data.certifications}
         onChange={(v) => updateField("certifications", v)}
+      />
+
+      <AchievementsEditor
+        value={data.achievements || []}
+        onChange={(v) => updateField("achievements", v)}
       />
     </div>
   );

@@ -17,6 +17,18 @@ export interface DateInfo {
 }
 
 /**
+ * Profile links for various platforms.
+ */
+export interface ResumeProfiles {
+  linkedin?: string | null;
+  github?: string | null;
+  leetcode?: string | null;
+  codeforces?: string | null;
+  codechef?: string | null;
+  website?: string | null;
+}
+
+/**
  * Personal information section of the resume.
  */
 export interface ResumePersonalInfo {
@@ -24,9 +36,7 @@ export interface ResumePersonalInfo {
   email?: string | null;
   phone?: string | null;
   location?: string | null;
-  linkedin_url?: string | null;
-  github_url?: string | null;
-  website_url?: string | null;
+  profiles?: ResumeProfiles;
 }
 
 /**
@@ -40,7 +50,7 @@ export interface ResumeWorkExperience {
   start_date: DateInfo;
   end_date?: DateInfo | null;
   is_current: boolean;
-  /** Array of bullet points for resume formatting */
+  /** Array of bullet points for resume formatting (supports **bold** and *italic*) */
   highlights: string[];
 }
 
@@ -56,6 +66,7 @@ export interface ResumeEducation {
   start_date: DateInfo;
   end_date?: DateInfo | null;
   gpa?: string | null;
+  /** Array of highlights (supports **bold** and *italic*) */
   highlights: string[];
 }
 
@@ -68,6 +79,7 @@ export interface ResumeProject {
   description?: string | null;
   technologies: string[];
   url?: string | null;
+  /** Array of highlights (supports **bold** and *italic*) */
   highlights: string[];
 }
 
@@ -107,7 +119,8 @@ export type SectionType =
   | "education"
   | "projects"
   | "skills"
-  | "certifications";
+  | "certifications"
+  | "achievements";
 
 /**
  * Default section order for new resumes.
@@ -119,6 +132,7 @@ export const DEFAULT_SECTION_ORDER: SectionType[] = [
   "projects",
   "skills",
   "certifications",
+  "achievements",
 ];
 
 /**
@@ -148,6 +162,8 @@ export interface ResumeData {
   skills: ResumeSkills;
   /** Certifications */
   certifications: ResumeCertification[];
+  /** Achievements (supports **bold** and *italic*) */
+  achievements: string[];
 
   /** ISO timestamp of creation */
   created_at: string;
@@ -179,6 +195,7 @@ export interface CreateResumeRequest {
   projects?: ResumeProject[];
   skills?: ResumeSkills;
   certifications?: ResumeCertification[];
+  achievements?: string[];
   section_order?: SectionType[];
 }
 
@@ -196,4 +213,5 @@ export interface UpdateResumeRequest {
   projects?: ResumeProject[];
   skills?: ResumeSkills;
   certifications?: ResumeCertification[];
+  achievements?: string[];
 }

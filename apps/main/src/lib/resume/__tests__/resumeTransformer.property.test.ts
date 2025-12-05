@@ -360,7 +360,7 @@ describe("ResumeTransformer Property Tests", () => {
           );
           const expectedUrl = linkedInProfile?.url ?? null;
 
-          expect(result.personal_info.linkedin_url).toBe(expectedUrl);
+          expect(result.personal_info.profiles?.linkedin).toBe(expectedUrl);
         }),
         { numRuns: 100 }
       );
@@ -376,7 +376,7 @@ describe("ResumeTransformer Property Tests", () => {
           );
           const expectedUrl = githubProfile?.url ?? null;
 
-          expect(result.personal_info.github_url).toBe(expectedUrl);
+          expect(result.personal_info.profiles?.github).toBe(expectedUrl);
         }),
         { numRuns: 100 }
       );

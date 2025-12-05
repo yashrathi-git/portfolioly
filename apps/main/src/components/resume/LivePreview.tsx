@@ -92,10 +92,10 @@ function PageBreakIndicator({
 
 /**
  * Check if template handles its own pagination
- * Templates like Jake's render separate pages internally
+ * Templates like Jake's and Modern render separate pages internally
  */
 function templateHandlesOwnPagination(templateId: string): boolean {
-  return templateId === "jake";
+  return templateId === "jake" || templateId === "modern";
 }
 
 export function LivePreview({

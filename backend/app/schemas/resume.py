@@ -21,6 +21,7 @@ class SectionType(str, Enum):
     PROJECTS = "projects"
     SKILLS = "skills"
     CERTIFICATIONS = "certifications"
+    ACHIEVEMENTS = "achievements"
 
 
 # Default section order for new resumes
@@ -31,6 +32,7 @@ DEFAULT_SECTION_ORDER: List[SectionType] = [
     SectionType.PROJECTS,
     SectionType.SKILLS,
     SectionType.CERTIFICATIONS,
+    SectionType.ACHIEVEMENTS,
 ]
 
 
@@ -41,6 +43,17 @@ class ResumeDateInfo(BaseModel):
     year: Optional[int] = Field(None, ge=1900, le=2100, description="4-digit year")
 
 
+class ResumeProfiles(BaseModel):
+    """Profile links for various platforms."""
+
+    linkedin: Optional[str] = Field(None, description="LinkedIn profile URL or username")
+    github: Optional[str] = Field(None, description="GitHub profile URL or username")
+    leetcode: Optional[str] = Field(None, description="LeetCode profile URL or username")
+    codeforces: Optional[str] = Field(None, description="Codeforces profile URL or username")
+    codechef: Optional[str] = Field(None, description="CodeChef profile URL or username")
+    website: Optional[str] = Field(None, description="Personal website URL")
+
+
 class ResumePersonalInfo(BaseModel):
     """Personal information section of the resume."""
 
@@ -48,9 +61,9 @@ class ResumePersonalInfo(BaseModel):
     email: Optional[str] = Field(None, description="Email address")
     phone: Optional[str] = Field(None, description="Phone number")
     location: Optional[str] = Field(None, description="Location/city")
-    linkedin_url: Optional[str] = Field(None, description="LinkedIn profile URL")
-    github_url: Optional[str] = Field(None, description="GitHub profile URL")
-    website_url: Optional[str] = Field(None, description="Personal website URL")
+    profiles: Optional[ResumeProfiles] = Field(
+        default_factory=ResumeProfiles, description="Profile links"
+    )
 
 
 class ResumeWorkExperience(BaseModel):
@@ -66,7 +79,7 @@ class ResumeWorkExperience(BaseModel):
     )
     is_current: bool = Field(False, description="Whether this is current position")
     highlights: List[str] = Field(
-        default_factory=list, description="Array of bullet points for resume formatting"
+        default_factory=list, description="Array of bullet points (supports **bold** and *italic*)"
     )
 
 
@@ -82,7 +95,7 @@ class ResumeEducation(BaseModel):
     end_date: Optional[ResumeDateInfo] = Field(None, description="End date")
     gpa: Optional[str] = Field(None, description="GPA or grade")
     highlights: List[str] = Field(
-        default_factory=list, description="Array of achievements or highlights"
+        default_factory=list, description="Array of achievements (supports **bold** and *italic*)"
     )
 
 
@@ -91,13 +104,13 @@ class ResumeProject(BaseModel):
 
     id: str = Field(..., description="Unique identifier")
     name: str = Field(..., min_length=1, description="Project name")
-    description: Optional[str] = Field(None, description="Project description")
+    description: Optional[str] = Field(None, description="Project description (supports **bold** and *italic*)")
     technologies: List[str] = Field(
         default_factory=list, description="Technologies used"
     )
     url: Optional[str] = Field(None, description="Project URL")
     highlights: List[str] = Field(
-        default_factory=list, description="Array of project highlights"
+        default_factory=list, description="Array of project highlights (supports **bold** and *italic*)"
     )
 
 
@@ -169,6 +182,9 @@ class ResumeData(BaseModel):
     certifications: List[ResumeCertification] = Field(
         default_factory=list, description="Certifications"
     )
+    achievements: List[str] = Field(
+        default_factory=list, description="Achievements (supports **bold** and *italic*)"
+    )
 
     created_at: datetime = Field(
         default_factory=datetime.utcnow, description="ISO timestamp of creation"
@@ -183,7 +199,7 @@ class ResumeData(BaseModel):
             "example": {
                 "id": "resume_abc123",
                 "name": "Software Engineer Resume",
-                "template_id": "classic",
+                "template_id": "modern",
                 "section_order": [
                     "summary",
                     "experience",
@@ -191,15 +207,21 @@ class ResumeData(BaseModel):
                     "projects",
                     "skills",
                     "certifications",
+                    "achievements",
                 ],
                 "personal_info": {
                     "full_name": "John Doe",
                     "email": "john.doe@example.com",
                     "phone": "+1 (555) 123-4567",
                     "location": "San Francisco, CA",
-                    "linkedin_url": "https://linkedin.com/in/johndoe",
-                    "github_url": "https://github.com/johndoe",
-                    "website_url": "https://johndoe.dev",
+                    "profiles": {
+                        "linkedin": "johndoe",
+                        "github": "johndoe",
+                        "leetcode": "johndoe",
+                        "codeforces": None,
+                        "codechef": None,
+                        "website": "https://johndoe.dev",
+                    },
                 },
                 "summary": "Experienced software engineer with 5+ years in web development",
                 "work_experiences": [
@@ -213,7 +235,7 @@ class ResumeData(BaseModel):
                         "is_current": True,
                         "highlights": [
                             "Led team of 5 developers",
-                            "Increased performance by 40%",
+                            "Increased **performance** by 40%",
                             "Implemented CI/CD pipeline",
                         ],
                     }
@@ -235,12 +257,12 @@ class ResumeData(BaseModel):
                     {
                         "id": "proj_1",
                         "name": "Portfolio Website",
-                        "description": "Personal portfolio built with Next.js",
+                        "description": "Personal portfolio built with **Next.js**",
                         "technologies": ["Next.js", "TypeScript", "Tailwind CSS"],
                         "url": "https://johndoe.dev",
                         "highlights": [
                             "Built responsive design",
-                            "Optimized for performance",
+                            "Optimized for *performance*",
                         ],
                     }
                 ],
@@ -265,6 +287,11 @@ class ResumeData(BaseModel):
                         "date": "2023",
                     }
                 ],
+                "achievements": [
+                    "Won **1st place** in company hackathon",
+                    "Published research paper in *IEEE*",
+                    "Achieved 2000+ rating on Codeforces",
+                ],
                 "created_at": "2024-01-15T10:30:00Z",
                 "updated_at": "2024-01-15T10:30:00Z",
             }
@@ -288,7 +315,7 @@ class CreateResumeRequest(BaseModel):
     """Request payload for creating a new resume."""
 
     name: str = Field(..., min_length=1, description="Resume name")
-    template_id: Optional[str] = Field("classic", description="Template ID")
+    template_id: Optional[str] = Field("modern", description="Template ID")
     personal_info: ResumePersonalInfo = Field(..., description="Personal information")
     summary: Optional[str] = Field(None, description="Professional summary")
     work_experiences: List[ResumeWorkExperience] = Field(
@@ -303,6 +330,9 @@ class CreateResumeRequest(BaseModel):
     )
     certifications: List[ResumeCertification] = Field(
         default_factory=list, description="Certifications"
+    )
+    achievements: List[str] = Field(
+        default_factory=list, description="Achievements"
     )
     section_order: List[SectionType] = Field(
         default_factory=lambda: list(DEFAULT_SECTION_ORDER), description="Section order"
@@ -332,6 +362,7 @@ class UpdateResumeRequest(BaseModel):
     certifications: Optional[List[ResumeCertification]] = Field(
         None, description="Certifications"
     )
+    achievements: Optional[List[str]] = Field(None, description="Achievements")
 
 
 class ResumeListResponse(BaseModel):
