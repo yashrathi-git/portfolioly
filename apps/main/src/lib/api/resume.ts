@@ -105,7 +105,7 @@ interface DeleteResumeResponse {
  * Ensure resume data has all required fields with defaults
  */
 function normalizeResumeData(data: Record<string, unknown>): ResumeData {
-  const result = { ...data } as ResumeData;
+  const result = { ...data } as unknown as ResumeData;
 
   // Ensure achievements exists
   result.achievements = (data.achievements as string[]) || [];
