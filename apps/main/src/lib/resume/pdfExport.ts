@@ -66,6 +66,12 @@ export function generateFilename(
  */
 const printStyles = `
   @media print {
+    /* Page setup - NO margins, template handles padding */
+    @page {
+      size: letter;
+      margin: 0 !important;
+    }
+
     /* Hide everything in body */
     body > * {
       display: none !important;
@@ -76,8 +82,8 @@ const printStyles = `
       display: block !important;
     }
 
-    /* Reset body styles for print */
-    body {
+    /* Reset html/body styles for print */
+    html, body {
       margin: 0 !important;
       padding: 0 !important;
       background: white !important;
@@ -98,46 +104,76 @@ const printStyles = `
       overflow: visible !important;
     }
 
-    #resume-print-container > * {
-      width: 100% !important;
-      max-width: 100% !important;
-      height: auto !important;
-      min-height: 0 !important;
-      margin: 0 !important;
-      padding: 0 !important;
+    /* Hide LivePreview page break indicators */
+    #resume-print-container [class*="PageBreakIndicator"],
+    #resume-print-container .page-break-indicator,
+    #resume-print-container [style*="border-dashed"],
+    #resume-print-container [style*="amber"] {
+      display: none !important;
+    }
+
+    /* Jake's template specific - hide measurement container */
+    .jake-measure-container {
+      display: none !important;
+    }
+
+    /* Jake's template specific - page labels */
+    .jake-page-label {
+      display: none !important;
+    }
+
+    /* Jake's template specific - pages container */
+    .jake-pages-container {
+      gap: 0 !important;
+    }
+
+    /* Jake's template specific - individual pages */
+    .jake-page {
+      width: 8.5in !important;
+      height: 11in !important;
+      padding: 0.5in !important;
       box-shadow: none !important;
-      transform: none !important;
+      page-break-after: always !important;
+      break-after: page !important;
       overflow: visible !important;
     }
 
-    /* Page setup - prevent empty pages */
-    @page {
-      size: letter;
-      margin: 0.5in;
+    .jake-page:last-child {
+      page-break-after: auto !important;
+      break-after: auto !important;
     }
 
-    /* Prevent page breaks inside entries */
+    /* Prevent page breaks inside entries for all templates */
     .classic-entry,
     .modern-entry,
-    .minimal-entry {
-      page-break-inside: avoid;
-      break-inside: avoid;
+    .minimal-entry,
+    .jake-entry {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
 
     /* Prevent page breaks inside sections when possible */
     .classic-section,
     .modern-section,
-    .minimal-section {
-      page-break-inside: avoid;
-      break-inside: avoid;
+    .minimal-section,
+    .jake-section {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
 
     /* Prevent orphaned section headers */
     .classic-section h2,
     .modern-section h2,
-    .minimal-section h2 {
-      page-break-after: avoid;
-      break-after: avoid;
+    .minimal-section h2,
+    .jake-section-title {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+
+    /* Prevent breaking inside bullet points */
+    .jake-entry-bullets li {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
 
     /* Ensure links are visible in print */
@@ -197,9 +233,11 @@ function createPrintContainer(sourceElement: Element): HTMLDivElement {
 
   // Remove any transforms or scaling from the clone
   clone.style.transform = "none";
-  clone.style.width = "100%";
-  clone.style.maxWidth = "100%";
   clone.style.boxShadow = "none";
+
+  // Remove page break indicators and measurement containers
+  const pageBreakIndicators = clone.querySelectorAll(".page-break-indicator, .no-print, .jake-measure-container, .jake-page-label");
+  pageBreakIndicators.forEach((el) => el.remove());
 
   container.appendChild(clone);
   document.body.appendChild(container);

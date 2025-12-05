@@ -23,8 +23,10 @@ export {
 import "./ClassicTemplate";
 import "./ModernTemplate";
 import "./MinimalTemplate";
+import "./JakeTemplate";
 
 // Export template components for direct use if needed
 export { ClassicTemplate } from "./ClassicTemplate";
 export { ModernTemplate } from "./ModernTemplate";
 export { MinimalTemplate } from "./MinimalTemplate";
+export { JakeTemplate } from "./JakeTemplate";

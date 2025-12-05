@@ -58,6 +58,7 @@ const CONTENT_HEIGHT_IN = PAGE_HEIGHT_IN - PAGE_MARGIN_IN * 2; // 10 inches
 
 /**
  * Page break indicator component (for HTML preview fallback)
+ * Hidden during print via no-print class
  */
 function PageBreakIndicator({
   pageNumber,
@@ -68,18 +69,18 @@ function PageBreakIndicator({
 }) {
   return (
     <div
-      className="absolute left-0 right-0 pointer-events-none z-10"
+      className="absolute left-0 right-0 pointer-events-none z-10 no-print page-break-indicator"
       style={{ top: topPosition }}
     >
       {/* Dashed line */}
       <div className="relative">
         <div
-          className="absolute left-[-20px] right-[-20px] border-t-2 border-dashed"
+          className="absolute left-[-20px] right-[-20px] border-t-2 border-dashed no-print"
           style={{ borderColor: "#f59e0b" }}
         />
         {/* Label */}
         <div
-          className="absolute right-[-20px] -top-5 text-xs font-medium px-2 py-0.5 rounded"
+          className="absolute right-[-20px] -top-5 text-xs font-medium px-2 py-0.5 rounded no-print"
           style={{ backgroundColor: "#fef3c7", color: "#b45309" }}
         >
           Page {pageNumber} / {pageNumber + 1}
@@ -87,6 +88,14 @@ function PageBreakIndicator({
       </div>
     </div>
   );
+}
+
+/**
+ * Check if template handles its own pagination
+ * Templates like Jake's render separate pages internally
+ */
+function templateHandlesOwnPagination(templateId: string): boolean {
+  return templateId === "jake";
 }
 
 export function LivePreview({
@@ -112,9 +121,13 @@ export function LivePreview({
     return <PDFTemplate data={data} sectionOrder={sectionOrder} />;
   }, [PDFTemplate, data, sectionOrder]);
 
+  // Check if template handles its own pagination (like Jake's template)
+  const handlesOwnPagination = templateHandlesOwnPagination(templateId);
+
   // Calculate page count based on content height (for HTML preview fallback)
+  // Skip for templates that handle their own pagination
   useEffect(() => {
-    if (hasPDF || !contentRef.current) return;
+    if (hasPDF || handlesOwnPagination || !contentRef.current) return;
 
     const calculatePages = () => {
       const contentHeight = contentRef.current?.scrollHeight || 0;
@@ -133,7 +146,7 @@ export function LivePreview({
       clearTimeout(timeoutId);
       resizeObserver.disconnect();
     };
-  }, [data, sectionOrder, templateId, hasPDF]);
+  }, [data, sectionOrder, templateId, hasPDF, handlesOwnPagination]);
 
   const handleZoomIn = useCallback(() => {
     setZoom((prev) => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
@@ -150,15 +163,18 @@ export function LivePreview({
   const zoomPercentage = Math.round(zoom * 100);
 
   // Generate page break indicators (for HTML preview fallback)
+  // Skip for templates that handle their own pagination
   const pageBreaks = [];
-  for (let i = 1; i < pageCount; i++) {
-    pageBreaks.push(
-      <PageBreakIndicator
-        key={i}
-        pageNumber={i}
-        topPosition={`${CONTENT_HEIGHT_IN * i}in`}
-      />
-    );
+  if (!handlesOwnPagination) {
+    for (let i = 1; i < pageCount; i++) {
+      pageBreaks.push(
+        <PageBreakIndicator
+          key={i}
+          pageNumber={i}
+          topPosition={`${CONTENT_HEIGHT_IN * i}in`}
+        />
+      );
+    }
   }
 
   if (!TemplateComponent && !PDFTemplate) {
@@ -235,15 +251,17 @@ export function LivePreview({
           <RotateCcw className="h-4 w-4" />
         </Button>
 
-        {/* Page count indicator */}
-        <div className="ml-2 pl-2 border-l text-sm text-muted-foreground">
-          {pageCount} {pageCount === 1 ? "page" : "pages"}
-          {pageCount > 1 && (
-            <span className="ml-1 text-amber-600 dark:text-amber-400">
-              ⚠ exceeds 1 page
-            </span>
-          )}
-        </div>
+        {/* Page count indicator - hide warning for templates that handle own pagination */}
+        {!handlesOwnPagination && (
+          <div className="ml-2 pl-2 border-l text-sm text-muted-foreground">
+            {pageCount} {pageCount === 1 ? "page" : "pages"}
+            {pageCount > 1 && (
+              <span className="ml-1 text-amber-600 dark:text-amber-400">
+                ⚠ exceeds 1 page
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Preview area with page visualization */}
