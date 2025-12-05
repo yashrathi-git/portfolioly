@@ -27,6 +27,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@react-pdf/renderer": "^4.3.1",
     "@types/canvas-confetti": "^1.9.0",
     "ai": "^4.1.8",
     "canvas-confetti": "^1.9.4",

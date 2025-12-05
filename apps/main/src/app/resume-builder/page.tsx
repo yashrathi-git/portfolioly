@@ -236,8 +236,12 @@ function ResumeBuilderPage() {
     }
 
     try {
-      await exportToPDF({ data: resumeData });
-      toast.success("PDF export initiated - check your print dialog");
+      await exportToPDF({
+        data: resumeData,
+        templateId: resumeData.template_id,
+        sectionOrder: resumeData.section_order,
+      });
+      toast.success("PDF exported successfully!");
     } catch (error) {
       console.error("PDF export error:", error);
       toast.error("Failed to export PDF");

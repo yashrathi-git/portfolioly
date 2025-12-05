@@ -1,13 +1,20 @@
 /**
  * PDF Export Utility
  *
- * Handles PDF generation for resumes using browser print functionality.
- * Clones the resume content to a dedicated print container for reliable rendering.
+ * Handles PDF generation for resumes.
+ * Uses @react-pdf/renderer for templates with PDF versions (accurate page breaks).
+ * Falls back to browser print for templates without PDF versions.
  *
  * _Requirements: 5.1, 5.2, 5.3, 5.4_
  */
 
-import type { ResumeData } from "@/types/resume";
+import type { ResumeData, SectionType } from "@/types/resume";
+import { pdf } from "@react-pdf/renderer";
+import {
+  getPDFTemplate,
+  hasPDFTemplate,
+} from "@/components/resume/templates/pdf";
+import React from "react";
 
 /**
  * Options for PDF export
@@ -15,6 +22,10 @@ import type { ResumeData } from "@/types/resume";
 export interface PDFExportOptions {
   /** Resume data to export */
   data: ResumeData;
+  /** Template ID to use */
+  templateId: string;
+  /** Section order for the resume */
+  sectionOrder: SectionType[];
   /** Optional custom filename (without extension) */
   filename?: string;
 }
@@ -78,22 +89,28 @@ const printStyles = `
     #resume-print-container {
       position: static !important;
       width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
       margin: 0 !important;
       padding: 0 !important;
       background: white !important;
       transform: none !important;
+      overflow: visible !important;
     }
 
     #resume-print-container > * {
       width: 100% !important;
       max-width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
       margin: 0 !important;
       padding: 0 !important;
       box-shadow: none !important;
       transform: none !important;
+      overflow: visible !important;
     }
 
-    /* Page setup */
+    /* Page setup - prevent empty pages */
     @page {
       size: letter;
       margin: 0.5in;
@@ -104,13 +121,23 @@ const printStyles = `
     .modern-entry,
     .minimal-entry {
       page-break-inside: avoid;
+      break-inside: avoid;
     }
 
-    /* Allow page breaks between sections */
+    /* Prevent page breaks inside sections when possible */
     .classic-section,
     .modern-section,
     .minimal-section {
       page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* Prevent orphaned section headers */
+    .classic-section h2,
+    .modern-section h2,
+    .minimal-section h2 {
+      page-break-after: avoid;
+      break-after: avoid;
     }
 
     /* Ensure links are visible in print */
@@ -192,20 +219,73 @@ function setDocumentTitle(filename: string): string {
 }
 
 /**
- * Export the resume as a PDF using browser print
+ * Export the resume as a PDF using @react-pdf/renderer (preferred) or browser print (fallback)
  *
- * This function:
- * 1. Clones the resume preview to a dedicated print container
- * 2. Injects print-specific CSS
- * 3. Sets the document title for the PDF filename
- * 4. Triggers the browser print dialog
- * 5. Cleans up after printing
+ * For templates with PDF versions:
+ * - Uses @react-pdf/renderer for accurate page breaks
+ * - Generates a blob and triggers download
  *
- * @param options - Export options including resume data and optional filename
+ * For templates without PDF versions:
+ * - Falls back to browser print dialog
+ *
+ * @param options - Export options including resume data, template ID, and optional filename
  */
 export async function exportToPDF(options: PDFExportOptions): Promise<void> {
-  const { data, filename: customFilename } = options;
+  const { data, templateId, sectionOrder, filename: customFilename } = options;
 
+  // Check if we have a PDF template for this template ID
+  if (hasPDFTemplate(templateId)) {
+    await exportWithReactPDF(data, templateId, sectionOrder, customFilename);
+  } else {
+    await exportWithBrowserPrint(data, customFilename);
+  }
+}
+
+/**
+ * Export using @react-pdf/renderer for accurate PDF generation
+ */
+async function exportWithReactPDF(
+  data: ResumeData,
+  templateId: string,
+  sectionOrder: SectionType[],
+  customFilename?: string
+): Promise<void> {
+  const PDFTemplate = getPDFTemplate(templateId);
+  if (!PDFTemplate) {
+    throw new Error(`PDF template not found for: ${templateId}`);
+  }
+
+  // Generate filename
+  const filename = generateFilename(data, customFilename);
+
+  // Create the PDF document element
+  const documentElement = React.createElement(PDFTemplate, {
+    data,
+    sectionOrder,
+  });
+
+  // Generate PDF blob
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blob = await pdf(documentElement as any).toBlob();
+
+  // Create download link and trigger download
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Export using browser print (fallback for templates without PDF versions)
+ */
+async function exportWithBrowserPrint(
+  data: ResumeData,
+  customFilename?: string
+): Promise<void> {
   // Find the resume preview element
   const previewElement = document.querySelector('[data-resume-preview="true"]');
   if (!previewElement) {

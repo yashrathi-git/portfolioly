@@ -15,6 +15,7 @@ Use TemplateRegistry to get templates by ID or get the default template.
 | `apps/main/src/components/resume/templates/ClassicTemplate.tsx`                  | Traditional serif layout          |
 | `apps/main/src/components/resume/templates/ModernTemplate.tsx`                   | Clean sans-serif layout           |
 | `apps/main/src/components/resume/templates/MinimalTemplate.tsx`                  | Minimalist whitespace layout      |
+| `apps/main/src/components/resume/templates/JakeTemplate.tsx`                     | Jake's LaTeX-style template       |
 | `apps/main/src/components/resume/templates/index.ts`                             | Exports and template registration |
 | `apps/main/src/components/resume/templates/__tests__/templates.property.test.ts` | Property tests                    |
 
@@ -71,6 +72,19 @@ const defaultTemplate = TemplateRegistry.getDefaultTemplate();
 - `classic` - Traditional serif fonts, conservative industries
 - `modern` - Sans-serif, tech/creative roles
 - `minimal` - Maximum whitespace, sophisticated look
+- `jake` - Jake Gutierrez's LaTeX-style template, ATS-friendly with small-caps headers
+
+---
+
+## Markdown Formatting (Jake's Template)
+
+Jake's Template supports inline markdown formatting in text fields:
+
+- `**text**` → **bold**
+- `*text*` → _italic_
+- Bullet points are rendered from the `highlights` array (use `*`, `-`, or `/` in editor)
+
+Example: `Developed a **REST API** using *FastAPI* and PostgreSQL`
 
 ---
 
@@ -84,3 +98,55 @@ All templates follow ATS requirements:
 - No tables for layout
 - No images for text content
 - All text is selectable
+
+---
+
+## PDF Templates (@react-pdf/renderer)
+
+Templates with PDF versions use `@react-pdf/renderer` for accurate page breaks.
+
+| Template | PDF Version | Location                            |
+| -------- | ----------- | ----------------------------------- |
+| Jake's   | ✅ Yes      | `templates/pdf/JakeTemplatePDF.tsx` |
+| Classic  | ❌ No       | Falls back to browser print         |
+| Modern   | ❌ No       | Falls back to browser print         |
+| Minimal  | ❌ No       | Falls back to browser print         |
+
+### PDF Template Files
+
+| File                                                                | Description           |
+| ------------------------------------------------------------------- | --------------------- |
+| `apps/main/src/components/resume/templates/pdf/index.ts`            | PDF template registry |
+| `apps/main/src/components/resume/templates/pdf/JakeTemplatePDF.tsx` | Jake's PDF template   |
+
+### PDF Template API
+
+```typescript
+import {
+  getPDFTemplate,
+  hasPDFTemplate,
+} from "@/components/resume/templates/pdf";
+
+// Check if PDF template exists
+if (hasPDFTemplate("jake")) {
+  const PDFTemplate = getPDFTemplate("jake");
+  // Use with PDFViewer or pdf() for export
+}
+```
+
+### Export with PDF Templates
+
+```typescript
+import { exportToPDF } from "@/lib/resume/pdfExport";
+
+await exportToPDF({
+  data: resumeData,
+  templateId: "jake",
+  sectionOrder: resumeData.section_order,
+});
+```
+
+### LivePreview Behavior
+
+- Templates with PDF versions: Uses `PDFViewer` for accurate page break preview
+- Templates without PDF versions: Uses HTML preview with estimated page breaks
