@@ -18,14 +18,20 @@ inclusion: always
 
 ## Spec mode rules:
 
-- While working on spec create a file in documentation/resume-builder-feat/working-on-xx-feature
-- In that docuementation have concise documentation of the functions and the API you exposed in that task so that it will be useful for the next task.
+- While working on spec create a file in `documentation/<feature-name>/working-on-xx-feature.md`
+- In that documentation have concise documentation of the functions and the API you exposed in that task so that it will be useful for the next task.
 - It should be searchable easily and easily queriable for the next task to find the right file and know all about what was done concisely. The idea is we never re-invent the wheel and we never have backend-frontend mismatch.
 - We should use consistent APIs across backend and frontend and if some functionality is already created by previous task the next task should know about it properly.
 - In these tasks be concise and to-the-point, the point of these is just to get familar with what exists and what functions we already have along with what API endpoints we have built
 - While doing a new task check these files, check the relevant file ONLY and verify what we already have in place
 - The first three lines should be short description of what is to come so that while doing a new task those three line could be easily read to understand if the file is relevant for the current task or not.
 - When doing a new task check if any file may be relevant in that directory to see if we can read it and understand what we already have in place.
+
+### Existing Feature Documentation
+
+- `documentation/resume-builder-feat/` - Resume Builder feature (complete)
+  - Schema, service, templates, import flow, editor, PDF export, transformer, UI components
+  - Remember this is task-wise documentation, and only document about what was achieved in the specific task.
 
 ## Package managers
 

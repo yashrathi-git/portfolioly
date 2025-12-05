@@ -16,6 +16,8 @@ Portfolioly is an AI-powered portfolio builder that transforms resumes, GitHub p
 
 ## Key Features
 
+### Portfolio Builder
+
 - PDF resume parsing with AI extraction
 - GitHub repository import
 - LinkedIn PDF import
@@ -23,6 +25,19 @@ Portfolioly is an AI-powered portfolio builder that transforms resumes, GitHub p
 - One-click Vercel deployment
 - Customizable themes and colors
 - Profile photo and project image uploads
+
+### Resume Builder
+
+- LinkedIn PDF → ATS-friendly resume transformation
+- GitHub repos → Projects section import
+- Portfolio data → Resume conversion
+- 3 professional templates: Classic, Modern, Minimal
+- Live preview with zoom controls
+- Drag-and-drop section reordering
+- PDF export via browser print
+- Inline editing with undo/redo
+- Multiple resume versions per user
+- Template persistence across sessions
 
 ## Target Users
 
