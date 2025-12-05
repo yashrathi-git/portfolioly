@@ -12,7 +12,7 @@
 import React, { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import type { SectionType } from "@/types/resume";
-import { GripVertical, Eye, EyeOff } from "lucide-react";
+import { GripVertical } from "lucide-react";
 
 export interface SectionReorderProps {
   /** Current section order */
@@ -21,8 +21,6 @@ export interface SectionReorderProps {
   onReorder: (newOrder: SectionType[]) => void;
   /** Optional className for styling */
   className?: string;
-  /** Optional: sections that have content (for visual feedback) */
-  sectionsWithContent?: SectionType[];
 }
 
 /** Human-readable labels for section types */
@@ -61,7 +59,6 @@ export function SectionReorder({
   sectionOrder,
   onReorder,
   className,
-  sectionsWithContent = [],
 }: SectionReorderProps) {
   const [dragState, setDragState] = useState<DragState>({
     draggedIndex: null,
@@ -164,7 +161,6 @@ export function SectionReorder({
 
       <div className="space-y-1" role="list" aria-label="Resume sections">
         {sectionOrder.map((section, index) => {
-          const hasContent = sectionsWithContent.includes(section);
           const isDragging = dragState.draggedIndex === index;
           const isDragOver = dragState.dragOverIndex === index;
 
@@ -207,19 +203,6 @@ export function SectionReorder({
               <span className="flex-1 text-sm font-medium">
                 {SECTION_LABELS[section]}
               </span>
-
-              {/* Content indicator */}
-              {hasContent ? (
-                <Eye
-                  className="h-4 w-4 text-green-500"
-                  aria-label="Has content"
-                />
-              ) : (
-                <EyeOff
-                  className="h-4 w-4 text-muted-foreground/50"
-                  aria-label="No content"
-                />
-              )}
 
               {/* Position number */}
               <span className="text-xs text-muted-foreground w-5 text-center">

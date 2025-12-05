@@ -31,7 +31,7 @@ export interface TemplateDefinition {
  */
 class TemplateRegistryClass {
   private _templates: Map<string, TemplateDefinition> = new Map();
-  private _defaultTemplateId: string = "classic";
+  private _defaultTemplateId: string = "jake";
 
   /**
    * Register a new template in the registry.

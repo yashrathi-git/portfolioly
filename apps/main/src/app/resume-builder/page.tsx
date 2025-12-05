@@ -54,6 +54,7 @@ import {
   LogOut,
   Sun,
   Moon,
+  X,
 } from "lucide-react";
 import { WandIcon } from "@/components/icons/PortfoliolyWandIcon";
 import { exportToPDF, isPrintSupported } from "@/lib/resume/pdfExport";
@@ -288,17 +289,6 @@ function ResumeBuilderPage() {
     toast.error("Import failed", { description: err.message });
     setImportSource(null);
   }, []);
-
-  const sectionsWithContent: SectionType[] = [];
-  if (resumeData.summary) sectionsWithContent.push("summary");
-  if (resumeData.work_experiences.length > 0)
-    sectionsWithContent.push("experience");
-  if (resumeData.education.length > 0) sectionsWithContent.push("education");
-  if (resumeData.projects.length > 0) sectionsWithContent.push("projects");
-  if (resumeData.skills.categories.length > 0)
-    sectionsWithContent.push("skills");
-  if (resumeData.certifications.length > 0)
-    sectionsWithContent.push("certifications");
 
   if (loading) {
     return (
@@ -605,26 +595,34 @@ function ResumeBuilderPage() {
                 className="h-full"
               />
 
-              {/* Settings toggle button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute right-2 top-2 z-10"
-                onClick={() => setShowSettings(!showSettings)}
-                title={showSettings ? "Hide settings" : "Show settings"}
-              >
-                <Settings2
-                  className={`h-4 w-4 transition-transform ${
-                    showSettings ? "rotate-90" : ""
-                  }`}
-                />
-              </Button>
+              {/* Settings expand button - shown when sidebar is collapsed */}
+              {!showSettings && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute right-2 top-2 z-10"
+                  onClick={() => setShowSettings(true)}
+                  title="Show settings"
+                >
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              )}
 
               {/* Settings panel overlay */}
               {showSettings && (
                 <div className="absolute right-0 top-0 bottom-0 w-[280px] bg-background border-l shadow-lg z-20 overflow-hidden">
+                  {/* Close button */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2 z-10"
+                    onClick={() => setShowSettings(false)}
+                    title="Close settings"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                   <ScrollArea className="h-full">
-                    <div className="p-4 space-y-6">
+                    <div className="p-4 pt-12 space-y-6">
                       <TemplateSelector
                         selectedTemplateId={resumeData.template_id}
                         onSelectTemplate={handleTemplateChange}
@@ -633,7 +631,6 @@ function ResumeBuilderPage() {
                       <SectionReorder
                         sectionOrder={resumeData.section_order}
                         onReorder={handleSectionReorder}
-                        sectionsWithContent={sectionsWithContent}
                       />
                     </div>
                   </ScrollArea>
