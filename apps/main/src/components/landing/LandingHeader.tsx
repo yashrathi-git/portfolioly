@@ -8,7 +8,6 @@ import { useScroll } from "motion/react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { GITHUB_REPO_URL } from "@/lib/utils/links";
-import { useBannerVisible } from "./ProductHuntBanner";
 import { usePathname } from "next/navigation";
 
 interface LandingHeaderProps {
@@ -19,7 +18,6 @@ export function LandingHeader({ variant }: LandingHeaderProps) {
   const { isDark, toggleTheme } = useTheme();
   const [hasScrolled, setHasScrolled] = useState(false);
   const { scrollY } = useScroll();
-  const { isVisible: bannerVisible } = useBannerVisible();
   const pathname = usePathname();
 
   // Auto-detect variant from pathname if not provided
@@ -33,12 +31,7 @@ export function LandingHeader({ variant }: LandingHeaderProps) {
   }, [scrollY]);
 
   return (
-    <header
-      className={cn(
-        "fixed inset-x-0 z-50 px-4 sm:px-6 lg:px-8 transition-all duration-200",
-        bannerVisible ? "top-[41px]" : "top-0"
-      )}
-    >
+    <header className="fixed inset-x-0 top-0 z-50 px-4 sm:px-6 lg:px-8 transition-all duration-200">
       <div className="mx-auto max-w-7xl pt-4">
         <div
           className={cn(
