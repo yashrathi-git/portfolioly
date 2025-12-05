@@ -9,12 +9,22 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { GITHUB_REPO_URL } from "@/lib/utils/links";
 import { useBannerVisible } from "./ProductHuntBanner";
+import { usePathname } from "next/navigation";
 
-export function LandingHeader() {
+interface LandingHeaderProps {
+  variant?: "portfolio" | "resume";
+}
+
+export function LandingHeader({ variant }: LandingHeaderProps) {
   const { isDark, toggleTheme } = useTheme();
   const [hasScrolled, setHasScrolled] = useState(false);
   const { scrollY } = useScroll();
   const { isVisible: bannerVisible } = useBannerVisible();
+  const pathname = usePathname();
+
+  // Auto-detect variant from pathname if not provided
+  const effectiveVariant =
+    variant ?? (pathname === "/resume" ? "resume" : "portfolio");
 
   useEffect(() => {
     return scrollY.on("change", (latest) => {
@@ -45,24 +55,43 @@ export function LandingHeader() {
 
             {/* Center Navigation - absolutely positioned for true centering */}
             <nav className="hidden md:flex items-center gap-x-6 absolute left-1/2 -translate-x-1/2">
-              <a
-                href="#steps"
-                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-              >
-                Steps
-              </a>
-              <a
-                href="#features"
-                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-              >
-                Features
-              </a>
-              <a
-                href="#demo"
-                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-              >
-                Video
-              </a>
+              {effectiveVariant === "portfolio" ? (
+                <>
+                  <a
+                    href="#steps"
+                    className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    Steps
+                  </a>
+                  <a
+                    href="#features"
+                    className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    Features
+                  </a>
+                  <a
+                    href="#demo"
+                    className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    Video
+                  </a>
+                  <Link
+                    href="/resume"
+                    className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    Resume Builder
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/"
+                    className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    Portfolio Builder
+                  </Link>
+                </>
+              )}
             </nav>
 
             <div className="flex items-center gap-x-2 sm:gap-x-3">
@@ -87,11 +116,24 @@ export function LandingHeader() {
                 )}
               </button>
               <Link
-                href="/auth/sign-in"
+                href={
+                  effectiveVariant === "resume"
+                    ? "/resume-builder/list"
+                    : "/auth/sign-in"
+                }
                 className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
-                <span className="hidden sm:inline">Build My Portfolio</span>
-                <span className="sm:hidden">Build</span>
+                {effectiveVariant === "resume" ? (
+                  <>
+                    <span className="hidden sm:inline">Build My Resume</span>
+                    <span className="sm:hidden">Build</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="hidden sm:inline">Build My Portfolio</span>
+                    <span className="sm:hidden">Build</span>
+                  </>
+                )}
               </Link>
             </div>
           </div>

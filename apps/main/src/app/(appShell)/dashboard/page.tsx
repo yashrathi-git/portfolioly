@@ -20,10 +20,9 @@ import { saveDeploymentUrl } from "@/lib/api/deployment";
 
 function DashboardPage() {
   const { user } = useAuth();
-  const [notifyForResume, setNotifyForResume] = useState(false);
   const [notifyForAnalytics, setNotifyForAnalytics] = useState(false);
   const [isUpdatingNotification, setIsUpdatingNotification] = useState(false);
-  
+
   // Deployment success dialog state
   const [showDeploymentSuccess, setShowDeploymentSuccess] = useState(false);
   const [deployedUrl, setDeployedUrl] = useState<string>("");
@@ -34,32 +33,32 @@ function DashboardPage() {
     // e.g., ?vercel_deployed=true?deployment-url=...
     // We need to parse this manually from the full URL
     const fullUrl = window.location.href;
-    
+
     // Check if this is a Vercel redirect
     if (!fullUrl.includes("vercel_deployed=true")) {
       return;
     }
-    
+
     // Parse all params - replace extra '?' with '&' to fix malformed query string
-    const urlParts = fullUrl.split('?');
+    const urlParts = fullUrl.split("?");
     if (urlParts.length < 2) return;
-    
+
     // Join all query parts with '&' and parse
-    const queryString = urlParts.slice(1).join('&');
+    const queryString = urlParts.slice(1).join("&");
     const params = new URLSearchParams(queryString);
-    
+
     // Extract all Vercel deployment params
     const deploymentUrl = params.get("deployment-url");
     const deploymentDashboardUrl = params.get("deployment-dashboard-url");
     const projectDashboardUrl = params.get("project-dashboard-url");
     const projectName = params.get("project-name");
     const repositoryUrl = params.get("repository-url");
-    
+
     // We need at least the deployment URL to show success
     if (deploymentUrl) {
       setDeployedUrl(deploymentUrl);
       setShowDeploymentSuccess(true);
-      
+
       // Save complete deployment info to backend (fire and forget)
       saveDeploymentUrl({
         deployedUrl: deploymentUrl,
@@ -69,7 +68,7 @@ function DashboardPage() {
         repositoryUrl: repositoryUrl || undefined,
       });
     }
-    
+
     // Clean up URL - remove all query params
     window.history.replaceState({}, "", window.location.pathname);
   }, []);
@@ -86,7 +85,6 @@ function DashboardPage() {
 
         if (response.ok) {
           const data = await response.json();
-          setNotifyForResume(data.resume_feature || false);
           setNotifyForAnalytics(data.analytics_feature || false);
         }
       } catch (error) {
@@ -97,20 +95,11 @@ function DashboardPage() {
     fetchNotificationStatus();
   }, []);
 
-  const handleNotifyMe = async (type: "resume" | "analytics") => {
-    const isResume = type === "resume";
-    const currentState = isResume ? notifyForResume : notifyForAnalytics;
+  const handleNotifyMe = async () => {
+    if (isUpdatingNotification || notifyForAnalytics) return;
 
-    if (isUpdatingNotification || currentState) return;
-
-    const setState = isResume ? setNotifyForResume : setNotifyForAnalytics;
-    const notificationType = isResume ? "resume_feature" : "analytics_feature";
-    const message = isResume
-      ? "You'll be notified when Resume Maker launches!"
-      : "You'll be notified when Analytics launches!";
-
-    setState(true);
-    toast.success(message);
+    setNotifyForAnalytics(true);
+    toast.success("You'll be notified when Analytics launches!");
 
     setIsUpdatingNotification(true);
     try {
@@ -124,14 +113,14 @@ function DashboardPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          notification_type: notificationType,
+          notification_type: "analytics_feature",
         }),
       });
 
       if (!response.ok) throw new Error("Failed to signup for notification");
     } catch (error) {
       console.error("Failed to signup for notification:", error);
-      setState(false);
+      setNotifyForAnalytics(false);
     } finally {
       setIsUpdatingNotification(false);
     }
@@ -160,139 +149,123 @@ function DashboardPage() {
         onOpenChange={setShowDeploymentSuccess}
         deployedUrl={deployedUrl}
       />
-      
+
       <main className="min-h-screen bg-background selection:bg-primary/10 selection:text-primary">
         {/* Hero Section */}
-      <div className="relative border-b bg-background pt-12 pb-12 lg:pt-16 lg:pb-16">
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="relative border-b bg-background pt-12 pb-12 lg:pt-16 lg:pb-16">
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="max-w-3xl"
+            >
+              <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm text-muted-foreground mb-4 bg-muted/50">
+                <Sparkles className="mr-2 h-3.5 w-3.5" />
+                <span>Welcome back</span>
+              </div>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl text-foreground">
+                Hello, {user?.displayName?.split(" ")[0] || "Creator"}
+              </h1>
+              <p className="mt-3 text-lg text-muted-foreground max-w-2xl leading-relaxed">
+                Manage your professional presence and analyze your impact.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="max-w-3xl"
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="space-y-12"
           >
-            <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm text-muted-foreground mb-4 bg-muted/50">
-              <Sparkles className="mr-2 h-3.5 w-3.5" />
-              <span>Welcome back</span>
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl text-foreground">
-              Hello, {user?.displayName?.split(" ")[0] || "Creator"}
-            </h1>
-            <p className="mt-3 text-lg text-muted-foreground max-w-2xl leading-relaxed">
-              Manage your professional presence and analyze your impact.
-            </p>
+            {/* Quick Actions Section */}
+            <section>
+              <motion.div
+                variants={item}
+                className="mb-6 flex items-center justify-between"
+              >
+                <div>
+                  <h2 className="text-xl font-medium tracking-tight text-foreground">
+                    Quick Actions
+                  </h2>
+                </div>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Edit Portfolio Card */}
+                <motion.div variants={item}>
+                  <DashboardCard
+                    title="Edit Portfolio"
+                    description="Customize and refine your existing portfolio"
+                    icon={Pencil}
+                    href="/edit"
+                  />
+                </motion.div>
+
+                {/* Create New Card */}
+                <motion.div variants={item}>
+                  <DashboardCard
+                    title="Create New"
+                    description="Build a portfolio from LinkedIn or Resume"
+                    icon={Upload}
+                    href="/upload"
+                  />
+                </motion.div>
+
+                {/* Resume Builder Card */}
+                <motion.div variants={item}>
+                  <DashboardCard
+                    title="Resume Builder"
+                    description="Create professional, ATS-friendly resumes"
+                    icon={FileText}
+                    href="/resume-builder/list"
+                  />
+                </motion.div>
+              </div>
+            </section>
+
+            {/* Coming Soon Section */}
+            <section>
+              <motion.div variants={item} className="mb-6">
+                <h2 className="text-xl font-medium tracking-tight text-foreground">
+                  Coming Soon
+                </h2>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Analytics Card */}
+                <motion.div variants={item}>
+                  <DashboardCard
+                    title="Analytics"
+                    description="View chat analytics and insights"
+                    icon={MessageSquare}
+                    badge="Soon"
+                    onClick={handleNotifyMe}
+                    disabled={notifyForAnalytics || isUpdatingNotification}
+                  >
+                    <div className="mt-2">
+                      {notifyForAnalytics ? (
+                        <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Bell className="h-3 w-3" />
+                          <span>Notification set</span>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-medium">
+                          <Bell className="h-3 w-3" />
+                          <span>Notify me</span>
+                        </div>
+                      )}
+                    </div>
+                  </DashboardCard>
+                </motion.div>
+              </div>
+            </section>
           </motion.div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="space-y-12"
-        >
-          {/* Quick Actions Section */}
-          <section>
-            <motion.div
-              variants={item}
-              className="mb-6 flex items-center justify-between"
-            >
-              <div>
-                <h2 className="text-xl font-medium tracking-tight text-foreground">
-                  Quick Actions
-                </h2>
-              </div>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Edit Portfolio Card */}
-              <motion.div variants={item}>
-                <DashboardCard
-                  title="Edit Portfolio"
-                  description="Customize and refine your existing portfolio"
-                  icon={Pencil}
-                  href="/edit"
-                />
-              </motion.div>
-
-              {/* Create New Card */}
-              <motion.div variants={item}>
-                <DashboardCard
-                  title="Create New"
-                  description="Build a portfolio from LinkedIn or Resume"
-                  icon={Upload}
-                  href="/upload"
-                />
-              </motion.div>
-            </div>
-          </section>
-
-          {/* Coming Soon Section */}
-          <section>
-            <motion.div variants={item} className="mb-6">
-              <h2 className="text-xl font-medium tracking-tight text-foreground">
-                Coming Soon
-              </h2>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Resume Maker Card */}
-              <motion.div variants={item}>
-                <DashboardCard
-                  title="Resume Maker"
-                  description="Create professional, ATS-friendly resumes"
-                  icon={FileText}
-                  badge="Soon"
-                  onClick={() => handleNotifyMe("resume")}
-                  disabled={notifyForResume || isUpdatingNotification}
-                >
-                  <div className="mt-2">
-                    {notifyForResume ? (
-                      <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Bell className="h-3 w-3" />
-                        <span>Notification set</span>
-                      </div>
-                    ) : (
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-medium">
-                        <Bell className="h-3 w-3" />
-                        <span>Notify me</span>
-                      </div>
-                    )}
-                  </div>
-                </DashboardCard>
-              </motion.div>
-
-              {/* Analytics Card */}
-              <motion.div variants={item}>
-                <DashboardCard
-                  title="Analytics"
-                  description="View chat analytics and insights"
-                  icon={MessageSquare}
-                  badge="Soon"
-                  onClick={() => handleNotifyMe("analytics")}
-                  disabled={notifyForAnalytics || isUpdatingNotification}
-                >
-                  <div className="mt-2">
-                    {notifyForAnalytics ? (
-                      <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Bell className="h-3 w-3" />
-                        <span>Notification set</span>
-                      </div>
-                    ) : (
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-medium">
-                        <Bell className="h-3 w-3" />
-                        <span>Notify me</span>
-                      </div>
-                    )}
-                  </div>
-                </DashboardCard>
-              </motion.div>
-            </div>
-          </section>
-        </motion.div>
-      </div>
       </main>
     </>
   );
