@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import RootProviders from "@/components/RootProviders";
 
 export const metadata: Metadata = {
   title: "Resume Builder - Portfolioly",
@@ -20,5 +21,9 @@ export default function ResumeBuilderLayout({
 }: {
   children: ReactNode;
 }) {
-  return children;
+  return (
+    <RootProviders>
+      <div className="h-dvh flex flex-col overflow-hidden">{children}</div>
+    </RootProviders>
+  );
 }

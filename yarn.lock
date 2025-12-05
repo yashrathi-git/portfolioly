@@ -8078,6 +8078,7 @@ __metadata:
     posthog-js: "npm:^1.298.1"
     react: "npm:19.1.0"
     react-dom: "npm:19.1.0"
+    react-resizable-panels: "npm:^3.0.6"
     sonner: "npm:^2.0.7"
     tailwind-merge: "npm:^3.3.1"
     tailwindcss: "npm:^4"
@@ -9128,6 +9129,16 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/7ad8f6ffd3e2aedf9b3d79f0c9088a9a3d7c5332d80c923427a6d97fe0626fb4cb33a6d9174d19fad57d860be69c96f68497a0619c3a8af0e8a5332e49bdde31
+  languageName: node
+  linkType: hard
+
+"react-resizable-panels@npm:^3.0.6":
+  version: 3.0.6
+  resolution: "react-resizable-panels@npm:3.0.6"
+  peerDependencies:
+    react: ^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+    react-dom: ^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+  checksum: 10c0/e6a6a2a7f438aaf3d4411c39626c1cab5c23af6f25d5ff1fdb8446916388fec549be63d65c47fe17bcc82522b1b5fc7fffa77a550ca9d0b8d21e340d83bdb3c0
   languageName: node
   linkType: hard
 
