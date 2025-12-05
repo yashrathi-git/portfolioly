@@ -48,7 +48,7 @@ function ensureFontLoaded(): void {
  */
 function getProfileUrl(key: string, url: string): string {
   if (url.startsWith("http")) return url;
-  
+
   const prefixes: Record<string, string> = {
     linkedin: "https://linkedin.com/in/",
     github: "https://github.com/",
@@ -92,7 +92,14 @@ function buildHeaderContent(data: ResumeData): React.ReactNode {
 
   // Profile links
   if (personal_info.profiles) {
-    const profileKeys = ["linkedin", "github", "leetcode", "codeforces", "codechef", "website"] as const;
+    const profileKeys = [
+      "linkedin",
+      "github",
+      "leetcode",
+      "codeforces",
+      "codechef",
+      "website",
+    ] as const;
     for (const key of profileKeys) {
       const url = personal_info.profiles[key];
       if (url) {
@@ -168,20 +175,27 @@ function buildSectionItems(
                     </div>
                     <div className="modern-entry-meta">
                       <span className="modern-date">
-                        {formatDateRange(exp.start_date, exp.end_date, exp.is_current)}
+                        {formatDateRange(
+                          exp.start_date,
+                          exp.end_date,
+                          exp.is_current
+                        )}
                       </span>
                       {exp.location && (
                         <span className="modern-location">{exp.location}</span>
                       )}
                     </div>
                   </div>
-                  {exp.highlights && exp.highlights.filter((h) => h.trim()).length > 0 && (
-                    <ul className="modern-highlights">
-                      {exp.highlights.filter((h) => h.trim()).map((highlight, j) => (
-                        <li key={j}>{renderHighlight(highlight)}</li>
-                      ))}
-                    </ul>
-                  )}
+                  {exp.highlights &&
+                    exp.highlights.filter((h) => h.trim()).length > 0 && (
+                      <ul className="modern-highlights">
+                        {exp.highlights
+                          .filter((h) => h.trim())
+                          .map((highlight, j) => (
+                            <li key={j}>{renderHighlight(highlight)}</li>
+                          ))}
+                      </ul>
+                    )}
                 </div>
               ),
             });
@@ -210,7 +224,9 @@ function buildSectionItems(
                         {edu.degree}
                         {edu.field ? ` in ${edu.field}` : ""}
                       </h3>
-                      <span className="modern-institution">{edu.institution}</span>
+                      <span className="modern-institution">
+                        {edu.institution}
+                      </span>
                     </div>
                     <div className="modern-entry-meta">
                       <span className="modern-date">
@@ -222,13 +238,16 @@ function buildSectionItems(
                     </div>
                   </div>
                   {edu.gpa && <p className="modern-gpa">GPA: {edu.gpa}</p>}
-                  {edu.highlights && edu.highlights.filter((h) => h.trim()).length > 0 && (
-                    <ul className="modern-highlights">
-                      {edu.highlights.filter((h) => h.trim()).map((highlight, j) => (
-                        <li key={j}>{renderHighlight(highlight)}</li>
-                      ))}
-                    </ul>
-                  )}
+                  {edu.highlights &&
+                    edu.highlights.filter((h) => h.trim()).length > 0 && (
+                      <ul className="modern-highlights">
+                        {edu.highlights
+                          .filter((h) => h.trim())
+                          .map((highlight, j) => (
+                            <li key={j}>{renderHighlight(highlight)}</li>
+                          ))}
+                      </ul>
+                    )}
                 </div>
               ),
             });
@@ -256,7 +275,11 @@ function buildSectionItems(
                       <h3>
                         {project.url ? (
                           <a
-                            href={project.url.startsWith("http") ? project.url : `https://${project.url}`}
+                            href={
+                              project.url.startsWith("http")
+                                ? project.url
+                                : `https://${project.url}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                           >
@@ -266,23 +289,32 @@ function buildSectionItems(
                           project.name
                         )}
                       </h3>
-                      {project.technologies && project.technologies.filter(t => t.trim()).length > 0 && (
-                        <span className="modern-tech-stack">
-                          {project.technologies.filter(t => t.trim()).join(" • ")}
-                        </span>
-                      )}
+                      {project.technologies &&
+                        project.technologies.filter((t) => t.trim()).length >
+                          0 && (
+                          <span className="modern-tech-stack">
+                            {project.technologies
+                              .filter((t) => t.trim())
+                              .join(" • ")}
+                          </span>
+                        )}
                     </div>
                   </div>
                   {project.description && (
-                    <p className="modern-description">{renderMarkdown(project.description)}</p>
+                    <p className="modern-description">
+                      {renderMarkdown(project.description)}
+                    </p>
                   )}
-                  {project.highlights && project.highlights.filter((h) => h.trim()).length > 0 && (
-                    <ul className="modern-highlights">
-                      {project.highlights.filter((h) => h.trim()).map((highlight, j) => (
-                        <li key={j}>{renderHighlight(highlight)}</li>
-                      ))}
-                    </ul>
-                  )}
+                  {project.highlights &&
+                    project.highlights.filter((h) => h.trim()).length > 0 && (
+                      <ul className="modern-highlights">
+                        {project.highlights
+                          .filter((h) => h.trim())
+                          .map((highlight, j) => (
+                            <li key={j}>{renderHighlight(highlight)}</li>
+                          ))}
+                      </ul>
+                    )}
                 </div>
               ),
             });
@@ -300,9 +332,13 @@ function buildSectionItems(
                 <div className="modern-skills">
                   {data.skills.categories.map((category, i) => (
                     <div key={i} className="modern-skill-category">
-                      <span className="modern-skill-label">{category.name}</span>
+                      <span className="modern-skill-label">
+                        {category.name}
+                      </span>
                       <span className="modern-skill-items">
-                        {category.items.filter(item => item.trim()).join(" • ")}
+                        {category.items
+                          .filter((item) => item.trim())
+                          .join(" • ")}
                       </span>
                     </div>
                   ))}
@@ -325,9 +361,14 @@ function buildSectionItems(
                     <li key={cert.id}>
                       <span className="modern-cert-name">{cert.name}</span>
                       {cert.issuer && (
-                        <span className="modern-cert-issuer">{cert.issuer}</span>
+                        <span className="modern-cert-issuer">
+                          {" "}
+                          – {cert.issuer}
+                        </span>
                       )}
-                      {cert.date && <span className="modern-cert-date">{cert.date}</span>}
+                      {cert.date && (
+                        <span className="modern-cert-date"> ({cert.date})</span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -338,16 +379,21 @@ function buildSectionItems(
         break;
 
       case "achievements":
-        if (data.achievements && data.achievements.filter((a) => a.trim()).length > 0) {
+        if (
+          data.achievements &&
+          data.achievements.filter((a) => a.trim()).length > 0
+        ) {
           items.push({
             key: "achievements",
             content: (
               <section className="modern-section">
                 <h2>Achievements</h2>
                 <ul className="modern-highlights">
-                  {data.achievements.filter((a) => a.trim()).map((achievement, i) => (
-                    <li key={i}>{renderHighlight(achievement)}</li>
-                  ))}
+                  {data.achievements
+                    .filter((a) => a.trim())
+                    .map((achievement, i) => (
+                      <li key={i}>{renderHighlight(achievement)}</li>
+                    ))}
                 </ul>
               </section>
             ),
@@ -392,7 +438,10 @@ export function ModernTemplate({
     for (let i = 1; i < children.length; i++) {
       const itemHeight = children[i]?.offsetHeight || 0;
 
-      if (currentHeight + itemHeight > CONTENT_HEIGHT_PX && currentPage.length > 0) {
+      if (
+        currentHeight + itemHeight > CONTENT_HEIGHT_PX &&
+        currentPage.length > 0
+      ) {
         newPages.push(currentPage);
         currentPage = [i - 1]; // -1 because content items start at index 0
         currentHeight = itemHeight;
@@ -457,9 +506,7 @@ export function ModernTemplate({
             {pageIndex === 0 && buildHeaderContent(data)}
             {pageItems.map((itemIndex) => {
               const item = sectionItems[itemIndex];
-              return item ? (
-                <div key={item.key}>{item.content}</div>
-              ) : null;
+              return item ? <div key={item.key}>{item.content}</div> : null;
             })}
           </div>
         ))}
@@ -521,30 +568,42 @@ const modernStyles = `
   }
 
   .modern-header {
-    margin-bottom: 1em;
+    margin-bottom: 1.25em;
     padding-bottom: 0.75em;
     border-bottom: 2px solid #2563eb;
+    text-align: center;
   }
 
   .modern-header h1 {
-    font-size: 24pt;
+    font-size: 22pt;
     font-weight: 700;
-    margin: 0 0 0.25em 0;
+    margin: 0 0 0.5em 0;
     color: #1a1a1a;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
 
   .modern-contact {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75em 1.5em;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4em 0;
     font-size: 9pt;
     color: #4b5563;
+    line-height: 1.6;
   }
 
   .modern-contact-item {
     display: inline-flex;
     align-items: center;
+    white-space: nowrap;
+  }
+
+  .modern-contact-item:not(:last-child)::after {
+    content: "•";
+    margin: 0 0.5em;
+    color: #9ca3af;
+    font-weight: 400;
   }
 
   .modern-link {
@@ -653,9 +712,11 @@ const modernStyles = `
   }
 
   .modern-highlights {
-    margin: 0.25em 0 0 1.25em;
-    padding: 0;
+    margin: 0.25em 0 0 0;
+    padding: 0 0 0 1.25em;
     color: #374151;
+    list-style-type: disc;
+    list-style-position: outside;
   }
 
   .modern-highlights li {
@@ -663,6 +724,12 @@ const modernStyles = `
     font-size: 9.5pt;
     page-break-inside: avoid;
     break-inside: avoid;
+    padding-left: 0.25em;
+    display: list-item;
+  }
+
+  .modern-highlights li::marker {
+    color: #6b7280;
   }
 
   .modern-description {
@@ -694,16 +761,21 @@ const modernStyles = `
   }
 
   .modern-certifications {
-    list-style: none;
+    list-style-type: disc;
+    list-style-position: outside;
     margin: 0;
-    padding: 0;
+    padding: 0 0 0 1.25em;
   }
 
   .modern-certifications li {
-    display: flex;
-    gap: 0.5em;
+    display: list-item;
     margin-bottom: 0.25em;
     font-size: 9.5pt;
+    padding-left: 0.25em;
+  }
+
+  .modern-certifications li::marker {
+    color: #6b7280;
   }
 
   .modern-cert-name {
@@ -713,10 +785,6 @@ const modernStyles = `
 
   .modern-cert-issuer {
     color: #4b5563;
-  }
-
-  .modern-cert-issuer::before {
-    content: "– ";
   }
 
   .modern-cert-date {
