@@ -6,6 +6,7 @@ import Link from "next/link";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Footer } from "@/components/landing/Footer";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
 
 const ENTRY_VARIANTS = {
   hidden: { opacity: 0, y: 10, filter: "blur(10px)" },
@@ -30,16 +31,22 @@ export default function ResumeBuilderPage() {
             <div className="flex flex-col items-center text-center">
               {/* Badge */}
               <motion.div
-                className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5"
+                className="mb-8"
                 variants={ENTRY_VARIANTS}
                 initial="hidden"
                 animate="visible"
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">
-                  Now Available
-                </span>
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 hover:bg-primary/10 transition-colors"
+                >
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">
+                    Build Your Portfolio
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5 text-primary" />
+                </Link>
               </motion.div>
 
               {/* Headline */}
@@ -90,9 +97,9 @@ export default function ResumeBuilderPage() {
                 ))}
               </motion.div>
 
-              {/* CTA Button */}
+              {/* CTA Buttons */}
               <motion.div
-                className="mt-12 flex justify-center"
+                className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4"
                 variants={ENTRY_VARIANTS}
                 initial="hidden"
                 animate="visible"
@@ -104,6 +111,15 @@ export default function ResumeBuilderPage() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </ShimmerButton>
                 </Link>
+                <a
+                  href="https://github.com/yashrathi-git/portfolioly"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 h-14 px-6 rounded-full border border-border bg-background hover:bg-muted transition-colors text-foreground font-medium"
+                >
+                  <GitHubLogoIcon className="h-5 w-5" />
+                  <span>Star on GitHub</span>
+                </a>
               </motion.div>
             </div>
           </div>

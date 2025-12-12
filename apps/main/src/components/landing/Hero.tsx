@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { LandingHeader } from "./LandingHeader";
 import { DemoCarousel } from "./DemoCarousel";
@@ -37,29 +37,24 @@ export function Hero() {
       <div className="relative isolate px-6 pt-14 lg:px-8">
         <div className="mx-auto max-w-4xl py-20 sm:py-24 lg:py-28">
           <div className="text-center">
-            {/* User Indicator - Above Title */}
+            {/* Resume Builder Pill */}
             <motion.div
-              className="mb-6 flex items-center justify-center gap-2"
+              className="mb-6"
               variants={ENTRY_VARIANTS}
               initial="hidden"
               animate="visible"
               transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
             >
-              <div className="flex -space-x-2">
-                {AVATAR_COLORS.map((color, i) => (
-                  <div
-                    key={i}
-                    className={`h-7 w-7 rounded-full ${color} ring-2 ring-background flex items-center justify-center`}
-                  >
-                    <span className="text-[10px] font-medium text-white">
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground ml-1">
-                500+ portfolios created
-              </span>
+              <Link
+                href="/resume"
+                className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 hover:bg-primary/10 transition-colors"
+              >
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">
+                  New: Build Your Resume
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-primary" />
+              </Link>
             </motion.div>
 
             {/* Headline with gradient on "two clicks" - responsive */}
