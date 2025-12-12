@@ -1,12 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Sparkles, ArrowRight } from "lucide-react";
+import { Check, Sparkles, ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Footer } from "@/components/landing/Footer";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
-import { GitHubLogoIcon } from "@radix-ui/react-icons";
+import { GitHubLogoIcon, LinkedInLogoIcon } from "@radix-ui/react-icons";
 
 const ENTRY_VARIANTS = {
   hidden: { opacity: 0, y: 10, filter: "blur(10px)" },
@@ -122,6 +123,57 @@ export default function ResumeBuilderPage() {
                 </a>
               </motion.div>
             </div>
+
+            {/* Demo Section */}
+            <motion.div
+              className="mt-20 sm:mt-28"
+              variants={ENTRY_VARIANTS}
+              initial="hidden"
+              animate="visible"
+              transition={{ duration: 0.6, delay: 0.9 }}
+            >
+              {/* Source Icons Infographic */}
+              <div className="flex items-center justify-center gap-3 sm:gap-4 mb-8">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0077B5]/10 border border-[#0077B5]/20">
+                  <LinkedInLogoIcon className="h-5 w-5 text-[#0077B5]" />
+                  <span className="text-sm font-medium text-[#0077B5]">
+                    LinkedIn
+                  </span>
+                </div>
+                <Plus className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-foreground/5 border border-foreground/10">
+                  <GitHubLogoIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">GitHub</span>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20">
+                  <Sparkles className="h-4 w-4 text-violet-500" />
+                  <span className="text-sm font-medium text-violet-500">
+                    Resume
+                  </span>
+                </div>
+              </div>
+
+              {/* Resume Preview - Smaller with fade */}
+              <div className="relative mx-auto max-w-md">
+                <div className="absolute -inset-4 bg-gradient-to-r from-[#0077B5]/20 via-violet-500/20 to-purple-600/20 rounded-2xl blur-2xl opacity-40" />
+                <div className="relative rounded-xl overflow-hidden border border-border/50 shadow-2xl bg-background max-h-[400px]">
+                  <Image
+                    src="https://media.portfolioly.app/hero/16158.jpeg"
+                    alt="Resume built with Portfolioly"
+                    width={600}
+                    height={800}
+                    className="w-full h-auto"
+                    priority
+                  />
+                  {/* Fade overlay */}
+                  <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
+                </div>
+                <p className="mt-4 text-center text-sm text-muted-foreground">
+                  Your professional resume, ready in minutes
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </main>
