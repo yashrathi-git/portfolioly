@@ -58,6 +58,7 @@ import {
 } from "lucide-react";
 import { WandIcon } from "@/components/icons/PortfoliolyWandIcon";
 import { exportToPDF, isPrintSupported } from "@/lib/resume/pdfExport";
+import { SupportNudgeDialog } from "@/components/resume/SupportNudgeDialog";
 import Link from "next/link";
 
 type ImportSource = "linkedin" | "github" | "portfolio" | null;
@@ -143,6 +144,7 @@ function ResumeBuilderPage() {
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(
     resumeId
   );
+  const [showSupportDialog, setShowSupportDialog] = useState(false);
 
   const [initialData, setInitialData] = useState<ResumeData>(createEmptyResume);
 
@@ -266,12 +268,16 @@ function ResumeBuilderPage() {
     [resumeData, setResumeData]
   );
 
-  const handleExport = useCallback(async () => {
+  const handleExportClick = useCallback(() => {
     if (!isPrintSupported()) {
       toast.error("PDF export is not supported in this browser");
       return;
     }
+    setShowSupportDialog(true);
+  }, []);
 
+  const handleExportContinue = useCallback(async () => {
+    setShowSupportDialog(false);
     try {
       await exportToPDF({
         data: resumeData,
@@ -383,7 +389,7 @@ function ResumeBuilderPage() {
             <span className="hidden sm:inline">Save</span>
           </Button>
 
-          <Button variant="default" size="sm" onClick={handleExport}>
+          <Button variant="default" size="sm" onClick={handleExportClick}>
             <Download className="h-4 w-4 mr-1" />
             <span className="hidden sm:inline">Export PDF</span>
           </Button>
@@ -647,6 +653,11 @@ function ResumeBuilderPage() {
           <AlertDescription>{saveError}</AlertDescription>
         </Alert>
       )}
+
+      <SupportNudgeDialog
+        open={showSupportDialog}
+        onContinue={handleExportContinue}
+      />
     </div>
   );
 }

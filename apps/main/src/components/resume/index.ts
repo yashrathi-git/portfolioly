@@ -15,3 +15,4 @@ export {
 export { LivePreview, type LivePreviewProps } from "./LivePreview";
 export { SectionReorder, type SectionReorderProps } from "./SectionReorder";
 export { ResumeEditor, type ResumeEditorProps } from "./ResumeEditor";
+export { SupportNudgeDialog } from "./SupportNudgeDialog";
